@@ -1,0 +1,47 @@
+.home-page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  background-color: transparent;
+  height: 100%;
+  color: white;
+  margin-inline: 8px;
+  gap: 10px;
+  overflow: auto;
+}
+.home-header {
+  width: 100%;
+  height: fit-content;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.welcome-message {
+  font-size: 23px;
+  font-weight: 500;
+}
+
+.home-profile-div{
+  border: 2px solid green;
+  display: flex;
+  height: 50px;
+  width: 160px;
+}
+.home-profile-picture{
+  height: 70%;
+}
+.home-header-bottom-line {
+  align-self: center;
+}
+
+
+.home-media-tile {
+  background-color: rgba(255, 255, 255, 0.17);
+  transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  transition-duration: 0.3s;
+  transition-delay: 0s;
+  transition-property: all;
+}
+.home-media-tile:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+}

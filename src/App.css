@@ -1,0 +1,92 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500&display=swap");
+
+* {
+  font-family: "Montserrat", sans-serif;
+  margin: 0;
+  border: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+div#root.root {
+  height: 100%;
+}
+
+#App, .login-register {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 1000px;
+}
+#App{
+  transition: background 12s;
+}
+#App > section {
+  width: 100%;
+  min-width: inherit;
+}
+.login-register{
+  background:linear-gradient(to top right,rgb(15, 32, 39),rgb(32, 58, 67),rgb(44, 83, 100));
+}
+
+::-webkit-scrollbar {
+  /*display: none; until scrollbar is fixed in horizontal containers*/
+  border-radius: 100vh;
+  background-color: grey;
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  border-radius: 100vh;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 100vh;
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+div, section {
+  user-select: none;
+}
+
+span, p{
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+hr {
+  border: 1px solid grey;
+  width: calc(100% - 25px);
+}
+
+.App button:active{
+  opacity: 0.65;
+}
+
+ul, ol{
+  list-style: none;
+  padding: 0;
+}
+
+#file-input{
+  display: none;
+}
+
+button{
+  outline: 0;
+  padding: 0;
+  transition: opacity 0.25s;
+  background-color: transparent;
+
+}
+
+button:disabled{
+  opacity: 0.5;
+} 
+button:hover:disabled{
+  cursor:not-allowed;
+}
+.loading-div{
+  color: white;
+}

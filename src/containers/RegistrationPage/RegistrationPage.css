@@ -1,0 +1,19 @@
+.registration-content {
+    color: white;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex: 1;
+    align-items: center;
+    overflow: auto;
+}
+
+
+.registration-content > h2{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    height: 3.8em;
+    flex: 0 0 auto;
+}

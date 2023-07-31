@@ -1,0 +1,58 @@
+.media-grid {
+  font-weight: 400;
+  justify-items: center;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 25px;
+  grid-auto-rows: 70px;
+  gap: 5px;
+}
+.media-grid-title {
+  grid-column: 1/-1;
+  width: 100%;
+  font-size: 19px;
+  font-weight: 400;
+}
+.media-grid-playlist-tile,
+.media-grid-song-tile {
+  color: white;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-radius: 5px;
+  padding-inline: 4px;
+  column-gap: 4px;
+  overflow: hidden;
+}
+
+.media-grid-tile-icon {
+  border-radius: 3px;
+  height: 88%;
+}
+.media-grid-tile-info {
+  height: 100%;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  gap: 1.5px;
+}
+
+.media-grid-tile-name {
+  font-size: 0.91em;
+  font-weight: 400;
+}
+
+.media-grid-tile-type,
+.media-grid-tile-artist,
+.media-grid-tile-year,
+.media-grid-tile-album {
+  font-weight: 300;
+  font-size: 0.85em;
+}
+
+.media-grid-tile-type{
+  font-style: italic;
+}

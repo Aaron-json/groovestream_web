@@ -1,0 +1,43 @@
+.login-form{
+    background-color:rgba(255, 255, 255, 0.1);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    width: 20em;
+    height: 23em;
+    align-items: center;
+    border-radius: 10px;
+    justify-self: center;
+    padding-block: 0.8em;
+}
+.login-form > h3{
+    margin-bottom: 2em;
+}
+
+.login-form > * {
+    width: 90%;
+}
+.login-form > input{
+    border-radius: 3px;
+    height: 2.3em;
+    margin-bottom: 2em;
+    
+}
+
+.login-form > button{
+    border-radius: 5px;
+    height: 2.5em;
+    padding: 0;
+    color: white;
+    background-color: transparent;
+    border: 2px solid white;
+    margin-bottom: 2em;
+}
+.login-form > p{
+    font-size: 0.8em;
+}
+
+.register-login-toggle:visited{
+  color: white;
+
+}

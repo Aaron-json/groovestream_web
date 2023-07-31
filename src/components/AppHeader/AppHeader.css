@@ -1,0 +1,15 @@
+.login-page-header {
+    color: white;
+    display: flex;
+    flex-direction: column;
+    height: 5em;
+    width: 100%;
+    align-items: center;
+}
+
+.login-page-header>h1 {
+    flex: 1;
+    align-self: flex-start;
+    font-size: 2em;
+    vertical-align: bottom;
+}

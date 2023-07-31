@@ -1,0 +1,36 @@
+background: linear-gradient(
+    to top right,
+    rgb(170, 75, 107),
+    rgb(107, 107, 131),
+    rgb(59, 141, 153)
+  );
+  background: linear-gradient(
+    to bottom left,
+    rgb(195, 20, 50),
+    rgb(36, 11, 54)
+  );
+  background: linear-gradient(to top right, rgb(55, 59, 68), rgb(6, 42, 101));
+  background: linear-gradient(
+    to top right,
+    rgb(15, 32, 39),
+    rgb(32, 58, 67),
+    rgb(44, 83, 100)
+  );
+
+  background: #000000; /* fallback for old browsers */
+  background: -webkit-linear-gradient(
+    to right,
+    #434343,
+    #000000
+  ); /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(to top right, rgb(0, 0, 0), rgb(67, 67, 67));
+
+  /*
+  background: -webkit-linear-gradient(360deg, #1C1C1C 10%, #494949 360%);
+  background: -moz-linear-gradient(360deg, #1C1C1C 10%, #494949 360%);
+  background: linear-gradient(360deg, #1C1C1C 10%, #494949 360%);
+  */
+  /*
+  background: -webkit-linear-gradient(360deg,#030303 10%,#1f1f1f 360%);
+  background: linear-gradient(360deg,#030303 10%,#1f1f1f 360%);
+  */

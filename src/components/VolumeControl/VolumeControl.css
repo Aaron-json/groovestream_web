@@ -1,0 +1,21 @@
+.volume-and-devices {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 260px;
+    max-width: 300px;
+    justify-content: center;
+    align-items: center;
+}
+
+#volume-slider {
+    height: 5px;
+    margin-left: 12px;
+    vertical-align: middle;
+}
+
+.volume-icon {
+    height: 20px;
+    vertical-align: middle;
+    filter: invert(1);
+}

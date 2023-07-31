@@ -1,0 +1,49 @@
+.mediabar-media-info {
+
+    display: flex;
+    flex: 1;
+    border-right: 1px solid grey;
+    min-width: 280px;
+    max-width: 340px;
+
+}
+
+.mediabar-media-image {
+    height: 100%;
+}
+
+.mediabar-name-artist-album {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    padding-left: 6px;
+    padding-right: 4px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.name,
+.artist,
+.album {
+    display: flex;
+    color: white;
+    font-weight: 200;
+    overflow: hidden;
+}
+
+.name {
+    display: flex;
+    align-items: center;
+    height: 45%;
+    font-weight: 400;
+    font-size: 20px;
+}
+
+.artist,
+.album {
+    flex: 1;
+    font-size: 17px;
+
+}
+

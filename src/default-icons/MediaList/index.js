@@ -1,0 +1,1 @@
+export { default as mediaListBackIcon } from "./back.png"
