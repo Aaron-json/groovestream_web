@@ -8,7 +8,6 @@ const GRADIENT_END = "rgb(44, 83, 100)";
 export const colorContext = createContext(DEFAULT_COLOR);
 
 export const ColorContextProvider = ({ children }) => {
-  const [currentMediaIcon, setCurrentMediaIcon] = useState(null);
   const [color, setColor] = useState(DEFAULT_COLOR);
 
   function updateColor(newColor) {
@@ -17,10 +16,8 @@ export const ColorContextProvider = ({ children }) => {
     setColor(colorTemplate);
   }
   useEffect(() => {
-    if (!currentMediaIcon) {
-      setColor(DEFAULT_COLOR);
-    }
-  }, [currentMediaIcon]);
+    setColor("--default-background");
+  }, []);
 
   return (
     <colorContext.Provider value={{ color, updateColor }}>

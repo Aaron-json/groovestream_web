@@ -7,4 +7,4 @@ export { default as Search } from './Search/Search'
 export { default as Library } from './Library/Library'
 export { default as LoginPage } from './LoginPage/LoginPage'
 export { default as RegistrationPage } from './RegistrationPage/RegistrationPage'
-
+export { default as MediaPage } from './MediaPage/MediaPage'

@@ -99,8 +99,8 @@ export default function LibraryMedia({
    * does NOT modify original array
    */
   function filterMedia(mediaList, searchFilter) {
-    console.log("filtering media");
-    if (searchFilter === "" || searchFilter === " ") return mediaList;
+    if (searchFilter === "" || searchFilter === " " || !searchFilter)
+      return mediaList;
     searchFilter = searchFilter.toLowerCase();
     return mediaList.filter((mediaItem) => {
       // check if mediaItem's name, album or artists match the search filter
