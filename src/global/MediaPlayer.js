@@ -52,7 +52,7 @@ export default class MediaPlayer {
 
     }
 
-    unloadSource(source) {
+    unloadSource() {
         if (!this.#HowlInstance) {
             return
         }

@@ -13,6 +13,7 @@ export default function MediaPage() {
         <h1>{media.name}</h1>
         <h2>{mediaTypeToField[mediaType]}</h2>
       </div>
+      <hr />
       <div className="media-page-content">
         <MediaList items={media.audioFiles} />
       </div>

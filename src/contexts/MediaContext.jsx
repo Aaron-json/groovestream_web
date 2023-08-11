@@ -20,12 +20,14 @@ const currentMediaReducer = (state, action) => {
       if (!state.queue) return;
 
       let nextIndex = (state.index + 1) % state.queue.length;
+      console.log(nextIndex, state.queue.length);
 
       while (state.queue[nextIndex].type !== 0) {
         // loop to the next audioFile i.e type = 0
         // there will be at least 1 audioFile since only audioFiles clicks
         // can set the currentMedia
         nextIndex = (nextIndex + 1) % state.queue.length;
+        console.log(nextIndex, state.queue.length);
       }
       if (nextIndex === state.index) {
         return state;
@@ -34,13 +36,14 @@ const currentMediaReducer = (state, action) => {
     case "previous":
       if (!state.queue) return;
 
-      let prevIndex = (state.index - 1) % state.queue.length;
-
+      //let prevIndex = (state.index - 1) % state.queue.length;
+      let prevIndex = mod(state.index - 1, state.queue.length);
       while (state.queue[prevIndex].type !== 0) {
         // loop to the previous audioFile i.e type = 0
         // there will be at least 1 audioFile since only audioFiles clicks
         // can set the currentMedia
-        prevIndex = (prevIndex - 1) % state.queue.length;
+        // prevIndex = (prevIndex - 1) % state.queue.length;
+        prevIndex = mod(prevIndex - 1, state.queue.length);
       }
       if (prevIndex === state.index) {
         return state;
@@ -86,6 +89,10 @@ export const MediaContextProvider = ({ children }) => {
       return;
     }
     loadMedia();
+    return () => {
+      // unload any current audio if component unmounts
+      player.unloadSource();
+    };
   }, [currentMediaStates]);
 
   // change volume when state changes
@@ -230,3 +237,13 @@ export const MediaContextProvider = ({ children }) => {
     </mediaContext.Provider>
   );
 };
+
+/**
+ *
+ * @param {Number} n
+ * @param {Numebr} m - The Modulo
+ * @returns {Number} The result of the mathematical n mod m. (Returns only positive numbers)
+ */
+function mod(n, m) {
+  return ((n % m) + m) % m;
+}

@@ -3,6 +3,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+    align-items: center;
 
 }
 
@@ -11,6 +12,7 @@
     flex-direction: column;
     height: fit-content;
     border: 1px solid green;
+    width: 100%;
 }
 
 .media-page-header > h1{
@@ -26,5 +28,5 @@
 }
 
 .media-page.contents{
-
+    width: 100%;
 }
