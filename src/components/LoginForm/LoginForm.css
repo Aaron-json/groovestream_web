@@ -25,12 +25,6 @@
 }
 
 .login-form > button{
-    border-radius: 5px;
-    height: 2.5em;
-    padding: 0;
-    color: white;
-    background-color: transparent;
-    border: 2px solid white;
     margin-bottom: 2em;
 }
 .login-form > p{

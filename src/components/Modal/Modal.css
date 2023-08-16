@@ -1,7 +1,29 @@
 .modal{
     overflow: auto;
-    height:fit-content ;
+    display: flex;
+    flex-direction: column;
+    background-color: transparent;
+    top: 18%;
+    left: 50%;
+    transform: translate(-50%, 0%);
+    min-width: 560px;
+    border: 2px solid grey;
+    border-radius: 7px;
+    padding: 15px;
+    gap: 16px;
 }
-.width{
-    width: fit-content;
+
+.close-modal-btn{
+    height: 2.2em;
+    color: var(--text-color);
+    border: 2px solid grey;
+    width: 60%;
+    margin-inline: auto;
+    border-radius: 4px;
+}
+.close-modal-btn:active{
+    opacity: 0.6;
+}
+.modal::backdrop{
+    background-color: rgba(1, 1, 1, 0.8);
 }

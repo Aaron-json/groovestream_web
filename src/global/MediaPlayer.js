@@ -1,35 +1,31 @@
 import { Howl, Howler } from "howler"
 
 export default class MediaPlayer {
-    #HowlInstance;
-    currentSourceID;
+    #HowlInstance = null;
+    currentSourceID = null;
     #DefaultConfiguration = {
         html5: true,
         volume: 1,
         loop: false,
 
     }
-    #frozen
+    // #GlobalHowler = Howler.init()
 
     #loadSourceHelper(source) {
         return new Promise((resolve, reject) => {
-            try {
-                this.#HowlInstance = new Howl(
-                    {
-                        ...this.#DefaultConfiguration,
-                        src: [source.data],
-                    }
-                )
-                    .once("load", () => {
-                        resolve();
-                    })
-
-            }
-            catch (e) {
-                reject(e)
-            }
+            this.#HowlInstance = new Howl(
+                {
+                    ...this.#DefaultConfiguration,
+                    src: [source.data],
+                }
+            )
+                .once("load", () => {
+                    resolve();
+                })
+                .once("loaderror", () => {
+                    reject()
+                })
         })
-
     }
 
     async loadSource(source) {
@@ -57,6 +53,7 @@ export default class MediaPlayer {
             return
         }
         this.#HowlInstance.unload()
+        this.#HowlInstance = null
         this.currentSourceID = null
     }
 
@@ -106,7 +103,7 @@ export default class MediaPlayer {
         }
         this.#HowlInstance.seek(seekPosition)
     }
-    getSeeker() {
+    getSeek() {
         if (!this.#HowlInstance) {
             return null;
         }

@@ -1,5 +1,11 @@
 import "./Library.css";
-import { Dropdown, SearchBar, MediaList } from "../../components";
+import {
+  Dropdown,
+  SearchBar,
+  MediaList,
+  Modal,
+  CreatePlaylist,
+} from "../../components";
 import { useContext, useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
@@ -19,6 +25,7 @@ const sortBy = { Name: "name", Date: "dateCreated" };
 const order = { "A-Z": "ascending", "Z-A": "descending" };
 export default function Library() {
   const [addingMedia, setAddingMedia] = useState(false);
+  const [addingPlaylist, setAddingPlaylist] = useState(false);
   const [currentCategory, setCurrentCategory] = useState("All");
   const [currentSort, setCurrentSort] = useState("Name");
   const [currentOrder, setCurrentOrder] = useState("A-Z");
@@ -112,7 +119,12 @@ export default function Library() {
 
         {addingMedia && (
           <>
-            <button className="add-media-options">Create New Playlist</button>
+            <button
+              className="add-media-options"
+              onClick={() => setAddingPlaylist(true)}
+            >
+              Create New Playlist
+            </button>
             <label className="add-media-options">
               Upload Song
               <input
@@ -129,6 +141,10 @@ export default function Library() {
           </>
         )}
       </div>
+
+      <Modal show={addingPlaylist} onClose={() => setAddingPlaylist(false)}>
+        <CreatePlaylist />
+      </Modal>
 
       {results === null ? (
         <div className="loading-div">Loading...</div>

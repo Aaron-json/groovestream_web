@@ -8,7 +8,6 @@
     row-gap: 6px;
     align-items: center;
     width: calc(100% - 10px);
-    margin-inline: 6px;
     overflow: hidden;
 }
 .library-page-header{

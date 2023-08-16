@@ -27,7 +27,6 @@ const currentMediaReducer = (state, action) => {
         // there will be at least 1 audioFile since only audioFiles clicks
         // can set the currentMedia
         nextIndex = (nextIndex + 1) % state.queue.length;
-        console.log(nextIndex, state.queue.length);
       }
       if (nextIndex === state.index) {
         return state;
@@ -36,13 +35,11 @@ const currentMediaReducer = (state, action) => {
     case "previous":
       if (!state.queue) return;
 
-      //let prevIndex = (state.index - 1) % state.queue.length;
       let prevIndex = mod(state.index - 1, state.queue.length);
       while (state.queue[prevIndex].type !== 0) {
         // loop to the previous audioFile i.e type = 0
         // there will be at least 1 audioFile since only audioFiles clicks
         // can set the currentMedia
-        // prevIndex = (prevIndex - 1) % state.queue.length;
         prevIndex = mod(prevIndex - 1, state.queue.length);
       }
       if (prevIndex === state.index) {
@@ -78,7 +75,7 @@ export const MediaContextProvider = ({ children }) => {
     }
   );
 
-  //convenence object to prevent destructuring to access the actual current media object
+  //convenience object to prevent destructuring to access the actual current media object
   const currentMediaObj = currentMediaStates.queue
     ? currentMediaStates.queue[currentMediaStates.index]
     : null;
@@ -90,7 +87,8 @@ export const MediaContextProvider = ({ children }) => {
     }
     loadMedia();
     return () => {
-      // unload any current audio if component unmounts
+      // unload any current audio when component unmounts
+      console.log("unloading source");
       player.unloadSource();
     };
   }, [currentMediaStates]);
@@ -132,10 +130,12 @@ export const MediaContextProvider = ({ children }) => {
     if (!currentMediaObj) {
       return;
     }
-    const { _id, format, type } = currentMediaObj;
+    //unload current source before loading the new source
+    // player.unloadSource();
+    const { _id, format } = currentMediaObj;
 
     const response = await retryRequest(async () => {
-      return await axiosClient.get(`/media/${type}/${_id}`, {
+      return await axiosClient.get(`/media/0/${_id}`, {
         headers: {
           Authorization: `Bearer ${accessTokenRef.current}`,
         },
@@ -160,7 +160,7 @@ export const MediaContextProvider = ({ children }) => {
       mediaList[index]._id === currentMediaObj?._id &&
       player.getState() === "playing"
     ) {
-      player.stop();
+      player.seek(0);
       player.play();
     } else if (
       mediaList[index]._id === currentMediaObj?._id &&
@@ -186,9 +186,6 @@ export const MediaContextProvider = ({ children }) => {
   }
   function playNext() {
     player.stop();
-    flushSync(() => {
-      setPlaybackState("stopped");
-    });
     flushSync(() => {
       currentMediaDispatch({
         type: "next",

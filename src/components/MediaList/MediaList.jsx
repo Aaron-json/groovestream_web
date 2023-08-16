@@ -226,6 +226,7 @@ function LibrarySong({
             : music_icon
         }
         alt="icon"
+        loading="lazy"
       />
       <div className="media-item-info">
         <span className="media-item-name">{media.filename}</span>
@@ -275,7 +276,7 @@ function LibraryPlaylist({
   }
   return (
     <li className="media-list-playlist-item" onClick={handlePlaylistClick}>
-      <img src={library_icon} alt="icon" />
+      <img loading="lazy" src={library_icon} alt="icon" />
       <div className="media-item-info">
         <span className="media-item-name">{playlist.name}</span>
         <span className="playlist-files-count">
@@ -308,8 +309,8 @@ function LibraryPlaylist({
 
 function NoMediaItem() {
   return (
-    <li className="no-media-item media-list-song-item">
+    <div className="media-list-song-item">
       <span>No Media</span>
-    </li>
+    </div>
   );
 }

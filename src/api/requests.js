@@ -10,7 +10,6 @@
 
 export async function retryRequest(requestFunction, refreshAuthentication) {
 
-
     try {
         return await requestFunction()
     }

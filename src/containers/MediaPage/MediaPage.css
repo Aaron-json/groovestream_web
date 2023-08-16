@@ -1,10 +1,10 @@
 .media-page{
+    flex: 1;
     color: var(--text-color);
     display: flex;
     flex-direction: column;
     width: 100%;
     align-items: center;
-
 }
 
 .media-page-header{
@@ -27,6 +27,6 @@
     text-transform: capitalize;
 }
 
-.media-page.contents{
+.media-page-content{
     width: 100%;
 }

@@ -5,7 +5,7 @@ import { authenticationContext } from "../../contexts/AuthenticationContext";
 import axiosClient from "../../api/axiosClient";
 
 const LoginForm = () => {
-  const { setRefreshToken, accessTokenRef, setAuthenticated } = useContext(
+  const { accessTokenRef, setAuthenticated } = useContext(
     authenticationContext
   );
   const [sendingRequest, setSendingRequest] = useState(false);
@@ -19,7 +19,7 @@ const LoginForm = () => {
     try {
       const loginResponse = await axiosClient.post("user/login", body);
       console.log(loginResponse);
-      const { refreshToken, accessToken } = loginResponse.data;
+      const { accessToken } = loginResponse.data;
       // update authentication state
       accessTokenRef.current = accessToken;
       setAuthenticated(true);
@@ -36,12 +36,26 @@ const LoginForm = () => {
       <label className="login-username-label" htmlFor="login-username-input">
         Username
       </label>
-      <input id="login-username-input" type="email" placeholder="Email" />
+      <input
+        className="form-input"
+        id="login-username-input"
+        type="email"
+        placeholder="Email"
+      />
       <label className="login-password-label" htmlFor="login-password-input">
         Password
       </label>
-      <input id="login-password-input" type="password" placeholder="Password" />
-      <button type="submit" className="login-submit" disabled={sendingRequest}>
+      <input
+        className="form-input"
+        id="login-password-input"
+        type="password"
+        placeholder="Password"
+      />
+      <button
+        type="submit"
+        className="login-submit form-button"
+        disabled={sendingRequest}
+      >
         Login
       </button>
       <p>

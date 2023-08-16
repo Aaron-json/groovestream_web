@@ -1,19 +1,25 @@
-import React, { useContext } from "react";
-import { colorContext } from "../../contexts/ColorContext";
+import "./Modal.css";
+import { useRef, useEffect } from "react";
+export default function Modal({ children, type, show, onClose }) {
+  const modalRef = useRef();
+  useEffect(() => {
+    if (!modalRef.current) {
+      return;
+    }
+    if (show) {
+      modalRef.current.showModal();
+    } else {
+      modalRef.current.close();
+    }
+  }, [show]);
 
-const Modal = () => {
-  const { color } = useContext(colorContext);
-
+  if (!show) return null;
   return (
-    <div
-      className="modal"
-      style={{
-        background: color,
-      }}
-    >
-      Modal
-    </div>
+    <dialog ref={modalRef} className="modal">
+      {children}
+      <button className="close-modal-btn" onClick={onClose}>
+        Close
+      </button>
+    </dialog>
   );
-};
-
-export default Modal;
+}

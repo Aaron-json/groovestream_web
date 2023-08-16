@@ -30,7 +30,22 @@ export const AuthenticationContextProvider = ({ children }) => {
       setAuthenticated(false);
     }
   }
+  async function request(requestFunction) {
+    console.log(
+      "trying request\ntryig again\nokbto\nmfsfmdlksmdfvjsm\nnsofjdnsmldf"
+    );
 
+    try {
+      return await requestFunction();
+    } catch (err) {
+      if (err?.response?.status === 401 || err?.response?.status === 403) {
+        await refreshAuthentication();
+        return await requestFunction();
+      } else {
+        throw err;
+      }
+    }
+  }
   return (
     <authenticationContext.Provider
       value={{
@@ -38,6 +53,7 @@ export const AuthenticationContextProvider = ({ children }) => {
         setAuthenticated,
         refreshAuthentication,
         accessTokenRef,
+        request,
       }}
     >
       {children}

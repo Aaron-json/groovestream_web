@@ -25,7 +25,6 @@ div#root.root {
   height: 100%;
   min-width: 1000px;
   background: var(--default-background);
-  background-repeat: no-repeat;
   background-size: cover;
 }
 #App{
@@ -93,8 +92,23 @@ button{
 button:disabled{
   opacity: 0.5;
 } 
+
 button:hover:disabled{
   cursor:not-allowed;
+}
+
+.form-input {
+  border-radius: 3px;
+  height: 2.3em;
+
+}
+.form-button{
+    border-radius: 5px;
+    height: 2.5em;
+    color: var(--text-color);
+    background-color: transparent;
+    border: 2px solid white;
+  
 }
 .loading-div{
   color: white;

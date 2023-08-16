@@ -53,6 +53,7 @@ export default function Home(props) {
         <h1 className="welcome-message">Hello {user && user.firstName}</h1>
         <div className="home-profile-div">
           <img src={profile_icon} alt="" className="home-profile-picture" />
+          <button className="home-profile-button">Profile</button>
         </div>
       </div>
 

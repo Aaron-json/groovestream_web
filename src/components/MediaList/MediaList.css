@@ -46,7 +46,7 @@
 
 .media-list-song-item,
 .media-list-playlist-item{
-   color: white;
+   color: var(--text-color);
    width: 100%;
     background-color: rgba(255, 255, 255, 0.13);
     height: 5.8em;
