@@ -20,7 +20,6 @@ const currentMediaReducer = (state, action) => {
       if (!state.queue) return;
 
       let nextIndex = (state.index + 1) % state.queue.length;
-      console.log(nextIndex, state.queue.length);
 
       while (state.queue[nextIndex].type !== 0) {
         // loop to the next audioFile i.e type = 0
@@ -50,6 +49,9 @@ const currentMediaReducer = (state, action) => {
       // set a new queue and index entirely
       const { queue, index } = action.payload;
       return { index, queue };
+
+    case "unload":
+      return { queue: null, index: null };
     default:
       return state;
   }
@@ -88,8 +90,8 @@ export const MediaContextProvider = ({ children }) => {
     loadMedia();
     return () => {
       // unload any current audio when component unmounts
-      console.log("unloading source");
-      player.unloadSource();
+
+      unloadMedia();
     };
   }, [currentMediaStates]);
 
@@ -114,15 +116,6 @@ export const MediaContextProvider = ({ children }) => {
       setPlaybackState("playing");
     }
   }
-
-  function updateSeek(position) {
-    /**
-     * This functionality SHOULD NOT be implemented with useEffect since seek could be updated
-     * from both the UI and from the Music Player. This could cause an infinite loop
-     */
-    setSeek(position);
-  }
-
   async function loadMedia() {
     /**
      * Downloads the current media and loads it to the Music player
@@ -131,24 +124,35 @@ export const MediaContextProvider = ({ children }) => {
       return;
     }
     //unload current source before loading the new source
-    // player.unloadSource();
-    const { _id, format } = currentMediaObj;
+    setPlaybackState("loading");
+    try {
+      const { _id, format } = currentMediaObj;
 
-    const response = await retryRequest(async () => {
-      return await axiosClient.get(`/media/0/${_id}`, {
-        headers: {
-          Authorization: `Bearer ${accessTokenRef.current}`,
-        },
+      const response = await retryRequest(async () => {
+        return await axiosClient.get(`/media/0/${_id}`, {
+          headers: {
+            Authorization: `Bearer ${accessTokenRef.current}`,
+          },
+        });
+      }, refreshAuthentication);
+      await player.loadSource({
+        data: `data:${format.mimeType};base64,${response.data}`,
+        _id,
       });
-    }, refreshAuthentication);
-    await player.loadSource({
-      data: `data:${format.mimeType};base64,${response.data}`,
-      _id,
-    });
-    player.play();
-    // hardcode the state as a literal since the player object's state is "loading"
-    // immediately after calling play
-    setPlaybackState("playing");
+      player.play();
+      // hardcode the state as a literal since the player object's state is "loading"
+      // immediately after calling play
+      setPlaybackState("playing");
+    } catch (err) {
+      console.log("loading error");
+      unloadMedia();
+    }
+  }
+
+  function unloadMedia() {
+    player.unloadSource();
+    currentMediaDispatch({ type: "unload" });
+    setPlaybackState("unloaded");
   }
 
   function updateMedia(mediaList, index = 0) {
@@ -160,11 +164,11 @@ export const MediaContextProvider = ({ children }) => {
       mediaList[index]._id === currentMediaObj?._id &&
       player.getState() === "playing"
     ) {
-      player.seek(0);
+      player.stop();
       player.play();
     } else if (
       mediaList[index]._id === currentMediaObj?._id &&
-      player.getState() === "loaded"
+      player.getState() !== "playing"
     ) {
       player.stop();
       player.play();
@@ -173,7 +177,6 @@ export const MediaContextProvider = ({ children }) => {
       // place all state changes here so react batches them together
       // for a single rerender
       player.pause();
-      setPlaybackState("loading");
       currentMediaDispatch({
         type: "newMedia",
         payload: {
@@ -185,31 +188,29 @@ export const MediaContextProvider = ({ children }) => {
     }
   }
   function playNext() {
+    if (!currentMediaObj) return;
     player.stop();
-    flushSync(() => {
-      currentMediaDispatch({
-        type: "next",
-      });
+    currentMediaDispatch({
+      type: "next",
     });
     // Call play() method anyways. loadMedia function will play automatically
     // however, if the "next" operation gives the same song as the current, then
     // the load function will not be called sicne media is already loaded
-    player.play();
-    flushSync(() => {
-      setPlaybackState("playing");
-    });
+    // player.play();
+    // setPlaybackState("playing");
   }
   function playPrev() {
+    if (!currentMediaObj) return;
+
     player.stop();
-    setPlaybackState(player.getState());
     currentMediaDispatch({
       type: "previous",
     });
     // Call play() method anyways. loadMedia function will play automatically
     // however, if the "next" operation gives the same song as the current, then
     // the load function will not be called sicne media is already loaded
-    player.play();
-    setPlaybackState("playing");
+    // player.play();
+    // setPlaybackState("playing");
   }
 
   return (

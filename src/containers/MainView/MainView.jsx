@@ -1,5 +1,5 @@
 import "./MainView.css";
-import { MediaPage, SideBar } from "../../containers";
+import { PlaylistPage, SideBar } from "../../containers";
 import { Home, Search, Library, LoginPage } from "../";
 import { Navigate, Route, Routes } from "react-router-dom";
 
@@ -12,7 +12,7 @@ const MainView = () => {
         <Route path="/home" element={<Home />} />
         <Route path="/search" element={<Search />} />
         <Route path="/library" element={<Library />} />
-        <Route path="/media/:mediaType/:mediaID" element={<MediaPage />} />
+        <Route path="/media/1/:mediaID" element={<PlaylistPage />} />
         <Route path="*" element={<Navigate to="/home" />} />
       </Routes>
     </section>

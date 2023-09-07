@@ -10,14 +10,18 @@ export default function MediaGrid({ items, title }) {
     <div className="media-grid">
       <h2 className="media-grid-title">{title}</h2>
       {items.map((media, index) => {
-        return (
-          <React.Fragment key={media._id}>
-            {media.type === 0 && (
-              <SongTile media={media} allMedia={items} index={index} />
-            )}
-            {media.type === 1 && <PlaylistTile media={media} />}
-          </React.Fragment>
-        );
+        if (media.type === 0 || media.type === 2) {
+          return (
+            <SongTile
+              key={media._id}
+              media={media}
+              allMedia={items}
+              index={index}
+            />
+          );
+        } else if (media.type === 1) {
+          return <PlaylistTile key={media._id} media={media} />;
+        }
       })}
     </div>
   );

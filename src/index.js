@@ -7,11 +7,13 @@ import { ColorContextProvider } from "./contexts/ColorContext";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  <AuthenticationContextProvider>
-    <BrowserRouter>
-      <ColorContextProvider>
-        <App />
-      </ColorContextProvider>
-    </BrowserRouter>
-  </AuthenticationContextProvider>
+  <React.StrictMode>
+    <AuthenticationContextProvider>
+      <BrowserRouter>
+        <ColorContextProvider>
+          <App />
+        </ColorContextProvider>
+      </BrowserRouter>
+    </AuthenticationContextProvider>
+  </React.StrictMode>
 );

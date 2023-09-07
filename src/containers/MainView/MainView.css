@@ -16,4 +16,5 @@
 
 .MainView > section{
 padding-inline: 5px;
+overflow-x: hidden;
 }

@@ -64,8 +64,6 @@
 .media-list-song-item:hover,
 .media-list-playlist-item:hover{
    background-color: rgba(255, 255, 255, 0.21);
-
-
 }
 
 .media-list-song-item:active,
@@ -112,21 +110,23 @@
    column-gap: 4px;
    justify-content: flex-end;
    width: 4em;
+   align-items: center;
 
 }
-.media-item-options > button{
+.media-item-options > *{
    display: flex;
    background: transparent;
-   width: 1.5em;
+   height: 20px;
    z-index: 1000;
    transition: scale 0.15s, opacity 0.15s;
+   place-content: center;
 }
-.media-item-options > button:hover{
+.media-item-options > *:hover{
    scale: 1.15
 }
-.media-item-options > button:active{
+.media-item-options > *:active{
    opacity: 0.5;
 }
 .media-item-options img{
-   width: 100%;
+   height: 100%;
 }

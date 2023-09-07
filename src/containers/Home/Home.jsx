@@ -1,10 +1,9 @@
 import "./Home.css";
-import { MediaGrid, HorizontalScroll } from "../../components";
+import { MediaGrid, HorizontalScroll, Dialog } from "../../components";
 import axiosClient from "../../api/axiosClient";
 import { useContext, useEffect, useState } from "react";
 import { profile_icon } from "../../default-icons";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
-import { retryRequest } from "../../api/requests";
 const homeCategories = [
   {
     title: "Top Songs on Spotify",
@@ -19,13 +18,14 @@ const homeCategories = [
 ];
 
 export default function Home(props) {
-  const { accessTokenRef, refreshAuthentication } = useContext(
+  const { accessTokenRef, request, setAuthenticated } = useContext(
     authenticationContext
   );
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [user, setUser] = useState(null);
   async function fetchUserData() {
     try {
-      const response = await retryRequest(async () => {
+      const response = await request(async () => {
         return await axiosClient.get("/user", {
           headers: {
             Authorization: `Bearer ${accessTokenRef.current}`,
@@ -34,11 +34,14 @@ export default function Home(props) {
             fields: ["profilePicture", "firstName", "audioFiles", "playlists"],
           },
         });
-      }, refreshAuthentication);
+      });
       setUser(response.data);
     } catch (err) {
       console.log(err);
     }
+  }
+  function displayProfileDialog() {
+    <Dialog show={showProfileDialog}>This is this user's dialog</Dialog>;
   }
   useEffect(() => {
     fetchUserData();
@@ -53,7 +56,12 @@ export default function Home(props) {
         <h1 className="welcome-message">Hello {user && user.firstName}</h1>
         <div className="home-profile-div">
           <img src={profile_icon} alt="" className="home-profile-picture" />
-          <button className="home-profile-button">Profile</button>
+          <button
+            className="home-profile-button"
+            onClick={() => setShowProfileDialog(!showProfileDialog)}
+          >
+            Profile
+          </button>
         </div>
       </div>
 

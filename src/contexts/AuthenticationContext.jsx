@@ -2,7 +2,6 @@ import { createContext, useEffect, useRef, useState } from "react";
 import axiosClient from "../api/axiosClient";
 
 export const authenticationContext = createContext();
-
 export const AuthenticationContextProvider = ({ children }) => {
   const [authenticated, setAuthenticated] = useState();
   const accessTokenRef = useRef();
@@ -30,15 +29,34 @@ export const AuthenticationContextProvider = ({ children }) => {
       setAuthenticated(false);
     }
   }
-  async function request(requestFunction) {
-    console.log(
-      "trying request\ntryig again\nokbto\nmfsfmdlksmdfvjsm\nnsofjdnsmldf"
-    );
+  async function logout() {
+    // clear refresh token with a server request since
+    // httpOnly cookies cannot be accessed through javascript
+    request(async () => {
+      await axiosClient.post("/user/logout", undefined, {
+        headers: {
+          Authorization: `Bearer ${accessTokenRef.current}`,
+        },
+      });
+    });
+    // clear the access token
+    accessTokenRef.current = "";
+    // set authenticated to false to update the ui
+    setAuthenticated(false);
+  }
+  /**
+   *
+   * @param {Function} requestFunction - Async function that sends request to the backend.
+   * If failed, it will try to grab a new access Token using the refreshAuthentication function and retry the request
+   * @returns {Promise}
+   */
 
+  async function request(requestFunction) {
     try {
       return await requestFunction();
     } catch (err) {
       if (err?.response?.status === 401 || err?.response?.status === 403) {
+        console.log(err);
         await refreshAuthentication();
         return await requestFunction();
       } else {
@@ -46,6 +64,7 @@ export const AuthenticationContextProvider = ({ children }) => {
       }
     }
   }
+
   return (
     <authenticationContext.Provider
       value={{

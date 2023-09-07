@@ -7,7 +7,6 @@
  * @param {Function} refreshAuthentication - function that tries to get a new access token to refresh authentication
  * @returns {Promise}
  */
-
 export async function retryRequest(requestFunction, refreshAuthentication) {
 
     try {
@@ -35,3 +34,4 @@ export function debounced(action, duration) {
 
     return () => clearTimeout(timeout)
 }
+

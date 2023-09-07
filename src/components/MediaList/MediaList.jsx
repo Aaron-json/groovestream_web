@@ -6,7 +6,7 @@ import {
   options_icon,
   delete_icon,
 } from "../../default-icons";
-import { mediaListBackIcon } from "../../default-icons/MediaList";
+import { mediaListBackIcon, plusIcon } from "../../default-icons/MediaList";
 import moment from "moment";
 import "./MediaList.css";
 import { debounced, retryRequest } from "../../api/requests";
@@ -14,6 +14,7 @@ import axiosClient from "../../api/axiosClient";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { mediaContext } from "../../contexts/MediaContext";
+import { FileInput } from "../";
 
 export default function LibraryMedia({
   items,
@@ -33,7 +34,7 @@ export default function LibraryMedia({
     authenticationContext
   );
 
-  const currentMedia = _getCurrentObj();
+  const currentMedia = useMemo(_getCurrentObj, [mediaListStack]);
   const currentMediaList = currentMedia.media;
   const currentMediaTitle = currentMedia.title;
   // consider applying useMemo if other states can also cause a rerender
@@ -80,7 +81,7 @@ export default function LibraryMedia({
         );
       }
       return {
-        media: currentList,
+        media: currentList.audioFiles,
         title: mediaListStack[mediaListStack.length - 1].title,
       };
     }
@@ -134,27 +135,11 @@ export default function LibraryMedia({
     if (mediaListStack.length === 1) return;
     setMediaListStack(mediaListStack.slice(0, mediaListStack.length - 1));
   }
-  async function deleteMedia(mediaID, mediaType) {
-    /**
-     * Function for deleting any type of media.
-     * FUnction is shared so it is on the parent list.
-     */
-    await retryRequest(async () => {
-      await axiosClient.delete(`/media/${mediaType}/${mediaID}`, {
-        headers: {
-          Authorization: `Bearer ${accessTokenRef.current}`,
-        },
-      });
-    }, refreshAuthentication);
-
-    // if a function to refresh media was passed,
-    // call it to get updated media list
-    refreshMedia && (await refreshMedia());
-  }
 
   return (
     <div className="media-list-div">
       {(mediaListStack.length > 1 || currentMediaTitle) && (
+        // render header ii title is passed or if we are displaying a nested media list
         <div className="media-list-header">
           {mediaListStack.length > 1 && (
             <button
@@ -172,15 +157,15 @@ export default function LibraryMedia({
         <ol className="media-list">
           {filteredItems.map((media, index) => {
             // return all the objects inside the category
-            if (media.type === 0) {
+            if (media.type === 0 || media.type === 2) {
               return (
                 <LibrarySong
                   key={media._id}
                   media={media}
                   index={index}
-                  deleteMedia={deleteMedia}
                   songClickHandler={songClickHandler}
                   allMedia={filteredItems}
+                  refreshMedia={refreshMedia}
                 />
               );
             } else if (media.type === 1) {
@@ -188,9 +173,9 @@ export default function LibraryMedia({
                 <LibraryPlaylist
                   key={media._id}
                   playlist={media}
-                  deleteMedia={deleteMedia}
                   playlistClickHandler={playlistClickHandler}
                   addMediaListToStack={addMediaListToStack}
+                  refreshMedia={refreshMedia}
                 />
               );
             }
@@ -204,14 +189,41 @@ export default function LibraryMedia({
 }
 function LibrarySong({
   media,
-  deleteMedia,
   songClickHandler,
   allMedia,
   index,
+  refreshMedia,
 }) {
   const { updateMedia, currentMedia } = useContext(mediaContext);
+  const { request, accessTokenRef } = useContext(authenticationContext);
   // consume media context in child components to prevent
   // the media list from mapping all over again
+  async function deleteAudioFile() {
+    /**
+     * Function for deleting any type of media.
+     * FUnction is shared so it is on the parent list.
+     */
+    let requestURL;
+    if (media.type === 0) {
+      requestURL = `/media/0/${media._id}`;
+    } else if (media.type === 2) {
+      // audioFile in a playlist
+
+      requestURL = `/media/2/${media._id}/${media.playlistID}`;
+    }
+    await request(async () => {
+      return await axiosClient.delete(requestURL, {
+        headers: {
+          Authorization: `Bearer ${accessTokenRef.current}`,
+        },
+      });
+    });
+
+    // if a function to refresh media was passed,
+    // call it to get updated media list
+    refreshMedia && (await refreshMedia());
+  }
+
   return (
     <li
       className="media-list-song-item"
@@ -247,7 +259,7 @@ function LibrarySong({
       <div className="media-item-options">
         <button
           onClick={(e) => {
-            deleteMedia(media._id, media.type);
+            deleteAudioFile();
             e.stopPropagation();
           }}
         >
@@ -263,16 +275,45 @@ function LibrarySong({
 
 function LibraryPlaylist({
   playlist,
-  deleteMedia,
   playlistClickHandler,
   addMediaListToStack,
+  refreshMedia,
 }) {
+  const { request, accessTokenRef } = useContext(authenticationContext);
+  async function addSongToPlaylistHandler(formData) {
+    await request(async () => {
+      // implement new route to add song to a playlist
+      return await axiosClient.post(`/media/2/${playlist._id}`, formData, {
+        headers: {
+          Authorization: `Bearer ${accessTokenRef.current}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+    });
+    refreshMedia && (await refreshMedia());
+  }
   function handlePlaylistClick() {
     if (playlistClickHandler) {
       playlistClickHandler();
     } else {
       addMediaListToStack(playlist._id, playlist.name);
     }
+  }
+  async function deletePlaylist() {
+    /**
+     * Function for deleting any type of media.
+     * FUnction is shared so it is on the parent list.
+     */
+    await request(async () => {
+      return await axiosClient.delete(`/media/1/${playlist._id}`, {
+        headers: {
+          Authorization: `Bearer ${accessTokenRef.current}`,
+        },
+      });
+    });
+    // if a function to refresh media was passed,
+    // call it to get updated media list
+    refreshMedia && (await refreshMedia());
   }
   return (
     <li className="media-list-playlist-item" onClick={handlePlaylistClick}>
@@ -288,10 +329,14 @@ function LibraryPlaylist({
       </div>
       <span className="media-item-type">Playlist</span>
       <div className="media-item-options">
+        <label onClick={(e) => e.stopPropagation()}>
+          <img src={plusIcon} alt="" />
+          <FileInput onInput={addSongToPlaylistHandler} />
+        </label>
         {playlist.name !== "Favorites" && (
           <button
             onClick={(e) => {
-              deleteMedia(playlist._id, playlist.type);
+              deletePlaylist();
               e.stopPropagation();
             }}
           >

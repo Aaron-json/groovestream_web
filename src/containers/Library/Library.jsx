@@ -5,12 +5,12 @@ import {
   MediaList,
   Modal,
   CreatePlaylist,
+  FileInput,
 } from "../../components";
 import { useContext, useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { retryRequest, debounced } from "../../api/requests";
-import { Route, Routes } from "react-router-dom";
 
 const categories = {
   /**
@@ -34,11 +34,11 @@ export default function Library() {
   const { accessTokenRef, refreshAuthentication } = useContext(
     authenticationContext
   );
-  console.log("library page rendered");
   async function fetchMedia() {
     // fetches all media at startup of the application
     try {
       const response = await retryRequest(async () => {
+        console.log("fetching media");
         return await axiosClient.get("/user", {
           headers: {
             Authorization: `Bearer ${accessTokenRef.current}`,
@@ -65,12 +65,7 @@ export default function Library() {
     fetchMedia();
   }, []);
 
-  async function handleFileInput(e) {
-    const files = e.target.files;
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      formData.append("media", files[i]);
-    }
+  async function handleFileInput(formData) {
     const response = await retryRequest(
       async () =>
         await axiosClient.post("/media/0", formData, {
@@ -81,6 +76,11 @@ export default function Library() {
         }),
       refreshAuthentication
     );
+    await fetchMedia();
+  }
+
+  async function createdPlaylistHandler() {
+    setAddingPlaylist(false);
     await fetchMedia();
   }
   return (
@@ -114,7 +114,7 @@ export default function Library() {
 
       <div className="file-upload-div">
         <button className="add-file-btn" onClick={handleAddingMedia}>
-          +
+          &#43;
         </button>
 
         {addingMedia && (
@@ -127,23 +127,14 @@ export default function Library() {
             </button>
             <label className="add-media-options">
               Upload Song
-              <input
-                name="media"
-                type="file"
-                id="file-input"
-                multiple
-                onInput={handleFileInput}
-                onClick={(e) => {
-                  e.target.value = null;
-                }}
-              />
+              <FileInput onInput={handleFileInput} />
             </label>
           </>
         )}
       </div>
 
       <Modal show={addingPlaylist} onClose={() => setAddingPlaylist(false)}>
-        <CreatePlaylist />
+        <CreatePlaylist onFinish={createdPlaylistHandler} />
       </Modal>
 
       {results === null ? (

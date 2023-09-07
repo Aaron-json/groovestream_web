@@ -8,7 +8,9 @@ export { default as Dropdown } from './Dropdown/Dropdown'
 export { default as SearchBar } from './SearchBar/SearchBar'
 export { default as MediaList } from './MediaList/MediaList'
 export { default as Modal } from './Modal/Modal'
+export { default as Dialog } from "./Dialog/Dialog"
 export { default as CreatePlaylist } from './CreatePlaylist/CreatePlaylist'
+export { default as FileInput } from './FileInput/FileInput'
 // Media Bar section components below
 export { default as MediaInfo } from "./MediaInfo/MediaInfo"
 export { default as PlaybackControls } from "./PlaybackControls/PlaybackControls"
