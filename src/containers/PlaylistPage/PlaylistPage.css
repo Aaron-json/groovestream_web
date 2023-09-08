@@ -1,0 +1,36 @@
+.media-page{
+    flex: 1;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+}
+
+.media-page-header{
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+    width: 100%;
+}
+
+.media-page > hr{
+    margin-block: 10px;
+}
+
+.media-page-header > h1{
+    font-size: 1.7em;
+    font-weight: 300;
+}
+
+.media-page-header > h2{
+    font-size: 1.3em;
+    font-weight: 200;
+    font-style: italic;
+    text-transform: capitalize;
+}
+
+.media-page-content{
+    width: 100%;
+    overflow: auto;
+}
