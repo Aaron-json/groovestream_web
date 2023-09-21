@@ -3,7 +3,7 @@ import "./MediaInfo.css";
 import { useContext } from "react";
 import { sound_waves } from "../../default-icons/MediaBar";
 import { music_icon } from "../../default-icons";
-import { mediaIcon } from "../../global/media";
+import { getSongIcon } from "../../global/media";
 
 const default_txt_icon = {
   music: sound_waves,
@@ -18,7 +18,7 @@ const MediaInfo = () => {
     <div className="mediabar-media-info">
       <img
         className="mediabar-media-image"
-        src={mediaIcon(currentMedia)}
+        src={getSongIcon(currentMedia)}
         alt=""
       />
       <div className="mediabar-name-artist-album">

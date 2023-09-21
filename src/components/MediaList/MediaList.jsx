@@ -15,7 +15,7 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { mediaContext } from "../../contexts/MediaContext";
 import { FileInput } from "../";
-import { mediaIcon } from "../../global/media";
+import { getSongIcon, getPlaylistIcon } from "../../global/media";
 
 export default function LibraryMedia({
   items,
@@ -231,7 +231,7 @@ function LibrarySong({
         songClickHandler ? songClickHandler : () => updateMedia(allMedia, index)
       }
     >
-      <img src={mediaIcon(media)} alt="icon" />
+      <img src={getSongIcon(media)} alt="icon" />
       <div className="media-item-info">
         <span className="media-item-name">{media.filename}</span>
         <span className="media-item-artist">
@@ -309,7 +309,7 @@ function LibraryPlaylist({
   }
   return (
     <li className="media-list-playlist-item" onClick={handlePlaylistClick}>
-      <img loading="lazy" src={library_icon} alt="icon" />
+      <img loading="lazy" src={getPlaylistIcon(playlist)} alt="icon" />
       <div className="media-item-info">
         <span className="media-item-name">{playlist.name}</span>
         <span className="playlist-files-count">

@@ -3,7 +3,7 @@ import "./MediaGrid.css";
 import { library_icon, music_icon } from "../../default-icons";
 import { mediaContext } from "../../contexts/MediaContext";
 import { useNavigate } from "react-router-dom";
-import { mediaIcon } from "../../global/media";
+import { getSongIcon, getPlaylistIcon } from "../../global/media";
 
 export default function MediaGrid({ items, title }) {
   // remember to only get the last 6 or 9 items
@@ -35,7 +35,11 @@ const SongTile = ({ media, allMedia, index }) => {
       className="media-grid-song-tile home-media-tile"
       onClick={() => updateMedia(allMedia, index)}
     >
-      <img className="media-grid-tile-icon" src={mediaIcon(media)} alt="icon" />
+      <img
+        className="media-grid-tile-icon"
+        src={getSongIcon(media)}
+        alt="icon"
+      />
       <div className="media-grid-tile-info">
         <span className="media-grid-tile-name">
           {media.title ? media.title : media.filename}
@@ -57,7 +61,11 @@ const PlaylistTile = ({ media }) => {
       className="media-grid-playlist-tile home-media-tile"
       onClick={() => navigate(`/media/1/${media._id}`, { state: media })}
     >
-      <img className="media-grid-tile-icon" src={library_icon} alt="icon" />
+      <img
+        className="media-grid-tile-icon"
+        src={getPlaylistIcon(media)}
+        alt="icon"
+      />
       <div className="media-grid-tile-info">
         <span className="media-grid-tile-name">{media.name}</span>
         <span className="media-grid-tile-type">Album</span>
