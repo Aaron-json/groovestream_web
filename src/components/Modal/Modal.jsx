@@ -21,12 +21,18 @@ export default function Modal({ show, onClose, children }) {
     }
   }, [show]);
 
+  function handleClose() {
+    if (onClose) {
+      onClose();
+    }
+  }
   // do not render component
   if (!show) return null;
+
   return (
     <dialog ref={modalRef} className="modal">
       {children}
-      <button className="close-modal-btn" onClick={onClose}>
+      <button className="close-modal-btn" onClick={handleClose}>
         Close
       </button>
     </dialog>

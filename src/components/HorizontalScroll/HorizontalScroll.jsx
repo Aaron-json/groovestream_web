@@ -3,6 +3,7 @@ import { library_icon, music_icon } from "../../default-icons";
 import React, { useContext } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
 import { useNavigate } from "react-router-dom";
+import { mediaIcon } from "../../global/media";
 export default function HorizontalScroll({ items, title }) {
   // remember to get only top 10 for each category
   return (
@@ -36,11 +37,7 @@ const SongTile = ({ media, allMedia, index }) => {
     >
       <img
         className="horizontal-scroll-media-icon"
-        src={
-          media.icon
-            ? `data:${media.icon.mimeType};base64,${media.icon.data}`
-            : music_icon
-        }
+        src={mediaIcon(media)}
         alt="icon"
       />
       <div className="horizontal-scroll-media-info">

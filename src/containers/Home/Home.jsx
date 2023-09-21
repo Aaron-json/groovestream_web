@@ -1,9 +1,11 @@
 import "./Home.css";
-import { MediaGrid, HorizontalScroll, Dialog } from "../../components";
+import { MediaGrid, HorizontalScroll, Dialog, Modal } from "../../components";
 import axiosClient from "../../api/axiosClient";
 import { useContext, useEffect, useState } from "react";
 import { profile_icon } from "../../default-icons";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
+import { UserProfilePage } from "../";
+
 const homeCategories = [
   {
     title: "Top Songs on Spotify",
@@ -18,9 +20,7 @@ const homeCategories = [
 ];
 
 export default function Home(props) {
-  const { accessTokenRef, request, setAuthenticated } = useContext(
-    authenticationContext
-  );
+  const { accessTokenRef, request } = useContext(authenticationContext);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [user, setUser] = useState(null);
   async function fetchUserData() {
@@ -39,9 +39,6 @@ export default function Home(props) {
     } catch (err) {
       console.log(err);
     }
-  }
-  function displayProfileDialog() {
-    <Dialog show={showProfileDialog}>This is this user's dialog</Dialog>;
   }
   useEffect(() => {
     fetchUserData();
@@ -64,7 +61,12 @@ export default function Home(props) {
           </button>
         </div>
       </div>
-
+      <Modal
+        show={showProfileDialog}
+        onClose={() => setShowProfileDialog(false)}
+      >
+        <UserProfilePage />
+      </Modal>
       <hr className="home-header-bottom-line" />
       {user && (
         <MediaGrid

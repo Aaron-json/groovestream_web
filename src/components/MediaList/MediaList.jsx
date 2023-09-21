@@ -15,6 +15,7 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { mediaContext } from "../../contexts/MediaContext";
 import { FileInput } from "../";
+import { mediaIcon } from "../../global/media";
 
 export default function LibraryMedia({
   items,
@@ -223,7 +224,6 @@ function LibrarySong({
     // call it to get updated media list
     refreshMedia && (await refreshMedia());
   }
-
   return (
     <li
       className="media-list-song-item"
@@ -231,15 +231,7 @@ function LibrarySong({
         songClickHandler ? songClickHandler : () => updateMedia(allMedia, index)
       }
     >
-      <img
-        src={
-          media.icon
-            ? `data:${media.icon.mimeType};base64,${media.icon.data}`
-            : music_icon
-        }
-        alt="icon"
-        loading="lazy"
-      />
+      <img src={mediaIcon(media)} alt="icon" />
       <div className="media-item-info">
         <span className="media-item-name">{media.filename}</span>
         <span className="media-item-artist">

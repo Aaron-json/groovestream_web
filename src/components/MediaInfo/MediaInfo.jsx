@@ -3,6 +3,7 @@ import "./MediaInfo.css";
 import { useContext } from "react";
 import { sound_waves } from "../../default-icons/MediaBar";
 import { music_icon } from "../../default-icons";
+import { mediaIcon } from "../../global/media";
 
 const default_txt_icon = {
   music: sound_waves,
@@ -11,15 +12,6 @@ const default_txt_icon = {
   album: "Unknown Album",
 };
 
-function mediaIcon(media) {
-  if (!media) {
-    return sound_waves;
-  } else if (!media.icon) {
-    return music_icon;
-  } else {
-    return `data:${media.icon.mimeType};base64,${media.icon.data}`;
-  }
-}
 const MediaInfo = () => {
   const { currentMedia } = useContext(mediaContext);
   return (

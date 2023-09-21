@@ -1,0 +1,25 @@
+.user-profile-page{
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    overflow: auto;
+}.user-profile-page-profile-picture-div{
+    width: 100%;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.user-profile-page-profile-picture{
+    height: 100%;
+    border-radius: 50%;
+    border: 1px solid grey;
+}
+
+.user-profile-page-logout-btn{
+    color: rgb(235, 64, 52);
+    font-size: 1em;
+    font-weight: 500;
+    
+}

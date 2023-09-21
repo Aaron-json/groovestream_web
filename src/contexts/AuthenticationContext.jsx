@@ -73,6 +73,7 @@ export const AuthenticationContextProvider = ({ children }) => {
         refreshAuthentication,
         accessTokenRef,
         request,
+        logout,
       }}
     >
       {children}
