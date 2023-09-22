@@ -22,15 +22,13 @@ export function getPlaylistIcon(playlist) {
     }
     else if (playlist.audioFiles.length > 0 && playlist.audioFiles) {
         //find the first song that has an icon
-        let icon = library_icon;
 
         for (let i = 0; i < playlist.audioFiles.length; i++) {
             let currentAudioFile = playlist.audioFiles[i]
             if (currentAudioFile.icon.data) {
-                icon = `data:${currentAudioFile.icon.mimeType};base64,${currentAudioFile.icon.data}`
-                break;
+                return `data:${currentAudioFile.icon.mimeType};base64,${currentAudioFile.icon.data}`
             }
         }
-        return icon;
+        return library_icon;
     }
 }
