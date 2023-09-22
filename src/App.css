@@ -93,17 +93,24 @@ button:hover:disabled{
 }
 
 .form-input {
+  color: var(--text-color);
+  background-color: transparent;
+  border: 1px solid grey;
   border-radius: 3px;
-  height: 2.3em;
-
+  height: 2em;
 }
+
+.form-input:focus {
+  outline: none;
+  border: 1px solid white;
+}
+
 .form-button{
     border-radius: 5px;
-    height: 2.5em;
+    height: 2.2em;
     color: var(--text-color);
     background-color: transparent;
-    border: 2px solid white;
-  
+    border: 1px solid white;
 }
 .loading-div{
   color: white;

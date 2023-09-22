@@ -3,8 +3,10 @@ import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { useContext, useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 import { profile_icon } from "../../default-icons";
+import moment from "moment/moment";
 export default function UserProfilePage() {
   const [user, setUser] = useState();
+  const [profileChanges, setProfileChanges] = useState({});
   const { accessTokenRef, request, logout } = useContext(authenticationContext);
   useEffect(() => {
     fetchUserData();
@@ -25,6 +27,7 @@ export default function UserProfilePage() {
               "audioFiles",
               "playlists",
               "dateCreated",
+              "email",
             ],
           },
         });
@@ -53,7 +56,39 @@ export default function UserProfilePage() {
           alt=""
         />
       </div>
-      <button onClick={() => logout()} className="user-profile-page-logout-btn">
+      <div className="user-profile-page-name-div">
+        <label className="user-profile-page-label">
+          First Name
+          <input
+            className="user-profile-page-name-input form-input"
+            placeholder={user.firstName}
+            type="text"
+          />
+        </label>
+        <label className="user-profile-page-label">
+          Last Name
+          <input
+            className="user-profile-page-name-input form-input"
+            placeholder={user.lastName}
+            type="text"
+          />
+        </label>
+      </div>
+      <label className="user-profile-page-label">
+        Email
+        <input className="form-input" placeholder={user.email} type="email" />
+      </label>
+      <label className="user-profile-page-label">
+        Birthday
+        <input className="form-input" type="date" />
+      </label>
+      <label className="user-profile-page-label">
+        Date Joined: {moment(user.dateCreated).format()}
+      </label>
+      <button
+        onClick={() => logout()}
+        className="form-button user-profile-page-logout-btn"
+      >
         Logout
       </button>
     </section>
