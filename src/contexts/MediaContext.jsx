@@ -90,10 +90,18 @@ export const MediaContextProvider = ({ children }) => {
     loadMedia();
     return () => {
       // unload any current audio when component unmounts
-
-      unloadMedia();
+      console.log("unloading media");
     };
   }, [currentMediaStates]);
+
+  useEffect(() => {
+    // cleanup for when the media context unmounts, unload the source
+    // DO NOT place with the useEffect that changes the current media
+    // it will cause media to be unloaded and set back to null on every media change
+    return () => {
+      unloadMedia();
+    };
+  }, []);
 
   // change volume when state changes
   useEffect(() => {

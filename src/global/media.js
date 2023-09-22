@@ -15,10 +15,22 @@ export function getSongIcon(song) {
 }
 
 export function getPlaylistIcon(playlist) {
-    if (playlist.audioFiles.length === 0) {
+
+    if (!playlist || playlist.audioFiles.length === 0) {
+        // playlist is null || undefined or playlist has no music
         return library_icon;
     }
-    else {
-        return `data:${playlist.audioFiles[0].icon.mimeType};base64,${playlist.audioFiles[0].icon.data}`
+    else if (playlist.audioFiles.length > 0 && playlist.audioFiles) {
+        //find the first song that has an icon
+        let icon = library_icon;
+
+        for (let i = 0; i < playlist.audioFiles.length; i++) {
+            let currentAudioFile = playlist.audioFiles[i]
+            if (currentAudioFile.icon.data) {
+                icon = `data:${currentAudioFile.icon.mimeType};base64,${currentAudioFile.icon.data}`
+                break;
+            }
+        }
+        return icon;
     }
 }
