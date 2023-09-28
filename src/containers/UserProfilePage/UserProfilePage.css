@@ -16,13 +16,21 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 5px;
 }
 .user-profile-page-profile-picture{
     height: 100%;
     border-radius: 50%;
     border: 1px solid grey;
 }
-
+.user-profile-page-add-photo-btn{
+    font-size: 0.8em;
+    color: var(--text-color);
+    cursor: pointer;
+}
+.user-profile-page-add-photo-btn:hover{
+    text-decoration: underline;
+}
 .user-profile-page-name-div{
     display: flex;
     width: 100%;
@@ -31,14 +39,32 @@
 }
 
 .user-profile-page-label{
+    color: var(--text-color);
+    font-size: 1em;
+    font-weight: 400;
     display: flex;
     flex-direction: column;
     flex: 1;
     width: 100%;
 }
+.user-profile-page-label.invalid{
+    color: hsl(0, 98%, 61%);
+}
+.user-profile-page-label.changes-failed{
+    background-color: hsl(0, 98%, 61%);
+}
+.user-profile-page-footer{
+    width: 100%;
+    display: flex;
+    gap: 5px;
+}
+
+.user-profile-page-footer > button{
+    font-size: 0.9em;
+    flex: 1;
+}
 
 .user-profile-page-logout-btn{
     color: rgb(235, 64, 52);
-    font-size: 1em;
-    font-weight: 500;  
+    
 }

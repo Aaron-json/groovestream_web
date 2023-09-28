@@ -1,9 +1,10 @@
 .modal{
+    background-color: rgba(1, 1, 1, 0.98);
     overflow: auto;
     display: flex;
     flex-direction: column;
     background-color: transparent;
-    top: 18%;
+    top: 10%;
     left: 50%;
     transform: translate(-50%, 0%);
     min-width: 560px;
@@ -11,8 +12,7 @@
     border: 2px solid grey;
     border-radius: 7px;
     padding: 15px;
-    gap: 16px;
-    scroll-behavior: unset;
+    gap: 12px;
 }
 
 .close-modal-btn{
@@ -27,7 +27,7 @@
     opacity: 0.6;
 }
 .modal::backdrop{
-    background-color: rgba(1, 1, 1, 0.8);
+    background-color: rgba(1, 1, 1, 0.91);
     scroll-behavior: unset;
 }
 

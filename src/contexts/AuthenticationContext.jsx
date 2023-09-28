@@ -16,6 +16,7 @@ export const AuthenticationContextProvider = ({ children }) => {
     // checks if you have any refresh tokens
     // if you do, gets new access tokens
 
+    console.log("refreshing auth");
     try {
       const refreshResponse = await axiosClient.get("/refresh", {
         // include http only cookie with refresh token
@@ -26,23 +27,28 @@ export const AuthenticationContextProvider = ({ children }) => {
       setAuthenticated(true);
     } catch (error) {
       // failed to authenticate
+      console.log(error);
       setAuthenticated(false);
     }
   }
   async function logout() {
     // clear refresh token with a server request since
     // httpOnly cookies cannot be accessed through javascript
-    request(async () => {
-      await axiosClient.post("/user/logout", undefined, {
-        headers: {
-          Authorization: `Bearer ${accessTokenRef.current}`,
-        },
+    try {
+      request(async () => {
+        await axiosClient.post("/user/logout", undefined, {
+          headers: {
+            Authorization: `Bearer ${accessTokenRef.current}`,
+          },
+        });
       });
-    });
-    // clear the access token
-    accessTokenRef.current = "";
-    // set authenticated to false to update the ui
-    setAuthenticated(false);
+      // clear the access token
+      accessTokenRef.current = undefined;
+      // set authenticated to false to update the ui
+      await refreshAuthentication();
+    } catch (err) {
+      console.log(err);
+    }
   }
   /**
    *

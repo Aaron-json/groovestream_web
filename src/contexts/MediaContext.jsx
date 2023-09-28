@@ -8,7 +8,6 @@ import {
 import MediaPlayer from "../global/MediaPlayer";
 import axiosClient from "../api/axiosClient";
 import { authenticationContext } from "./AuthenticationContext";
-import { retryRequest } from "../api/requests";
 import { flushSync } from "react-dom";
 
 export const mediaContext = createContext();
@@ -58,9 +57,7 @@ const currentMediaReducer = (state, action) => {
 };
 
 export const MediaContextProvider = ({ children }) => {
-  const { accessTokenRef, refreshAuthentication } = useContext(
-    authenticationContext
-  );
+  const { accessTokenRef, request } = useContext(authenticationContext);
 
   const [seek, setSeek] = useState(0);
   const [volume, setVolume] = useState(0.7);
@@ -136,13 +133,13 @@ export const MediaContextProvider = ({ children }) => {
     try {
       const { _id, format } = currentMediaObj;
 
-      const response = await retryRequest(async () => {
+      const response = await request(async () => {
         return await axiosClient.get(`/media/0/${_id}`, {
           headers: {
             Authorization: `Bearer ${accessTokenRef.current}`,
           },
         });
-      }, refreshAuthentication);
+      });
       await player.loadSource({
         data: `data:${format.mimeType};base64,${response.data}`,
         _id,
@@ -152,7 +149,7 @@ export const MediaContextProvider = ({ children }) => {
       // immediately after calling play
       setPlaybackState("playing");
     } catch (err) {
-      console.log("loading error");
+      console.log(err);
       unloadMedia();
     }
   }
