@@ -5,6 +5,7 @@ import { FileInput } from "../../components";
 import axiosClient from "../../api/axiosClient";
 import { profile_icon } from "../../default-icons";
 import moment from "moment/moment";
+const supportedProfilePictureFormats = ["image/jpeg", "image/png"];
 
 export default function UserProfilePage() {
   const [user, setUser] = useState();
@@ -98,15 +99,31 @@ export default function UserProfilePage() {
 
   function getProfilePicture() {
     if (user.profilePicture) {
-      return `data:image/png:base64,${user.profilePicture}`;
+      console.log(user.profilePicture);
+      return `data:${user.profilePicture.mimeType};base64,${user.profilePicture.data}`;
     } else {
       return profile_icon;
     }
   }
 
-  async function uploadProfilePicture() {
+  async function handleProfilePictureUpload(formData, error) {
     //profile picture change is done separate from
+    if (error || !formData) {
+      console.log(error);
+      return;
+    }
     try {
+      console.log(formData.get("files").type);
+      const response = await request(
+        async () =>
+          await axiosClient.put("/user/profilePicture", formData, {
+            headers: {
+              Authorization: `Bearer ${accessTokenRef.current}`,
+              "Content-Type": "multipart/form-data",
+            },
+          })
+      );
+      await fetchUserData();
     } catch (error) {}
   }
 
@@ -121,7 +138,10 @@ export default function UserProfilePage() {
         />
         <label className="user-profile-page-add-photo-btn">
           {user.profilePicture ? "Change photo" : "Upload Picture"}
-          <FileInput onInput={uploadProfilePicture} />
+          <FileInput
+            onInput={handleProfilePictureUpload}
+            formats={supportedProfilePictureFormats}
+          />
         </label>
       </div>
       {ifApplyingChangesFailed && (

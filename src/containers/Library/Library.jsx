@@ -11,6 +11,7 @@ import { useContext, useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { retryRequest, debounced } from "../../api/requests";
+import { supportedAUdioFormats } from "../../global/media";
 
 const categories = {
   /**
@@ -65,7 +66,11 @@ export default function Library() {
     fetchMedia();
   }, []);
 
-  async function handleFileInput(formData) {
+  async function handleFileInput(formData, error) {
+    if (error || !formData) {
+      console.log(error);
+      return;
+    }
     const response = await retryRequest(
       async () =>
         await axiosClient.post("/media/0", formData, {
@@ -127,7 +132,11 @@ export default function Library() {
             </button>
             <label className="add-media-options">
               Upload Song
-              <FileInput onInput={handleFileInput} />
+              <FileInput
+                onInput={handleFileInput}
+                multiple={true}
+                formats={supportedAUdioFormats}
+              />
             </label>
           </>
         )}
