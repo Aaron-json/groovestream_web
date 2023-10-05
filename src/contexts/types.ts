@@ -6,7 +6,7 @@ type ContextProvider = {
 
 type MediaState = {
     index: number | NullorUndefined,
-    queue: any[] | NullorUndefined
+    queue: AudioFile[] | NullorUndefined
 }
 
 type mediaStateAction = {

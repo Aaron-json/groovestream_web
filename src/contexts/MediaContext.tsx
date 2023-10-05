@@ -1,6 +1,5 @@
 import React, {
   Reducer,
-  ReducerWithoutAction,
   SetStateAction,
   createContext,
   useContext,
@@ -13,7 +12,7 @@ import axiosClient from "../api/axiosClient";
 import { authenticationContext } from "./AuthenticationContext";
 
 interface MediaContextValue {
-        currentMedia: MediaState,
+        currentMedia: AudioFile,
         updateMedia: (mediaList:any[], index:number) => void,
         player:MediaPlayer,
         playbackState:string,
@@ -178,7 +177,7 @@ export const MediaContextProvider:React.FC<ContextProvider> = ({ children }) => 
     setPlaybackState("unloaded");
   }
 
-  function updateMedia(mediaList : any[], index = 0) {
+  function updateMedia(mediaList : AudioFile[], index = 0) {
     /**
      * Updates media given a list of media and its index in the list.
      * Restarts the same song if the given media is already the current media
