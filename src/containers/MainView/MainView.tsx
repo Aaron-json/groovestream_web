@@ -1,6 +1,6 @@
 import "./MainView.css";
-import { PlaylistPage, SideBar } from "../../containers";
-import { Home, Search, Library, LoginPage } from "../";
+import { PlaylistPage, SideBar } from "..";
+import { Home, Search, Library, LoginPage } from "..";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 const MainView = () => {

@@ -1,3 +1,4 @@
+import React from "react";
 import "./PlaybackControls.css";
 import { play, pause, back, next } from "../../default-icons/MediaBar";
 import { useContext } from "react";
@@ -12,9 +13,9 @@ const PlaybackControls = () => {
     setSeek,
     playNext,
     playPrev,
-  } = useContext(mediaContext);
+  } = useContext(mediaContext)!;
 
-  function parseSeconds(secondsCount) {
+  function parseSeconds(secondsCount:number) {
     // takes in number of seconds and returns it in the format
     // hours: seconds: minutes
     const seconds = secondsCount % 60;

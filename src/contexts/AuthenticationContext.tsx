@@ -1,10 +1,20 @@
+import React, { SetStateAction } from "react";
 import { createContext, useEffect, useRef, useState } from "react";
 import axiosClient from "../api/axiosClient";
 
-export const authenticationContext = createContext();
-export const AuthenticationContextProvider = ({ children }) => {
-  const [authenticated, setAuthenticated] = useState();
-  const accessTokenRef = useRef();
+interface AuthenticationContextValue{
+  authenticated: boolean,
+        setAuthenticated: React.Dispatch<SetStateAction<boolean>>,
+        refreshAuthentication: () => Promise<void>,
+        accessTokenRef: React.MutableRefObject<string | undefined>,
+        request: (requestFunction: () => Promise<any>) => Promise<any>,
+        logout: () => Promise<void>,
+}
+export const authenticationContext = createContext<AuthenticationContextValue | undefined>(undefined);
+
+export const AuthenticationContextProvider = ({ children }: ContextProvider) => {
+  const [authenticated, setAuthenticated] = useState(false);
+  const accessTokenRef = useRef<string | undefined>();
   // const [refreshToken, setRefreshToken] = useState()
   // persist refresh token in local storage
 
@@ -50,6 +60,8 @@ export const AuthenticationContextProvider = ({ children }) => {
       console.log(err);
     }
   }
+
+  type requestFunctionType = () => Promise<any>;
   /**
    *
    * @param {Function} requestFunction - Async function that sends request to the backend.
@@ -57,10 +69,10 @@ export const AuthenticationContextProvider = ({ children }) => {
    * @returns {Promise}
    */
 
-  async function request(requestFunction) {
+  async function request(requestFunction: requestFunctionType) {
     try {
       return await requestFunction();
-    } catch (err) {
+    } catch (err: any) {
       if (err?.response?.status === 401 || err?.response?.status === 403) {
         console.log(err);
         await refreshAuthentication();

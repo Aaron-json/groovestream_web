@@ -1,4 +1,3 @@
-export { default as Content } from './Content/Content'
 export { default as SideBar } from './SideBar/SideBar'
 export { default as MediaBar } from './MediaBar/MediaBar'
 export { default as MainView } from './MainView/MainView'

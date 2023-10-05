@@ -1,3 +1,4 @@
+import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 // import { useContext } from "react";
 import "./RegistrationForm.css";
@@ -8,15 +9,15 @@ const RegistrationForm = () => {
   // const { refreshAuthentication } = useContext(authenticationContext)
   const navigator = useNavigate()
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     // get values from input fields
-    const firstName = document.getElementById('register-firstname-input').value
-    const lastName = document.getElementById('register-lastname-input').value
-    const email = document.getElementById('register-username-input').value
-    const password = document.getElementById('register-password-input').value
-    const confirmPassword = document.getElementById('register-confirm-password-input').value
-    const dateString = document.getElementById('register-date-of-birth').value
+    const firstName =( document.getElementById('register-firstname-input') as HTMLInputElement).value
+    const lastName =( document.getElementById('register-lastname-input') as HTMLInputElement).value
+    const email = (document.getElementById('register-username-input') as HTMLInputElement).value
+    const password = (document.getElementById('register-password-input') as HTMLInputElement).value
+    const confirmPassword = (document.getElementById('register-confirm-password-input') as HTMLInputElement).value
+    const dateString = (document.getElementById('register-date-of-birth') as HTMLInputElement).value
 
     if (confirmPassword !== password) {
       console.log("Passwords don't match mate")

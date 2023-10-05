@@ -1,7 +1,7 @@
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
 
 const HOST_NAME = "http://localhost:5001"
-const axiosClient = axios.create({
+const axiosClient : AxiosInstance = axios.create({
     baseURL: HOST_NAME,
     withCredentials: true,
     // ovverride the content type header if you are not sending json data in your request

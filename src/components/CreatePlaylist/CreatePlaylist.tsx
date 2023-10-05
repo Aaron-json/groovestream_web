@@ -1,3 +1,4 @@
+import React from "react";
 import axiosClient from "../../api/axiosClient";
 import { useContext, useState } from "react";
 import "./CreatePlaylist.css";
@@ -6,7 +7,7 @@ import { authenticationContext } from "../../contexts/AuthenticationContext";
 export default function CreatePlaylist({ onFinish }) {
   const { request, accessTokenRef } = useContext(authenticationContext);
   const [isLoading, setIsLoading] = useState(false);
-  async function createPlaylist(playlistName) {
+  async function createPlaylist(playlistName: String) {
     await request(async () => {
       axiosClient.post(
         "/media/1",

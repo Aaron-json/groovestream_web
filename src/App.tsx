@@ -1,5 +1,5 @@
 // import logo from './logo.svg';
-import { useContext } from "react";
+import React, { useContext } from "react";
 import "./App.css";
 import { MainView, MediaBar, LoginPage, RegistrationPage } from "./containers";
 import { MediaContextProvider } from "./contexts/MediaContext";

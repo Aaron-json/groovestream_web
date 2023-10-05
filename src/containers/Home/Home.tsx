@@ -1,10 +1,11 @@
+import React from "react";
 import "./Home.css";
 import { MediaGrid, HorizontalScroll, Dialog, Modal } from "../../components";
 import axiosClient from "../../api/axiosClient";
 import { useContext, useEffect, useState } from "react";
 import { profile_icon } from "../../default-icons";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
-import { UserProfilePage } from "../";
+import { UserProfilePage } from "..";
 
 const homeCategories = [
   {
@@ -19,7 +20,7 @@ const homeCategories = [
   },
 ];
 
-export default function Home(props) {
+export default function Home() {
   const { accessTokenRef, request } = useContext(authenticationContext);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [user, setUser] = useState(null);

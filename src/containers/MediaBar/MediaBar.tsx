@@ -1,7 +1,8 @@
+import React from "react"
 import "./MediaBar.css";
 import { MediaInfo, PlaybackControls, VolumeControl } from "../../components";
 
-const MediaBar = (props) => {
+const MediaBar = () => {
   return (
     <section className="MediaBar">
       <MediaInfo />

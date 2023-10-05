@@ -1,6 +1,7 @@
+import React from "react"
 import "./AppHeader.css"
 
-const AppHeader = () => {
+export default function AppHeader() {
     return (
         <section className="login-page-header">
             <h1>GrooveStream</h1>
@@ -8,5 +9,3 @@ const AppHeader = () => {
         </section>
     )
 }
-
-export default AppHeader

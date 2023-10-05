@@ -1,4 +1,7 @@
-import {
+import React, {
+  Reducer,
+  ReducerWithoutAction,
+  SetStateAction,
   createContext,
   useContext,
   useEffect,
@@ -8,15 +11,29 @@ import {
 import MediaPlayer from "../global/MediaPlayer";
 import axiosClient from "../api/axiosClient";
 import { authenticationContext } from "./AuthenticationContext";
-import { flushSync } from "react-dom";
 
-export const mediaContext = createContext();
+interface MediaContextValue {
+        currentMedia: MediaState,
+        updateMedia: (mediaList:any[], index:number) => void,
+        player:MediaPlayer,
+        playbackState:string,
+        playPauseToggle: () => void,
+        setMute: React.Dispatch<SetStateAction<boolean>>,
+        mute: boolean,
+        volume: number,
+        setVolume: React.Dispatch<SetStateAction<number>>,
+        seek : number,
+        setSeek: React.Dispatch<SetStateAction<number>>,
+        playNext: () => void,
+        playPrev: () => void,
+}
+export const mediaContext = createContext<MediaContextValue | undefined>(undefined);
 const player = new MediaPlayer();
-
-const currentMediaReducer = (state, action) => {
+type mediaReducer = Reducer<MediaState, mediaStateAction>
+const currentMediaReducer : mediaReducer = (state, action) : MediaState => {
   switch (action.type) {
     case "next":
-      if (!state.queue) return;
+      if (!state.queue || !state.index) return state;
 
       let nextIndex = (state.index + 1) % state.queue.length;
 
@@ -31,7 +48,7 @@ const currentMediaReducer = (state, action) => {
       }
       return { ...state, index: nextIndex };
     case "previous":
-      if (!state.queue) return;
+      if (!state.queue || !state.index) return state;
 
       let prevIndex = mod(state.index - 1, state.queue.length);
       while (state.queue[prevIndex].type !== 0) {
@@ -56,8 +73,8 @@ const currentMediaReducer = (state, action) => {
   }
 };
 
-export const MediaContextProvider = ({ children }) => {
-  const { accessTokenRef, request } = useContext(authenticationContext);
+export const MediaContextProvider:React.FC<ContextProvider> = ({ children }) => {
+  const { accessTokenRef, request } = useContext(authenticationContext)!;
 
   const [seek, setSeek] = useState(0);
   const [volume, setVolume] = useState(0.7);
@@ -66,17 +83,18 @@ export const MediaContextProvider = ({ children }) => {
 
   // reducer is optimal since we expect currentMedia to change when index OR both to change
   // alsp supports future complex features eq. playNext queue
-  const [currentMediaStates, currentMediaDispatch] = useReducer(
-    currentMediaReducer,
+  const [currentMediaStates, currentMediaDispatch] = useReducer<mediaReducer>(currentMediaReducer,
     {
-      queue: null,
-      index: null,
+      queue: undefined,
+      index: undefined,
     }
   );
 
   //convenience object to prevent destructuring to access the actual current media object
+  // when queue is null or defined so is the index which means if queue not null you can assume that
+  // index will also not be null
   const currentMediaObj = currentMediaStates.queue
-    ? currentMediaStates.queue[currentMediaStates.index]
+    ? currentMediaStates.queue[currentMediaStates.index!]
     : null;
 
   //load media when current media changes
@@ -160,7 +178,7 @@ export const MediaContextProvider = ({ children }) => {
     setPlaybackState("unloaded");
   }
 
-  function updateMedia(mediaList, index = 0) {
+  function updateMedia(mediaList : any[], index = 0) {
     /**
      * Updates media given a list of media and its index in the list.
      * Restarts the same song if the given media is already the current media
@@ -247,6 +265,6 @@ export const MediaContextProvider = ({ children }) => {
  * @param {Numebr} m - The Modulo
  * @returns {Number} The result of the mathematical n mod m. (Returns only positive numbers)
  */
-function mod(n, m) {
+function mod(n:number, m:number) {
   return ((n % m) + m) % m;
 }
