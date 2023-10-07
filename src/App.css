@@ -15,7 +15,7 @@
 
 html,
 body,
-div#root.root {
+div#root {
   height: 100%;
 }
 
