@@ -1,9 +1,8 @@
-import React from "react";
 import "./Home.css";
-import { MediaGrid, HorizontalScroll, Dialog, Modal } from "../../components";
+import { MediaGrid, HorizontalScroll, Modal } from "../../components";
 import axiosClient from "../../api/axiosClient";
 import { useContext, useEffect, useState } from "react";
-import { profile_icon } from "../../default-icons";
+import { profile_icon } from "../../assets/default-icons";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { UserProfilePage } from "..";
 
@@ -21,9 +20,9 @@ const homeCategories = [
 ];
 
 export default function Home() {
-  const { accessTokenRef, request } = useContext(authenticationContext);
+  const { accessTokenRef, request } = useContext(authenticationContext)!;
   const [showProfileDialog, setShowProfileDialog] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | undefined>(undefined);
   async function fetchUserData() {
     try {
       const response = await request(async () => {
@@ -71,14 +70,14 @@ export default function Home() {
       <hr className="home-header-bottom-line" />
       {user && (
         <MediaGrid
-          items={getRecentlyPlayed(user.playlists, user.audioFiles)}
+          items={getRecentlyPlayed(user.playlists!, user.audioFiles!)}
           title="Recently Played"
         />
       )}
 
       {user && (
         <HorizontalScroll
-          items={getMostPlayedTracks(user.audioFiles)}
+          items={getMostPlayedTracks(user.audioFiles!)}
           title="Most Played Tracks"
         />
       )}
@@ -93,8 +92,12 @@ export default function Home() {
   );
 }
 
-function getRecentlyPlayed(playlists, audioFiles, limit = 6) {
-  const processedMedia = audioFiles.concat(playlists).sort(
+function getRecentlyPlayed(
+  playlists: Playlist[],
+  audioFiles: AudioFile[],
+  limit = 6
+) {
+  const processedMedia = audioFiles.toSorted(
     // compares when the songs were last played and returns a new sorted array
     (a, b) =>
       (a.lastPlayed ? a.lastPlayed : 0) - (b.lastPlayed ? a.lastPlayed : 0)
@@ -102,16 +105,15 @@ function getRecentlyPlayed(playlists, audioFiles, limit = 6) {
 
   return processedMedia.slice(-limit);
 }
-
-function getMostPlayedTracks(audioFiles, limit = 10) {
-  const processedMedia = audioFiles.toSorted(
+function getMostPlayedTracks(audioFiles: AudioFile[], limit = 10) {
+  const processedMedia = audioFiles.sort(
     (a, b) => a.playbackCount - b.playbackCount
   );
 
   return processedMedia.slice(-limit);
 }
 
-function getMostPlayedPlaylists(playlists, limit = 10) {
+function getMostPlayedPlaylists(playlists: Playlist[], limit = 10) {
   const processedMedia = playlists.toSorted(
     (a, b) => a.playbackCount - b.playbackCount
   );

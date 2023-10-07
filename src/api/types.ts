@@ -1,21 +1,26 @@
 // check types with the backend especially for dates
-
-interface user{
-    firstName: string;
-    lasttName: string;
-    email: string;
-    dateOfBirth: number;
-    audioFiles: AudioFile[];
-    playlists: Playlist[];
-    friends: User[];
-    recentSearches: RecentSearch[];
-    dateCreated: number;
+interface User{
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    dateOfBirth?: number;
+    audioFiles?: AudioFile[];
+    playlists?: Playlist[];
+    friends?: User[];
+    recentSearches?: RecentSearch[];
+    dateCreated?: number;
+    profilePicture?: {
+        mimeType: string,
+        data: string,
+    }
 
 }
-
+enum MediaTypes{
+    "AudioFile", "Playlist", "PlaylistAudioFile"
+}
 interface AudioFile{
     _id: string;
-    type: 0;
+    type: MediaTypes.AudioFile;
     filename: string;
     title: string | NullOrUndefined;
     album: string | NullOrUndefined;
@@ -26,7 +31,7 @@ interface AudioFile{
     dateUploaded: number;
     playbackCount: number;
     lastPlayed: number;
-    format:Object | NullOrUndefined;
+    format: any;
     icon: {
         mimeType: string | NullOrUndefined;
         data: string | NullOrUndefined;
@@ -36,17 +41,17 @@ interface AudioFile{
 
 interface Playlist{
     _id:string;
-    type: 1;
+    type: MediaTypes.Playlist;
     name: string;
     dateCreated: number;
-    audioFiles: AudioFIle[];
+    audioFiles: AudioFile[];
     playbackCount: number;
     lastPlayed: number;
 
 }
 
-interface PlaylistAudioFile extends AUdioFile{
-    type:2;
+interface PlaylistAudioFile extends Omit<AudioFile, 'type'>{
+    type: MediaTypes.PlaylistAudioFile;
     playlistID: string;
 }
 

@@ -1,25 +1,62 @@
+import React from "react";
 import "./UserProfilePage.css";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { useContext, useEffect, useState, useRef, useReducer } from "react";
 import { FileInput } from "../../components";
 import axiosClient from "../../api/axiosClient";
-import { profile_icon } from "../../default-icons";
+import { profile_icon } from "../../assets/default-icons";
 import moment from "moment/moment";
+import { FileInputError } from "../../components/FileInput/FileInput";
 const supportedProfilePictureFormats = ["image/jpeg", "image/png"];
+type ProfileChangesReducer = React.Reducer<
+  ProfileChangesState,
+  ProfileChangesAction
+>;
+const profileChangesReducer: ProfileChangesReducer = (state, action) => {
+  // fix to return a new object to cause a state change
+  switch (action.field) {
+    case "firstName":
+      const firstNamePattern = "^[a-zA-Z-]{2,}$";
+      const ifValidFirstName = RegExp(firstNamePattern).test(action.value);
+      return {
+        ...state,
+        firstName: { value: action.value, valid: ifValidFirstName },
+      };
+    case "lastName":
+      const lastNamePattern = "^[a-zA-Z-]{2,}$";
+      const ifValidLastName = RegExp(lastNamePattern).test(action.value);
+      return {
+        ...state,
+        lastName: { value: action.value, valid: ifValidLastName },
+      };
+    case "dateOfBirth":
+      const datePattern =
+        "^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-([0-9]{4})$";
+      const ifValidDate = RegExp(datePattern).test(action.value);
+      return {
+        ...state,
+        dateOfBirth: { value: action.value, valid: ifValidDate },
+      };
+    case "reset":
+      return {};
+    default:
+      return state;
+  }
+};
 
 export default function UserProfilePage() {
-  const [user, setUser] = useState();
+  const [user, setUser] = useState<User | undefined>();
   // we do not want react to rerender the page when changes are made only when applied.
   // so do not create a new object on every change, just add to the mutabla object
   // useRef since it does not cause re-renders
-  const [profileChanges, profileChangesDispatch] = useReducer(
-    profileChangesReducer,
-    {}
-  );
+  const [profileChanges, profileChangesDispatch] =
+    useReducer<ProfileChangesReducer>(profileChangesReducer, {});
 
   const [ifApplyingChangesFailed, setIfApplyingChangesFailed] = useState(false);
 
-  const { accessTokenRef, request, logout } = useContext(authenticationContext);
+  const { accessTokenRef, request, logout } = useContext(
+    authenticationContext
+  )!;
   useEffect(() => {
     fetchUserData();
   }, []);
@@ -49,28 +86,32 @@ export default function UserProfilePage() {
       console.log(err);
     }
   }
-
+  type UserUpdateQuery = {
+    [key in keyof ProfileChangesState]: User[key];
+  };
   async function applyChanges() {
-    const updateQuery = {};
+    const updateQuery: UserUpdateQuery = {};
     let UpdateQueryEmpty = true;
-    for (const field in profileChanges) {
+
+    let field: keyof ProfileChangesState;
+    for (field in profileChanges) {
       // new change is the same as the old version
-      if (profileChanges[field].value === user[field]) continue;
+      if (profileChanges[field]!.value === user![field]) continue;
       // changes made are not valid values for that field
-      if (profileChanges[field].valid === false) {
+      if (profileChanges[field]!.valid === false) {
         console.log(ifApplyingChangesFailed);
         setIfApplyingChangesFailed(true);
         return;
       }
       if (field === "dateOfBirth") {
         //change the date of Birth to its time stamp
-        const timestamp = getTimestamp(profileChanges.dateOfBirth.value);
-        if (timestamp !== user.dateOfBirth) {
+        const timestamp = getTimestamp(profileChanges.dateOfBirth!.value);
+        if (timestamp !== user!.dateOfBirth) {
           updateQuery.dateOfBirth = timestamp;
           UpdateQueryEmpty = false;
         }
       } else {
-        updateQuery[field] = profileChanges[field].value;
+        updateQuery[field] = profileChanges[field]!.value;
         UpdateQueryEmpty = false;
       }
     }
@@ -98,22 +139,27 @@ export default function UserProfilePage() {
   }
 
   function getProfilePicture() {
-    if (user.profilePicture) {
-      console.log(user.profilePicture);
-      return `data:${user.profilePicture.mimeType};base64,${user.profilePicture.data}`;
+    if (user!.profilePicture) {
+      console.log(user!.profilePicture);
+      return `data:${user!.profilePicture.mimeType};base64,${
+        user!.profilePicture.data
+      }`;
     } else {
       return profile_icon;
     }
   }
 
-  async function handleProfilePictureUpload(formData, error) {
+  async function handleProfilePictureUpload(
+    formData: FormData | undefined,
+    error: FileInputError | undefined
+  ) {
     //profile picture change is done separate from
     if (error || !formData) {
       console.log(error);
       return;
     }
     try {
-      console.log(formData.get("files").type);
+      console.log((formData.get("files") as File).type);
       const response = await request(
         async () =>
           await axiosClient.put("/user/profilePicture", formData, {
@@ -230,7 +276,7 @@ export default function UserProfilePage() {
         />
       </label>
       <label className="user-profile-page-label">
-        Friends: {user.friends.length}
+        Friends: {user.friends!.length}
       </label>
       <label className="user-profile-page-label">
         Date Joined: {moment(user.dateCreated).format("DD MMMM YYYY")}
@@ -254,38 +300,33 @@ export default function UserProfilePage() {
  * Takes date string and returns its timestamp
  * @param {String} dateString Date sting in format (DD-MM-YYYY)
  */
-function getTimestamp(dateString) {
+function getTimestamp(dateString: string) {
   const [day, month, year] = dateString.split("-").map(Number);
   return new Date(year, month - 1, day).getTime();
 }
 
 function ifvalidEmail() {}
-function profileChangesReducer(state, action) {
-  // fix to return a new object to cause a state change
-  switch (action.field) {
-    case "firstName":
-      const firstNamePattern = "^[a-zA-Z-]{2,}$";
-      const ifValidFirstName = RegExp(firstNamePattern).test(action.value);
-      return {
-        ...state,
-        firstName: { value: action.value, valid: ifValidFirstName },
-      };
-    case "lastName":
-      const lastNamePattern = "^[a-zA-Z-]{2,}$";
-      const ifValidLastName = RegExp(lastNamePattern).test(action.value);
-      return {
-        ...state,
-        lastName: { value: action.value, valid: ifValidLastName },
-      };
-    case "dateOfBirth":
-      const datePattern =
-        "^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-([0-9]{4})$";
-      const ifValidDate = RegExp(datePattern).test(action.value);
-      return {
-        ...state,
-        dateOfBirth: { value: action.value, valid: ifValidDate },
-      };
-    case "reset":
-      return {};
-  }
+interface ProfileChangesField {
+  value: string;
+  valid: boolean;
+}
+interface ProfileChangesState {
+  firstName?: ProfileChangesField;
+  lastName?: ProfileChangesField;
+  email?: ProfileChangesField;
+  dateOfBirth?: ProfileChangesField;
+  friends?: ProfileChangesField;
+  dateCreated?: ProfileChangesField;
+}
+// interface UserUpdateQuery{
+//   firstName?: User["firstName"];
+//   lastName?: User["lastName"];
+//   email?:User["email"];
+//   dateOfBirth?:User["dateOfBirth"];
+//   friends?:User["friends"];
+//   dateCreated?: User["dateCreated"];
+// }
+interface ProfileChangesAction {
+  field: string;
+  value: string;
 }

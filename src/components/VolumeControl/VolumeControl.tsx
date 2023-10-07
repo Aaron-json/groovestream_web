@@ -4,10 +4,10 @@ import { mediaContext } from "../../contexts/MediaContext";
 import {
   volume as volumeIcon,
   mute as muteIcon,
-} from "../../default-icons/MediaBar";
+} from "../../assets/default-icons/MediaBar";
 
 const VolumeControl = () => {
-  const { mute, setMute, volume, setVolume } = useContext(mediaContext);
+  const { mute, setMute, volume, setVolume } = useContext(mediaContext)!;
   return (
     <div className="volume-and-devices">
       <div className="volume-group">
@@ -24,7 +24,7 @@ const VolumeControl = () => {
           max={1}
           step={0.01}
           value={volume}
-          onChange={(e) => setVolume(e.target.value)}
+          onChange={(e) => setVolume(Number(e.target.value))}
         />
       </div>
     </div>

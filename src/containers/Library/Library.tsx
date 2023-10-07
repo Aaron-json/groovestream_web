@@ -10,8 +10,9 @@ import {
 import { useContext, useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
-import { retryRequest, debounced } from "../../api/requests";
+import { debounced } from "../../api/requests";
 import { supportedAUdioFormats } from "../../global/media";
+import { FileInputError } from "../../components/FileInput/FileInput";
 
 const categories = {
   /**
@@ -32,13 +33,13 @@ export default function Library() {
   const [currentOrder, setCurrentOrder] = useState("A-Z");
   const [results, setResults] = useState(null);
   const [searchValue, setSearchValue] = useState("");
-  const { accessTokenRef, refreshAuthentication } = useContext(
+  const { accessTokenRef, refreshAuthentication, request } = useContext(
     authenticationContext
-  );
+  )!;
   async function fetchMedia() {
     // fetches all media at startup of the application
     try {
-      const response = await retryRequest(async () => {
+      const response = await request(async () => {
         console.log("fetching media");
         return await axiosClient.get("/user", {
           headers: {
@@ -48,7 +49,7 @@ export default function Library() {
             fields: ["audioFiles", "playlists"],
           },
         });
-      }, refreshAuthentication);
+      });
 
       // the order of arrays in results corresponds to the order in the fields
       // query params
@@ -58,7 +59,7 @@ export default function Library() {
     }
   }
 
-  function handleAddingMedia(e) {
+  function handleAddingMedia() {
     setAddingMedia(!addingMedia);
   }
 
@@ -66,20 +67,22 @@ export default function Library() {
     fetchMedia();
   }, []);
 
-  async function handleFileInput(formData, error) {
+  async function handleFileInput(
+    formData: FormData | undefined,
+    error: FileInputError | undefined
+  ) {
     if (error || !formData) {
       console.log(error);
       return;
     }
-    const response = await retryRequest(
+    const response = await request(
       async () =>
         await axiosClient.post("/media/0", formData, {
           headers: {
             Authorization: `Bearer ${accessTokenRef.current}`,
             "Content-Type": "multipart/form-data",
           },
-        }),
-      refreshAuthentication
+        })
     );
     await fetchMedia();
   }
@@ -160,11 +163,11 @@ export default function Library() {
 }
 
 function filterMedia(
-  playlists,
-  audioFiles,
-  selectedMediaType,
-  searchValue,
-  sortOrder
+  playlists: Playlist[],
+  audioFiles: AudioFile[],
+  selectedMediaType: string,
+  searchValue: string,
+  sortOrder: string
 ) {
   return playlists.concat(audioFiles);
 }

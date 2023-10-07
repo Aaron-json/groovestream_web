@@ -1,6 +1,5 @@
 import "./HorizontalScroll.css";
-import { library_icon, music_icon } from "../../default-icons";
-import React, { useContext } from "react";
+import { useContext } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
 import { useNavigate } from "react-router-dom";
 import { getSongIcon, getPlaylistIcon } from "../../global/media";

@@ -2,17 +2,21 @@ import React, { SetStateAction } from "react";
 import { createContext, useEffect, useRef, useState } from "react";
 import axiosClient from "../api/axiosClient";
 
-interface AuthenticationContextValue{
-  authenticated: boolean,
-        setAuthenticated: React.Dispatch<SetStateAction<boolean>>,
-        refreshAuthentication: () => Promise<void>,
-        accessTokenRef: React.MutableRefObject<string | undefined>,
-        request: (requestFunction: () => Promise<any>) => Promise<any>,
-        logout: () => Promise<void>,
+interface AuthenticationContextValue {
+  authenticated: boolean;
+  setAuthenticated: React.Dispatch<SetStateAction<boolean>>;
+  refreshAuthentication: () => Promise<void>;
+  accessTokenRef: React.MutableRefObject<string | undefined>;
+  request: (requestFunction: () => Promise<any>) => Promise<any>;
+  logout: () => Promise<void>;
 }
-export const authenticationContext = createContext<AuthenticationContextValue | undefined>(undefined);
+export const authenticationContext = createContext<
+  AuthenticationContextValue | undefined
+>(undefined);
 
-export const AuthenticationContextProvider = ({ children }: ContextProvider) => {
+export const AuthenticationContextProvider = ({
+  children,
+}: ContextProvider) => {
   const [authenticated, setAuthenticated] = useState(false);
   const accessTokenRef = useRef<string | undefined>();
   // const [refreshToken, setRefreshToken] = useState()

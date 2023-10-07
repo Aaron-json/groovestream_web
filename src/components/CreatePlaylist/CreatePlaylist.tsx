@@ -1,11 +1,14 @@
-import React from "react";
+import { FormEventHandler } from "react";
 import axiosClient from "../../api/axiosClient";
 import { useContext, useState } from "react";
 import "./CreatePlaylist.css";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 
-export default function CreatePlaylist({ onFinish }) {
-  const { request, accessTokenRef } = useContext(authenticationContext);
+interface CreatePlaylistProps {
+  onFinish: () => any;
+}
+export default function CreatePlaylist({ onFinish }: CreatePlaylistProps) {
+  const { request, accessTokenRef } = useContext(authenticationContext)!;
   const [isLoading, setIsLoading] = useState(false);
   async function createPlaylist(playlistName: String) {
     await request(async () => {
@@ -23,11 +26,11 @@ export default function CreatePlaylist({ onFinish }) {
     });
   }
 
-  async function submitHandler(e) {
+  const submitHandler: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    const playlistName = document.getElementById(
-      "create-playlist-name-input"
+    const playlistName = (
+      document.getElementById("create-playlist-name-input") as HTMLInputElement
     ).value;
     try {
       await createPlaylist(playlistName);
@@ -36,7 +39,7 @@ export default function CreatePlaylist({ onFinish }) {
       console.log(err);
     }
     setIsLoading(false);
-  }
+  };
   return (
     <form
       className="create-playlist-form"

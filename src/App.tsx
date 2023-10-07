@@ -1,5 +1,5 @@
 // import logo from './logo.svg';
-import React, { useContext } from "react";
+import { useContext } from "react";
 import "./App.css";
 import { MainView, MediaBar, LoginPage, RegistrationPage } from "./containers";
 import { MediaContextProvider } from "./contexts/MediaContext";
@@ -9,8 +9,8 @@ import { AppHeader } from "./components";
 import { colorContext } from "./contexts/ColorContext";
 
 export default function App() {
-  const { authenticated } = useContext(authenticationContext);
-  const { color } = useContext(colorContext);
+  const { authenticated } = useContext(authenticationContext)!;
+  const { color } = useContext(colorContext)!;
 
   return (
     <>

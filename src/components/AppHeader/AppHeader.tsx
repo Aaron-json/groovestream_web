@@ -1,11 +1,10 @@
-import React from "react"
-import "./AppHeader.css"
+import "./AppHeader.css";
 
 export default function AppHeader() {
-    return (
-        <section className="login-page-header">
-            <h1>GrooveStream</h1>
-            <hr />
-        </section>
-    )
+  return (
+    <section className="login-page-header">
+      <h1>GrooveStream</h1>
+      <hr />
+    </section>
+  );
 }

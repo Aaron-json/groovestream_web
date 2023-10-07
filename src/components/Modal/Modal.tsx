@@ -1,7 +1,12 @@
 import "./Modal.css";
-import { useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 
-export default function Modal({ show, onClose, children }) {
+interface ModalProps {
+  show: boolean;
+  onClose: () => any;
+  children: React.ReactNode;
+}
+export default function Modal({ show, onClose, children }: ModalProps) {
   const modalRef = useRef();
 
   useEffect(() => {

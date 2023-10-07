@@ -2,12 +2,11 @@ import "./PlaylistPage.css";
 import { useLocation, useParams } from "react-router-dom";
 import { MediaList } from "../../components";
 import { useEffect, useState, useContext } from "react";
-import { retryRequest } from "../../api/requests";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import axiosClient from "../../api/axiosClient";
 
 export default function PlaylistPage() {
-  const { accessTokenRef, request } = useContext(authenticationContext);
+  const { accessTokenRef, request } = useContext(authenticationContext)!;
   const { mediaID } = useParams();
   const [playlist, setPlaylist] = useState(useLocation().state);
   useEffect(() => {

@@ -1,6 +1,5 @@
-import React from "react";
 import "./PlaybackControls.css";
-import { play, pause, back, next } from "../../default-icons/MediaBar";
+import { play, pause, back, next } from "../../assets/default-icons/MediaBar";
 import { useContext } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
 
@@ -15,7 +14,7 @@ const PlaybackControls = () => {
     playPrev,
   } = useContext(mediaContext)!;
 
-  function parseSeconds(secondsCount:number) {
+  function parseSeconds(secondsCount: number) {
     // takes in number of seconds and returns it in the format
     // hours: seconds: minutes
     const seconds = secondsCount % 60;
@@ -54,7 +53,7 @@ const PlaybackControls = () => {
           min={0}
           step={1}
           value={seek}
-          onChange={(e) => setSeek(e.target.value)}
+          onChange={(e) => setSeek(Number(e.target.value))}
         />
         <label htmlFor="seeker" className="seeker-label">
           {currentMedia && currentMedia.duration

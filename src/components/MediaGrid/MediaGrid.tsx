@@ -1,6 +1,5 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import "./MediaGrid.css";
-import { library_icon, music_icon } from "../../default-icons";
 import { mediaContext } from "../../contexts/MediaContext";
 import { useNavigate } from "react-router-dom";
 import { getSongIcon, getPlaylistIcon } from "../../global/media";

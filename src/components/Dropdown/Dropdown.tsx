@@ -1,11 +1,16 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import "./Dropdown.css";
-import { dropdown_icon } from "../../default-icons";
+import { dropdown_icon } from "../../assets/default-icons";
 
-const Dropdown = ({ items, currentItem, setCurrentItem }) => {
+interface DropdownProps {
+  items: Array<string>;
+  currentItem: string;
+  setCurrentItem: React.Dispatch<React.SetStateAction<string>>;
+}
+const Dropdown = ({ items, currentItem, setCurrentItem }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  function handleItemClick(item) {
+  function handleItemClick(item: string) {
     setCurrentItem(item);
     setIsOpen(false);
   }

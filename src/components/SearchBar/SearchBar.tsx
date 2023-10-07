@@ -1,6 +1,15 @@
 import "./SearchBar.css";
 
-export default function SearchBar({ value, valueChangeHandler, placeholder }) {
+interface SearchBarProps {
+  value: string;
+  valueChangeHandler: (newValue: string) => any;
+  placeholder: string;
+}
+export default function SearchBar({
+  value,
+  valueChangeHandler,
+  placeholder,
+}: SearchBarProps) {
   return (
     <input
       className="search-bar"

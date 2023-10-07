@@ -1,6 +1,15 @@
+import React from "react";
 import "./FileInput.css";
 
-const errorFormats = {
+export interface FileInputError{
+  message: string,
+  code: string,
+}
+type FileInputErrorNames = "INVALID_TYPE" | "EXPECTED_FORMATS_UNSPECIFIED"
+type FileInputErrors = {
+  [key in FileInputErrorNames]: FileInputError
+}
+const errorFormats : FileInputErrors = {
   INVALID_TYPE: {
     message: "one of the selected files is not a valid format",
     code: "INVALID_TYPE",
@@ -10,21 +19,28 @@ const errorFormats = {
     code: "EXPECTED_FORMATS_UNSPECIFIED",
   },
 };
-export default function FileInput({ onInput, multiple, formats }) {
-  function validFileType(file) {
+
+interface FileInputProps{
+  onInput:(data:FormData | undefined, error: FileInputError | undefined) => any
+  multiple?: boolean;
+  formats: string[]
+}
+export default function FileInput({ onInput, multiple, formats } : FileInputProps) {
+  function validFileType(file : File) {
     return formats.includes(file.type);
   }
 
-  function handleFileInput(e) {
+  const handleFileInput:React.FormEventHandler<HTMLInputElement> = (e) => {
     // check if supported formats are specified
     if (!formats) {
-      onInput(null, errorFormats.EXPECTED_FORMATS_UNSPECIFIED);
-      e.target.value = null;
+      onInput(undefined, errorFormats.EXPECTED_FORMATS_UNSPECIFIED);
+      e.currentTarget.value = "";
       return;
     }
-    const files = e.target.files;
+    const files = e.currentTarget.files;
+    if (!files) return;
     const formData = new FormData();
-    let error = null;
+    let error = undefined;
     for (let i = 0; i < files.length; i++) {
       // check if each file is a valid file type
       if (validFileType(files[i])) {
@@ -36,7 +52,7 @@ export default function FileInput({ onInput, multiple, formats }) {
     }
     // returns files before the error and the error itself
     onInput(formData, error);
-    e.target.value = null;
+    e.currentTarget.value = "";
   }
 
   return (

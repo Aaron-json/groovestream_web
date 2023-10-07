@@ -7,14 +7,18 @@ import axiosClient from "../../api/axiosClient";
 const LoginForm = () => {
   const { accessTokenRef, setAuthenticated } = useContext(
     authenticationContext
-  );
+  )!;
   const [sendingRequest, setSendingRequest] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setSendingRequest(true);
-    const email = document.getElementById("login-username-input").value;
-    const password = document.getElementById("login-password-input").value;
+    const email = (
+      document.getElementById("login-username-input") as HTMLInputElement
+    ).value;
+    const password = (
+      document.getElementById("login-password-input") as HTMLInputElement
+    ).value;
     const body = { email, password };
     try {
       const loginResponse = await axiosClient.post("user/login", body);

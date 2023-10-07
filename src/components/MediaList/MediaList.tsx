@@ -1,39 +1,47 @@
+import { options_icon, delete_icon } from "../../assets/default-icons";
 import {
-  playlist_icon,
-  library_icon,
-  music_icon,
-  music_icon2,
-  options_icon,
-  delete_icon,
-} from "../../default-icons";
-import { mediaListBackIcon, plusIcon } from "../../default-icons/MediaList";
+  mediaListBackIcon,
+  plusIcon,
+} from "../../assets/default-icons/MediaList";
 import moment from "moment";
 import "./MediaList.css";
-import { debounced, retryRequest } from "../../api/requests";
 import axiosClient from "../../api/axiosClient";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { mediaContext } from "../../contexts/MediaContext";
 import { FileInput } from "../";
 import { getSongIcon, getPlaylistIcon } from "../../global/media";
 
-export default function LibraryMedia({
+interface MediaListOptions {}
+interface MediaListProps {
+  items: Array<Playlist | AudioFile | PlaylistAudioFile>;
+  searchValue?: string;
+  refreshMedia?: () => any;
+  title?: string;
+  songClickHandler?: () => any;
+  playlistClickHandler?: () => any;
+  options?: MediaListOptions;
+}
+
+type MediaListStack = Array<{
+  title: string | undefined;
+  media: MediaListProps["items"] | string;
+}>;
+
+export default function MediaList({
   items,
   searchValue,
   refreshMedia,
   title,
   songClickHandler,
   playlistClickHandler,
-}) {
+}: MediaListProps) {
   // used when an object containing other media is clicked to be able to return
   // to previous lists
-  const [mediaListStack, setMediaListStack] = useState([
+  const [mediaListStack, setMediaListStack] = useState<MediaListStack>([
     { title, media: items },
   ]);
-  const [debouncedSearchValue, setDebouncedSearchValue] = useState(searchValue);
-  const { refreshAuthentication, accessTokenRef } = useContext(
-    authenticationContext
-  );
+  //const [debouncedSearchValue, setDebouncedSearchValue] = useState(searchValue);
 
   const currentMedia = useMemo(_getCurrentObj, [mediaListStack]);
   const currentMediaList = currentMedia.media;
@@ -100,7 +108,10 @@ export default function LibraryMedia({
    * @returns {Array} a NEW array after the filters have been applied.
    * does NOT modify original array
    */
-  function filterMedia(mediaList, searchFilter) {
+  function filterMedia(
+    mediaList: Array<AudioFile | Playlist>,
+    searchFilter: string
+  ) {
     if (searchFilter === "" || searchFilter === " " || !searchFilter)
       return mediaList;
     searchFilter = searchFilter.toLowerCase();
@@ -129,7 +140,7 @@ export default function LibraryMedia({
     });
   }
 
-  function addMediaListToStack(mediaID, title) {
+  function addMediaListToStack(mediaID: string, title: string) {
     setMediaListStack([...mediaListStack, { title, media: mediaID }]);
   }
   function popMediaListFromStack() {
@@ -188,15 +199,22 @@ export default function LibraryMedia({
     </div>
   );
 }
+interface MediaListSong {
+  audioFile: AudioFile;
+  songClickHandler: MediaListProps["songClickHandler"];
+  allMedia: MediaListProps["items"];
+  index: number;
+  refreshMedia: () => any;
+}
 function LibrarySong({
-  media,
+  audioFile,
   songClickHandler,
   allMedia,
   index,
   refreshMedia,
-}) {
-  const { updateMedia, currentMedia } = useContext(mediaContext);
-  const { request, accessTokenRef } = useContext(authenticationContext);
+}: MediaListSong) {
+  const { updateMedia, currentMedia } = useContext(mediaContext)!;
+  const { request, accessTokenRef } = useContext(authenticationContext)!;
   // consume media context in child components to prevent
   // the media list from mapping all over again
   async function deleteAudioFile() {
@@ -204,13 +222,13 @@ function LibrarySong({
      * Function for deleting any type of media.
      * FUnction is shared so it is on the parent list.
      */
-    let requestURL;
-    if (media.type === 0) {
-      requestURL = `/media/0/${media._id}`;
-    } else if (media.type === 2) {
+    let requestURL: string;
+    if (audioFile.type === 0) {
+      requestURL = `/media/0/${audioFile._id}`;
+    } else if (audioFile.type === 2) {
       // audioFile in a playlist
 
-      requestURL = `/media/2/${media._id}/${media.playlistID}`;
+      requestURL = `/media/2/${audioFile._id}/${audioFile.playlistID}`;
     }
     await request(async () => {
       return await axiosClient.delete(requestURL, {
@@ -231,21 +249,21 @@ function LibrarySong({
         songClickHandler ? songClickHandler : () => updateMedia(allMedia, index)
       }
     >
-      <img src={getSongIcon(media)} alt="icon" />
+      <img src={getSongIcon(audioFile)} alt="icon" />
       <div className="media-item-info">
-        <span className="media-item-name">{media.filename}</span>
+        <span className="media-item-name">{audioFile.filename}</span>
         <span className="media-item-artist">
-          {media.artists ? media.artists.join(", ") : "Unknown Artist"}
+          {audioFile.artists ? audioFile.artists.join(", ") : "Unknown Artist"}
         </span>
         <span className="media-item-album">
-          {media.album ? media.album : "Unknown Album"}
+          {audioFile.album ? audioFile.album : "Unknown Album"}
         </span>
         <span className="media-item-date-created">
-          Uploaded {moment(media.dateUploaded).fromNow()}
+          Uploaded {moment(audioFile.dateUploaded).fromNow()}
         </span>
       </div>
       <span className="media-item-type">
-        {currentMedia?._id === media._id ? "Now Playing" : "Song"}
+        {currentMedia?._id === audioFile._id ? "Now Playing" : "Song"}
       </span>
 
       <div className="media-item-options">
@@ -271,7 +289,7 @@ function LibraryPlaylist({
   addMediaListToStack,
   refreshMedia,
 }) {
-  const { request, accessTokenRef } = useContext(authenticationContext);
+  const { request, accessTokenRef } = useContext(authenticationContext)!;
   async function addSongToPlaylistHandler(formData) {
     await request(async () => {
       // implement new route to add song to a playlist

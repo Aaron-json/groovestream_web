@@ -10,7 +10,7 @@
 :root{
   --animation-speed: 0.2s;
   --text-color: white;
-  --default-background: url('default-icons/background11small.jpg')
+  --default-background: url('assets/default-icons/background11small.jpg')
 }
 
 html,
