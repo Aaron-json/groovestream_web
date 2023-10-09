@@ -1,5 +1,5 @@
 import "./Search.css";
-import { SearchBar, Dropdown, MediaList } from "../../components";
+import { SearchBar, MediaList } from "../../components";
 import { useContext, useEffect, useState } from "react";
 // import { sample_results } from "../../sample_data";
 import { debounced } from "../../api/requests";
@@ -7,9 +7,7 @@ import axiosClient from "../../api/axiosClient";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 
 const Search = () => {
-  const { accessTokenRef, refreshAuthentication, request } = useContext(
-    authenticationContext
-  )!;
+  const { accessTokenRef, request } = useContext(authenticationContext)!;
   const [searchValue, setSearchValue] = useState("");
   const [displayMedia, setDisplayMedia] = useState(null);
 

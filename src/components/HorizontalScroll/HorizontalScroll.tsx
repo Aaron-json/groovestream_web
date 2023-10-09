@@ -3,7 +3,14 @@ import { useContext } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
 import { useNavigate } from "react-router-dom";
 import { getSongIcon, getPlaylistIcon } from "../../global/media";
-export default function HorizontalScroll({ items, title }) {
+interface HorizontalScrollProps {
+  items: Array<AudioFile | PlaylistAudioFile | Playlist>;
+  title: string;
+}
+export default function HorizontalScroll({
+  items,
+  title,
+}: HorizontalScrollProps) {
   // remember to get only top 10 for each category
   return (
     <div className="horizontal-scroll">
@@ -14,21 +21,28 @@ export default function HorizontalScroll({ items, title }) {
             return (
               <SongTile
                 key={media._id}
-                media={media}
+                audioFile={media as AudioFile | PlaylistAudioFile}
                 allMedia={items}
                 index={index}
               />
             );
           } else if (media.type === 1) {
-            return <PlaylistTile key={media._id} media={media} />;
+            return (
+              <PlaylistTile key={media._id} playlist={media as Playlist} />
+            );
           }
         })}
       </div>
     </div>
   );
 }
-const SongTile = ({ media, allMedia, index }) => {
-  const { updateMedia } = useContext(mediaContext);
+interface SongTileProps {
+  audioFile: AudioFile | PlaylistAudioFile;
+  allMedia: HorizontalScrollProps["items"];
+  index: number;
+}
+const SongTile = ({ audioFile, allMedia, index }: SongTileProps) => {
+  const { updateMedia } = useContext(mediaContext)!;
   return (
     <div
       className="horizontal-scroll-song-tile home-media-tile"
@@ -36,32 +50,37 @@ const SongTile = ({ media, allMedia, index }) => {
     >
       <img
         className="horizontal-scroll-media-icon"
-        src={getSongIcon(media)}
+        src={getSongIcon(audioFile)}
         alt="icon"
       />
       <div className="horizontal-scroll-media-info">
-        <span className="horizontal-scroll-media-name">{media.filename}</span>
+        <span className="horizontal-scroll-media-name">
+          {audioFile.filename}
+        </span>
         <span className="horizontal-scroll-media-artist">
-          {media.artists ? media.artists.join(", ") : "Unknown Artist"}
+          {audioFile.artists ? audioFile.artists.join(", ") : "Unknown Artist"}
         </span>
       </div>
     </div>
   );
 };
-const PlaylistTile = ({ media }) => {
+interface PlaylistTileProps {
+  playlist: Playlist;
+}
+const PlaylistTile = ({ playlist }: PlaylistTileProps) => {
   const navigate = useNavigate();
   return (
     <div
       className="horizontal-scroll-artist-tile home-media-tile"
-      onClick={() => navigate(`/media/1/${media._id}`, { state: media })}
+      onClick={() => navigate(`/media/1/${playlist._id}`, { state: playlist })}
     >
       <img
         className="horizontal-scroll-media-icon"
-        src={getPlaylistIcon(media)}
+        src={getPlaylistIcon(playlist)}
         alt="icon"
       />
       <div className="horizontal-scroll-media-info">
-        <span className="horizontal-scroll-media-name">{media.name}</span>
+        <span className="horizontal-scroll-media-name">{playlist.name}</span>
       </div>
     </div>
   );

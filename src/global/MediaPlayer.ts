@@ -1,7 +1,7 @@
 import { Howl, Howler } from "howler";
 export default class MediaPlayer {
-  #HowlInstance = null;
-  currentSourceID = null;
+  #HowlInstance: Howl | undefined;
+  currentSourceID: string | undefined;
   #DefaultConfiguration = {
     html5: true,
     volume: 1,
@@ -9,22 +9,18 @@ export default class MediaPlayer {
   };
   // #GlobalHowler = Howler.init()
 
-  #loadSourceHelper(source) {
+  #loadSourceHelper(source: MediaSource) {
     return new Promise((resolve, reject) => {
       this.#HowlInstance = new Howl({
         ...this.#DefaultConfiguration,
         src: [source.data],
       })
-        .once("load", () => {
-          resolve();
-        })
-        .once("loaderror", () => {
-          reject();
-        });
+        .once("load", resolve)
+        .once("loaderror", reject);
     });
   }
 
-  async loadSource(source) {
+  async loadSource(source: MediaSource) {
     if (!this.#HowlInstance) {
       // now Howl created
       await this.#loadSourceHelper(source);
@@ -45,8 +41,8 @@ export default class MediaPlayer {
       return;
     }
     this.#HowlInstance.unload();
-    this.#HowlInstance = null;
-    this.currentSourceID = null;
+    this.#HowlInstance = undefined;
+    this.currentSourceID = undefined;
   }
 
   play() {
@@ -69,10 +65,10 @@ export default class MediaPlayer {
     this.#HowlInstance.stop();
   }
 
-  mute(ifMute) {
+  mute(ifMute: boolean) {
     Howler.mute(ifMute);
   }
-  setVolume(volume) {
+  setVolume(volume: number) {
     Howler.volume(volume);
   }
   getVolume() {
@@ -86,7 +82,7 @@ export default class MediaPlayer {
     return this.#HowlInstance.duration();
   }
 
-  setSeek(seekPosition) {
+  setSeek(seekPosition: number) {
     if (!this.#HowlInstance) {
       return;
     }
@@ -94,17 +90,29 @@ export default class MediaPlayer {
   }
   getSeek() {
     if (!this.#HowlInstance) {
-      return null;
+      return 0;
     }
     return this.#HowlInstance.seek();
   }
+  isLoaded() {
+    return this.#HowlInstance !== undefined;
+  }
+  isPlaying() {
+    if (!this.#HowlInstance) return false;
+    return this.#HowlInstance.playing();
+  }
   getState() {
     if (!this.#HowlInstance) {
-      return undefined;
+      return "unloaded";
     } else if (this.#HowlInstance.playing()) {
       return "playing";
     } else {
       return this.#HowlInstance.state(); //"loaded", "unloaded", "loading"
     }
   }
+}
+
+interface MediaSource {
+  data: string;
+  _id: string;
 }

@@ -1,10 +1,14 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import "./MediaGrid.css";
 import { mediaContext } from "../../contexts/MediaContext";
 import { useNavigate } from "react-router-dom";
 import { getSongIcon, getPlaylistIcon } from "../../global/media";
 
-export default function MediaGrid({ items, title }) {
+interface MediaGridProps {
+  items: Array<AudioFile | PlaylistAudioFile | Playlist>;
+  title: string;
+}
+export default function MediaGrid({ items, title }: MediaGridProps) {
   // remember to only get the last 6 or 9 items
   return (
     <div className="media-grid">
@@ -14,20 +18,26 @@ export default function MediaGrid({ items, title }) {
           return (
             <SongTile
               key={media._id}
-              media={media}
+              audioFile={media as AudioFile | PlaylistAudioFile}
               allMedia={items}
               index={index}
             />
           );
         } else if (media.type === 1) {
-          return <PlaylistTile key={media._id} media={media} />;
+          return <PlaylistTile key={media._id} playlist={media as Playlist} />;
         }
       })}
     </div>
   );
 }
-const SongTile = ({ media, allMedia, index }) => {
-  const { updateMedia } = useContext(mediaContext);
+
+interface SongTileProps {
+  audioFile: PlaylistAudioFile | AudioFile;
+  allMedia: MediaGridProps["items"];
+  index: number;
+}
+const SongTile = ({ audioFile, allMedia, index }: SongTileProps) => {
+  const { updateMedia } = useContext(mediaContext)!;
 
   return (
     <div
@@ -36,37 +46,41 @@ const SongTile = ({ media, allMedia, index }) => {
     >
       <img
         className="media-grid-tile-icon"
-        src={getSongIcon(media)}
+        src={getSongIcon(audioFile)}
         alt="icon"
       />
       <div className="media-grid-tile-info">
         <span className="media-grid-tile-name">
-          {media.title ? media.title : media.filename}
+          {audioFile.title ? audioFile.title : audioFile.filename}
         </span>
         <span className="media-grid-tile-artist">
-          {media.artists ? media.artists.join(", ") : "Unknown Artist"}
+          {audioFile.artists ? audioFile.artists.join(", ") : "Unknown Artist"}
         </span>
         <span className="media-grid-tile-album">
-          {media.album ? media.album : "Unknown Album"}
+          {audioFile.album ? audioFile.album : "Unknown Album"}
         </span>
       </div>
     </div>
   );
 };
-const PlaylistTile = ({ media }) => {
+
+interface PlaylistTileInterface {
+  playlist: Playlist;
+}
+const PlaylistTile = ({ playlist }: PlaylistTileInterface) => {
   const navigate = useNavigate();
   return (
     <div
       className="media-grid-playlist-tile home-media-tile"
-      onClick={() => navigate(`/media/1/${media._id}`, { state: media })}
+      onClick={() => navigate(`/media/1/${playlist._id}`, { state: playlist })}
     >
       <img
         className="media-grid-tile-icon"
-        src={getPlaylistIcon(media)}
+        src={getPlaylistIcon(playlist)}
         alt="icon"
       />
       <div className="media-grid-tile-info">
-        <span className="media-grid-tile-name">{media.name}</span>
+        <span className="media-grid-tile-name">{playlist.name}</span>
         <span className="media-grid-tile-type">Album</span>
       </div>
     </div>

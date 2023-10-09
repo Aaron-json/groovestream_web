@@ -1,16 +1,15 @@
-type NullorUndefined = null | undefined
+type NullorUndefined = null | undefined;
 
 type ContextProvider = {
-    children: React.ReactNode
-}
+  children: React.ReactNode;
+};
 
-type MediaState = {
-    index: number | NullorUndefined,
-    queue: AudioFile[] | NullorUndefined
-}
+type CurrentMedia = {
+  index: number | NullorUndefined;
+  queue: AudioFile[] | NullorUndefined;
+};
 
 type mediaStateAction = {
-    type: string,
-    payload?: any | NullorUndefined,
-}
-
+  type: string;
+  payload?: any | NullorUndefined;
+};

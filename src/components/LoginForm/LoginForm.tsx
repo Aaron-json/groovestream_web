@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import "./LoginForm.css";
-import { useContext, useState } from "react";
+import { FormEvent, useContext, useState } from "react";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import axiosClient from "../../api/axiosClient";
 
@@ -10,7 +10,7 @@ const LoginForm = () => {
   )!;
   const [sendingRequest, setSendingRequest] = useState(false);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSendingRequest(true);
     const email = (

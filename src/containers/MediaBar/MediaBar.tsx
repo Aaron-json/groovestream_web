@@ -1,4 +1,3 @@
-import React from "react"
 import "./MediaBar.css";
 import { MediaInfo, PlaybackControls, VolumeControl } from "../../components";
 

@@ -1,8 +1,12 @@
 import "./NavButton.css";
 import { navButtons, infoButtons } from "../../containers/SideBar/SideBar";
-import {NavLink} from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
-const SideButton = (props) => {
+interface SideButtonProps {
+  text: string;
+  icon: string;
+}
+const SideButton = (props: SideButtonProps) => {
   return (
     // anchor to add router support
     <>
@@ -19,11 +23,13 @@ const SideButton = (props) => {
   );
 };
 
-function NavButton(props) {
-
+function NavButton(props: SideButtonProps) {
   return (
-    <NavLink to={`/${props.text}`}
-             className= {({isActive}) => isActive ? 'current-nav-entry' : 'nav-entry'}
+    <NavLink
+      to={`/${props.text}`}
+      className={({ isActive }) =>
+        isActive ? "current-nav-entry" : "nav-entry"
+      }
     >
       <img className="nav-icon" src={props.icon} alt={props.text} />
       <label className="nav-label">
@@ -32,8 +38,7 @@ function NavButton(props) {
     </NavLink>
   );
 }
-
-function InfoButton(props) {
+function InfoButton(props: SideButtonProps) {
   return (
     <a className="info-nav-entry" onClick={() => {}}>
       <img className="nav-icon" src={props.icon} alt={props.text} />
@@ -43,16 +48,4 @@ function InfoButton(props) {
     </a>
   );
 }
-
-function toggleMenu(props) {
-  return (
-    <a className="info-nav-entry" onClick={() => {}}>
-      <img className="nav-icon" src={props.icon} alt={props.text} />
-      <label className="nav-label">
-        {props.text.charAt(0).toUpperCase() + props.text.slice(1)}
-      </label>
-    </a>
-  );
-}
-
 export default SideButton;

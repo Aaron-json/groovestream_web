@@ -1,0 +1,3 @@
+interface RequestConfig {
+  accessToken: string;
+}

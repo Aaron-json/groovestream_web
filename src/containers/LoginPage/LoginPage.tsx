@@ -1,8 +1,7 @@
-import React from "react";
 import "./LoginPage.css";
 import { LoginForm } from "../../components";
 
-export default function (){
+export default function () {
   return (
     <section className="login-page">
       <h2>Welcome Back!</h2>

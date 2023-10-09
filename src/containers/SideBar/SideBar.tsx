@@ -1,4 +1,3 @@
-import React from "react";
 import "./SideBar.css";
 import { NavButton } from "../../components";
 import {
@@ -11,12 +10,12 @@ import {
 } from "./default-icons";
 
 // side navigation buttons and their icons
-export const navButtons:any = {
+export const navButtons: any = {
   home: home_icon,
   search: search_icon,
   library: library_icon,
 };
-export const infoButtons:any = {
+export const infoButtons: any = {
   about: about_icon,
   settings: settings_icon,
 };
@@ -27,7 +26,6 @@ export default function SideBar() {
       <hr className="menu-nav-separator" />
       <div className="nav-buttons">
         {Object.keys(navButtons).map((navLabel) => {
-
           return (
             <NavButton
               key={navLabel}

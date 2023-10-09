@@ -10,9 +10,9 @@ import {
 import { useContext, useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
-import { debounced } from "../../api/requests";
-import { supportedAUdioFormats } from "../../global/media";
+import { supportedAudioFormats } from "../../global/media";
 import { FileInputError } from "../../components/FileInput/FileInput";
+import { uploadAudioFile } from "../../api/requests/media";
 
 const categories = {
   /**
@@ -31,11 +31,11 @@ export default function Library() {
   const [currentCategory, setCurrentCategory] = useState("All");
   const [currentSort, setCurrentSort] = useState("Name");
   const [currentOrder, setCurrentOrder] = useState("A-Z");
-  const [results, setResults] = useState(null);
+  const [results, setResults] = useState<
+    Pick<User, "audioFiles" | "playlists"> | undefined
+  >(undefined);
   const [searchValue, setSearchValue] = useState("");
-  const { accessTokenRef, refreshAuthentication, request } = useContext(
-    authenticationContext
-  )!;
+  const { accessTokenRef, request } = useContext(authenticationContext)!;
   async function fetchMedia() {
     // fetches all media at startup of the application
     try {
@@ -75,14 +75,8 @@ export default function Library() {
       console.log(error);
       return;
     }
-    const response = await request(
-      async () =>
-        await axiosClient.post("/media/0", formData, {
-          headers: {
-            Authorization: `Bearer ${accessTokenRef.current}`,
-            "Content-Type": "multipart/form-data",
-          },
-        })
+    await request(async () =>
+      uploadAudioFile(formData, { accessToken: accessTokenRef.current })
     );
     await fetchMedia();
   }
@@ -138,7 +132,7 @@ export default function Library() {
               <FileInput
                 onInput={handleFileInput}
                 multiple={true}
-                formats={supportedAUdioFormats}
+                formats={supportedAudioFormats}
               />
             </label>
           </>
@@ -149,11 +143,11 @@ export default function Library() {
         <CreatePlaylist onFinish={createdPlaylistHandler} />
       </Modal>
 
-      {results === null ? (
+      {!results ? (
         <div className="loading-div">Loading...</div>
       ) : (
         <MediaList
-          items={filterMedia(results.playlists, results.audioFiles)}
+          items={filterMedia(results!.playlists!, results!.audioFiles!)}
           searchValue={searchValue}
           refreshMedia={fetchMedia}
         />
@@ -164,10 +158,7 @@ export default function Library() {
 
 function filterMedia(
   playlists: Playlist[],
-  audioFiles: AudioFile[],
-  selectedMediaType: string,
-  searchValue: string,
-  sortOrder: string
-) {
-  return playlists.concat(audioFiles);
+  audioFiles: AudioFile[]
+): Array<AudioFile | Playlist> {
+  return [...playlists, ...audioFiles];
 }

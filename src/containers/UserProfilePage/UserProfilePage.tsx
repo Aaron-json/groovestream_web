@@ -1,12 +1,14 @@
 import React from "react";
 import "./UserProfilePage.css";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
-import { useContext, useEffect, useState, useRef, useReducer } from "react";
+import { useContext, useEffect, useState, useReducer } from "react";
 import { FileInput } from "../../components";
 import axiosClient from "../../api/axiosClient";
 import { profile_icon } from "../../assets/default-icons";
 import moment from "moment/moment";
 import { FileInputError } from "../../components/FileInput/FileInput";
+import { uploadProfilePicture } from "../../api/requests/media";
+import { getUserFields } from "../../api/requests/user";
 const supportedProfilePictureFormats = ["image/jpeg", "image/png"];
 type ProfileChangesReducer = React.Reducer<
   ProfileChangesState,
@@ -63,29 +65,26 @@ export default function UserProfilePage() {
 
   async function fetchUserData() {
     try {
-      const response = await request(async () => {
-        return await axiosClient.get("/user", {
-          headers: {
-            Authorization: `Bearer ${accessTokenRef.current}`,
-          },
-          params: {
-            fields: [
-              "profilePicture",
-              "firstName",
-              "lastName",
-              "dateOfBirth",
-              "dateCreated",
-              "email",
-              "friends",
-            ],
-          },
-        });
-      });
-      setUser(response.data);
+      const fields = [
+        "profilePicture",
+        "firstName",
+        "lastName",
+        "dateOfBirth",
+        "dateCreated",
+        "email",
+        "friends",
+      ];
+      const userInfo = await request(
+        async () =>
+          await getUserFields(fields, { accessToken: accessTokenRef.current })
+      );
+      console.log(userInfo);
+      setUser(userInfo);
     } catch (err) {
       console.log(err);
     }
   }
+
   type UserUpdateQuery = {
     [key in keyof ProfileChangesState]: User[key];
   };
@@ -99,7 +98,6 @@ export default function UserProfilePage() {
       if (profileChanges[field]!.value === user![field]) continue;
       // changes made are not valid values for that field
       if (profileChanges[field]!.valid === false) {
-        console.log(ifApplyingChangesFailed);
         setIfApplyingChangesFailed(true);
         return;
       }
@@ -118,7 +116,7 @@ export default function UserProfilePage() {
     // check if any valid changes happened
     if (UpdateQueryEmpty) return;
     try {
-      const response = await request(async () => {
+      await request(async () => {
         return await axiosClient.put(
           "/user",
           {
@@ -140,7 +138,6 @@ export default function UserProfilePage() {
 
   function getProfilePicture() {
     if (user!.profilePicture) {
-      console.log(user!.profilePicture);
       return `data:${user!.profilePicture.mimeType};base64,${
         user!.profilePicture.data
       }`;
@@ -160,13 +157,10 @@ export default function UserProfilePage() {
     }
     try {
       console.log((formData.get("files") as File).type);
-      const response = await request(
+      await request(
         async () =>
-          await axiosClient.put("/user/profilePicture", formData, {
-            headers: {
-              Authorization: `Bearer ${accessTokenRef.current}`,
-              "Content-Type": "multipart/form-data",
-            },
+          await uploadProfilePicture(formData, {
+            accessToken: accessTokenRef.current,
           })
       );
       await fetchUserData();
@@ -305,7 +299,6 @@ function getTimestamp(dateString: string) {
   return new Date(year, month - 1, day).getTime();
 }
 
-function ifvalidEmail() {}
 interface ProfileChangesField {
   value: string;
   valid: boolean;

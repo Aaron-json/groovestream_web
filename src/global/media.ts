@@ -1,7 +1,9 @@
 import { library_icon, music_icon } from "../assets/default-icons";
 import { sound_waves } from "../assets/default-icons/MediaBar";
-export const supportedAUdioFormats = ["audio/mpeg", "audio/wav", "audio/wave"];
-export function getSongIcon(song: AudioFile | NullOrUndefined) {
+export const supportedAudioFormats = ["audio/mpeg", "audio/wav", "audio/wave"];
+export function getSongIcon(
+  song: AudioFile | NullOrUndefined | PlaylistAudioFile
+) {
   if (!song) {
     // no media is loaded
     return sound_waves;

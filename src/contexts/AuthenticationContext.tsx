@@ -6,7 +6,7 @@ interface AuthenticationContextValue {
   authenticated: boolean;
   setAuthenticated: React.Dispatch<SetStateAction<boolean>>;
   refreshAuthentication: () => Promise<void>;
-  accessTokenRef: React.MutableRefObject<string | undefined>;
+  accessTokenRef: React.MutableRefObject<string>;
   request: (requestFunction: () => Promise<any>) => Promise<any>;
   logout: () => Promise<void>;
 }
@@ -18,7 +18,7 @@ export const AuthenticationContextProvider = ({
   children,
 }: ContextProvider) => {
   const [authenticated, setAuthenticated] = useState(false);
-  const accessTokenRef = useRef<string | undefined>();
+  const accessTokenRef = useRef<string>("");
   // const [refreshToken, setRefreshToken] = useState()
   // persist refresh token in local storage
 
@@ -30,7 +30,7 @@ export const AuthenticationContextProvider = ({
     // checks if you have any refresh tokens
     // if you do, gets new access tokens
 
-    console.log("refreshing auth");
+    console.log("access token is ", accessTokenRef.current);
     try {
       const refreshResponse = await axiosClient.get("/refresh", {
         // include http only cookie with refresh token
@@ -57,7 +57,7 @@ export const AuthenticationContextProvider = ({
         });
       });
       // clear the access token
-      accessTokenRef.current = undefined;
+      accessTokenRef.current = "";
       // set authenticated to false to update the ui
       await refreshAuthentication();
     } catch (err) {
@@ -72,7 +72,6 @@ export const AuthenticationContextProvider = ({
    * If failed, it will try to grab a new access Token using the refreshAuthentication function and retry the request
    * @returns {Promise}
    */
-
   async function request(requestFunction: requestFunctionType) {
     try {
       return await requestFunction();

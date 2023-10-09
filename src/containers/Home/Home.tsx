@@ -1,23 +1,10 @@
 import "./Home.css";
 import { MediaGrid, HorizontalScroll, Modal } from "../../components";
-import axiosClient from "../../api/axiosClient";
 import { useContext, useEffect, useState } from "react";
 import { profile_icon } from "../../assets/default-icons";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { UserProfilePage } from "..";
-
-const homeCategories = [
-  {
-    title: "Top Songs on Spotify",
-    endpoint: "songs/top",
-    count: 15,
-  },
-  {
-    title: "Top Artists on Spotify",
-    endPoint: "artists/top",
-    count: 15,
-  },
-];
+import { getUserFields } from "../../api/requests/user";
 
 export default function Home() {
   const { accessTokenRef, request } = useContext(authenticationContext)!;
@@ -25,17 +12,12 @@ export default function Home() {
   const [user, setUser] = useState<User | undefined>(undefined);
   async function fetchUserData() {
     try {
-      const response = await request(async () => {
-        return await axiosClient.get("/user", {
-          headers: {
-            Authorization: `Bearer ${accessTokenRef.current}`,
-          },
-          params: {
-            fields: ["profilePicture", "firstName", "audioFiles", "playlists"],
-          },
-        });
-      });
-      setUser(response.data);
+      const fields = ["firstName", "audioFiles", "playlists"];
+      const response = await request(
+        async () =>
+          await getUserFields(fields, { accessToken: accessTokenRef.current })
+      );
+      setUser(response);
     } catch (err) {
       console.log(err);
     }
@@ -44,7 +26,7 @@ export default function Home() {
     fetchUserData();
   }, []);
 
-  if (user === null) {
+  if (!user) {
     return <div className="loading">Loading...</div>;
   }
   return (
@@ -84,7 +66,7 @@ export default function Home() {
 
       {user && (
         <HorizontalScroll
-          items={getMostPlayedPlaylists(user.playlists)}
+          items={getMostPlayedPlaylists(user.playlists!)}
           title="Most Played Playlists"
         />
       )}
@@ -97,7 +79,7 @@ function getRecentlyPlayed(
   audioFiles: AudioFile[],
   limit = 6
 ) {
-  const processedMedia = audioFiles.toSorted(
+  const processedMedia = [...audioFiles].sort(
     // compares when the songs were last played and returns a new sorted array
     (a, b) =>
       (a.lastPlayed ? a.lastPlayed : 0) - (b.lastPlayed ? a.lastPlayed : 0)
@@ -106,7 +88,7 @@ function getRecentlyPlayed(
   return processedMedia.slice(-limit);
 }
 function getMostPlayedTracks(audioFiles: AudioFile[], limit = 10) {
-  const processedMedia = audioFiles.sort(
+  const processedMedia = [...audioFiles].sort(
     (a, b) => a.playbackCount - b.playbackCount
   );
 
@@ -114,12 +96,8 @@ function getMostPlayedTracks(audioFiles: AudioFile[], limit = 10) {
 }
 
 function getMostPlayedPlaylists(playlists: Playlist[], limit = 10) {
-  const processedMedia = playlists.toSorted(
+  const processedMedia = [...playlists].sort(
     (a, b) => a.playbackCount - b.playbackCount
   );
   return processedMedia.slice(-limit);
 }
-
-function getMostPlayedOnSpotify() {}
-
-function getMostPlayedOnAppleMusic() {}

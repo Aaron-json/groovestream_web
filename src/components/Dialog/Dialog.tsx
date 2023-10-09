@@ -1,9 +1,9 @@
-import React from "react"
+import React from "react";
 import "./Dialog.css";
 
 interface DialogProps {
-  show: boolean,
-  children: React.ReactNode
+  show: boolean;
+  children: React.ReactNode;
 }
 export default function Dialog({ show, children }: DialogProps) {
   if (!show) return null;

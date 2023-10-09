@@ -27,5 +27,4 @@ dist-ssr
 .env
 
 # personal workflow text files
-
-.txt
+src/default_colors.txt
