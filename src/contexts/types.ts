@@ -4,10 +4,12 @@ type ContextProvider = {
   children: React.ReactNode;
 };
 
-type CurrentMedia = {
-  index: number | NullorUndefined;
-  queue: AudioFile[] | NullorUndefined;
-};
+type CurrentMedia =
+  | {
+      index: number;
+      queue: AudioFile[];
+    }
+  | NullorUndefined;
 
 type mediaStateAction = {
   type: string;

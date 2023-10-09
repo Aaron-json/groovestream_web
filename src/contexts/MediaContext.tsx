@@ -1,4 +1,4 @@
-import {
+import React, {
   Reducer,
   SetStateAction,
   createContext,
@@ -13,7 +13,7 @@ import { authenticationContext } from "./AuthenticationContext";
 import { flushSync } from "react-dom";
 
 interface MediaContextValue {
-  currentMedia: AudioFile | null;
+  currentMedia: AudioFile | undefined;
   updateMedia: (mediaList: any[], index: number) => void;
   player: MediaPlayer;
   playbackState: string;
@@ -22,9 +22,11 @@ interface MediaContextValue {
   mute: boolean;
   volume: number;
   setVolume: React.Dispatch<SetStateAction<number>>;
+  ifSeeking: boolean;
+  setIfSeeking: React.Dispatch<SetStateAction<boolean>>;
   seek: number;
+  setSeek: React.Dispatch<SetStateAction<number>>;
   updateSeek: (seekPosition: number) => void;
-  //setSeek: React.Dispatch<SetStateAction<number>>;
   playNext: () => void;
   playPrev: () => void;
 }
@@ -46,12 +48,12 @@ type mediaReducer = Reducer<CurrentMedia, mediaStateAction>;
 const currentMediaReducer: mediaReducer = (state, action): CurrentMedia => {
   switch (action.type) {
     case "next":
-      if (!state.queue || !state.index) return state;
+      if (!state) return state;
 
       let nextIndex = (state.index + 1) % state.queue.length;
 
       while (
-        state.queue[nextIndex].type !== 0 ||
+        state.queue[nextIndex].type !== 0 &&
         state.queue[nextIndex].type !== 2
       ) {
         // loop to the next audioFile i.e type = 0
@@ -60,15 +62,15 @@ const currentMediaReducer: mediaReducer = (state, action): CurrentMedia => {
         nextIndex = (nextIndex + 1) % state.queue.length;
       }
       if (nextIndex === state.index) {
-        return state;
+        return undefined;
       }
       return { ...state, index: nextIndex };
     case "previous":
-      if (!state.queue || !state.index) return state;
+      if (!state) return state;
 
       let prevIndex = mod(state.index - 1, state.queue.length);
       while (
-        state.queue[prevIndex].type !== 0 ||
+        state.queue[prevIndex].type !== 0 &&
         state.queue[prevIndex].type !== 2
       ) {
         // loop to the previous audioFile i.e type = 0
@@ -77,7 +79,7 @@ const currentMediaReducer: mediaReducer = (state, action): CurrentMedia => {
         prevIndex = mod(prevIndex - 1, state.queue.length);
       }
       if (prevIndex === state.index) {
-        return state;
+        return undefined;
       }
       return { ...state, index: prevIndex };
     case "newMedia":
@@ -86,7 +88,7 @@ const currentMediaReducer: mediaReducer = (state, action): CurrentMedia => {
       return { index, queue };
 
     case "unload":
-      return { queue: null, index: null };
+      return undefined;
     default:
       return state;
   }
@@ -98,6 +100,7 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
   const { accessTokenRef, request } = useContext(authenticationContext)!;
 
   const [seek, setSeek] = useState(0);
+  const [ifSeeking, setIfSeeking] = useState(false);
   const [volume, setVolume] = useState(0.7);
   const [mute, setMute] = useState(false);
   const [playbackState, setPlaybackState] =
@@ -107,52 +110,33 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
   // alsp supports future complex features eq. playNext queue
   const [currentMediaStates, currentMediaDispatch] = useReducer<mediaReducer>(
     currentMediaReducer,
-    {
-      queue: undefined,
-      index: undefined,
-    }
+    undefined
   );
-
-  //convenience object to prevent destructuring to access the actual current media object
-  // when queue is null or defined so is the index which means if queue not null you can assume that
-  // index will also not be null
-  const currentMediaObj = currentMediaStates.queue
-    ? currentMediaStates.queue[currentMediaStates.index!]
-    : null;
 
   useEffect(() => {
     // cleanup for when the media context unmounts, unload the source
     // DO NOT place with the useEffect that changes the current media
     // it will cause media to be unloaded and set back to null on every media change
-    return () => {
-      unloadMedia();
-    };
+    return unloadMedia;
   }, []);
   //load media when current media changes
   useEffect(() => {
-    if (!currentMediaObj) {
+    if (!currentMediaStates) {
       return;
     }
     loadMedia();
-    return () => {
-      // unload any current audio when component unmounts
-      console.log("unloading media");
-    };
   }, [currentMediaStates]);
 
   useEffect(() => {
-    let timeout;
-    if (playbackState === "playing") {
+    let timeout: number | undefined;
+    if (playbackState === "playing" && !ifSeeking) {
       timeout = setInterval(() => {
         // seek will not be null since
         flushSync(() => setSeek(Math.round(player.getSeek())));
       }, 1000);
-    } else {
-      if (timeout) {
-        clearInterval(timeout);
-      }
     }
-  }, [playbackState]);
+    return () => clearInterval(timeout);
+  }, [playbackState, ifSeeking]);
 
   // change volume when state changes
   useEffect(() => {
@@ -162,7 +146,7 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
   useEffect(() => {
     player.mute(mute);
   }, [mute]);
-  useEffect(() => console.log(seek), [seek]);
+
   function playPauseToggle() {
     /**
      * Function to toggle between play and pause
@@ -170,7 +154,11 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
     if (player.isPlaying()) {
       player.pause();
       setPlaybackState("paused");
-    } else if (playbackState !== "playing" && playbackState !== "unloaded") {
+    } else if (
+      !player.isPlaying() &&
+      playbackState !== "unloaded" &&
+      playbackState !== "loading"
+    ) {
       player.play();
       setPlaybackState("playing");
     }
@@ -179,15 +167,17 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
     /**
      * Downloads the current media and loads it to the Music player
      */
-
-    if (!currentMediaObj) {
+    if (!currentMediaStates) {
       return;
     }
+    console.log(currentMediaStates);
     //unload current source before loading the new source
     // react will not batch updates so no need to use fluShSync
     setPlaybackState("loading");
+
     try {
-      const { _id, format } = currentMediaObj;
+      const { _id, format } =
+        currentMediaStates.queue[currentMediaStates.index];
 
       const response = await request(async () => {
         return await axiosClient.get(`/media/0/${_id}`, {
@@ -201,8 +191,6 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
         _id,
       });
       player.play();
-      // hardcode the state as a literal since the player object's state is "loading"
-      // immediately after calling play
       setPlaybackState("playing");
     } catch (err) {
       console.log(err);
@@ -225,16 +213,21 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
      * Updates media given a list of media and its index in the list.
      * Restarts the same song if the given media is already the current media
      */
-    if (mediaList[index]._id === currentMediaObj?._id && player.isPlaying()) {
-      player.stop();
-      player.play();
-    } else if (
-      mediaList[index]._id === currentMediaObj?._id &&
-      playbackState !== "playing"
+    if (
+      currentMediaStates &&
+      mediaList[index]._id ===
+        currentMediaStates.queue[currentMediaStates.index]?._id &&
+      mediaList === currentMediaStates.queue &&
+      index === currentMediaStates.index
     ) {
-      player.stop();
-      player.play();
-      setPlaybackState("playing");
+      if (playbackState === "playing") {
+        player.stop();
+        player.play();
+      } else {
+        player.stop();
+        player.play();
+        setPlaybackState("playing");
+      }
     } else {
       // place all state changes here so react batches them together
       // for a single rerender
@@ -246,16 +239,15 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
           index: index,
         },
       });
-      setPlaybackState(player.getState());
     }
   }
-
   function updateSeek(seekPosition: number) {
     player.setSeek(seekPosition);
   }
   function playNext() {
-    if (!currentMediaObj) return;
+    if (!currentMediaStates) return;
     player.stop();
+    setPlaybackState("stopped");
     currentMediaDispatch({
       type: "next",
     });
@@ -263,27 +255,26 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
     // Call play() method anyways. loadMedia function will play automatically
     // however, if the "next" operation gives the same song as the current, then
     // the load function will not be called sicne media is already loaded
-    player.play();
-    setPlaybackState("playing");
   }
   function playPrev() {
-    if (!currentMediaObj) return;
+    if (!currentMediaStates) return;
 
     player.stop();
+    setPlaybackState("stopped");
     currentMediaDispatch({
       type: "previous",
     });
     // Call play() method anyways. loadMedia function will play automatically
     // however, if the "next" operation gives the same song as the current, then
     // the load function will not be called sicne media is already loaded
-    player.play();
-    setPlaybackState("playing");
   }
 
   return (
     <mediaContext.Provider
       value={{
-        currentMedia: currentMediaObj,
+        currentMedia: currentMediaStates
+          ? currentMediaStates.queue[currentMediaStates.index]
+          : undefined,
         updateMedia,
         player,
         playbackState,
@@ -294,6 +285,9 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
         setVolume,
         updateSeek,
         seek,
+        setSeek,
+        ifSeeking,
+        setIfSeeking,
         playNext,
         playPrev,
       }}

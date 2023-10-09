@@ -1,5 +1,11 @@
 import "./PlaybackControls.css";
-import { play, pause, back, next } from "../../assets/default-icons/MediaBar";
+import {
+  play,
+  pause,
+  back,
+  next,
+  loading,
+} from "../../assets/default-icons/MediaBar";
 import { useContext, useState } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
 
@@ -9,19 +15,22 @@ const PlaybackControls = () => {
     playbackState,
     playPauseToggle,
     seek,
+    setSeek,
+    ifSeeking,
+    setIfSeeking,
     updateSeek,
     playNext,
     playPrev,
   } = useContext(mediaContext)!;
 
-  const [internalSeek, setinternalSeek] = useState(0);
-  const [ifSeeking, setIfSeeking] = useState(false);
-
-  function getDisplaySeek() {
-    if (ifSeeking) {
-      return internalSeek;
-    } else {
-      return seek;
+  function getPlaybackIcon() {
+    switch (playbackState) {
+      case "playing":
+        return pause;
+      case "loading":
+        return loading;
+      default:
+        return play;
     }
   }
   function parseSeconds(secondsCount: number) {
@@ -40,8 +49,12 @@ const PlaybackControls = () => {
         <button className="playback-control-btn" onClick={playPrev}>
           <img src={back} alt="back" />
         </button>
-        <button className="playback-control-btn" onClick={playPauseToggle}>
-          <img src={playbackState === "playing" ? pause : play} alt="play" />
+        <button className={`playback-control-btn`} onClick={playPauseToggle}>
+          <img
+            className={playbackState === "loading" ? "loading" : undefined}
+            src={getPlaybackIcon()}
+            alt="play"
+          />
         </button>
         <button className="playback-control-btn" onClick={playNext}>
           <img src={next} alt="next" />
@@ -62,11 +75,11 @@ const PlaybackControls = () => {
           }
           min={0}
           step={1}
-          value={getDisplaySeek()}
+          value={seek}
           onMouseDown={() => setIfSeeking(true)}
-          onChange={(e) => setinternalSeek(Number(e.target.value))}
+          onInput={(e) => setSeek(Number(e.currentTarget.value))}
           onMouseUp={() => {
-            updateSeek(internalSeek);
+            updateSeek(seek);
             setIfSeeking(false);
           }}
           //onChange={(e) => setSeek(Number(e.target.value))}

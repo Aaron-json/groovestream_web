@@ -76,28 +76,24 @@ export default function Home() {
 
 function getRecentlyPlayed(
   playlists: Playlist[],
-  audioFiles: AudioFile[],
+  audioFiles: (AudioFile | PlaylistAudioFile)[],
   limit = 6
 ) {
-  const processedMedia = [...audioFiles].sort(
-    // compares when the songs were last played and returns a new sorted array
-    (a, b) =>
-      (a.lastPlayed ? a.lastPlayed : 0) - (b.lastPlayed ? a.lastPlayed : 0)
-  );
-
-  return processedMedia.slice(-limit);
+  const totalMedia = [...playlists, ...audioFiles];
+  totalMedia.filter((media) => Boolean(media.lastPlayed));
+  totalMedia.sort((a, b) => a.lastPlayed - b.lastPlayed);
+  return totalMedia.slice(-limit);
 }
 function getMostPlayedTracks(audioFiles: AudioFile[], limit = 10) {
-  const processedMedia = [...audioFiles].sort(
-    (a, b) => a.playbackCount - b.playbackCount
-  );
-
-  return processedMedia.slice(-limit);
+  const totalMedia = [...audioFiles];
+  totalMedia.filter((media) => media.playbackCount !== 0);
+  totalMedia.sort((a, b) => a.playbackCount - b.playbackCount);
+  return totalMedia.slice(-limit);
 }
 
 function getMostPlayedPlaylists(playlists: Playlist[], limit = 10) {
-  const processedMedia = [...playlists].sort(
-    (a, b) => a.playbackCount - b.playbackCount
-  );
-  return processedMedia.slice(-limit);
+  const totalMedia = [...playlists];
+  totalMedia.filter((media) => media.playbackCount !== 0);
+  totalMedia.sort((a, b) => a.playbackCount - b.playbackCount);
+  return totalMedia.slice(-limit);
 }

@@ -39,11 +39,19 @@
 
 
 .playback-control-btn>img {
-    filter: invert(1);
     width: 60%;
-
 }
-
+.playback-control-btn>img.loading{
+    animation: rotate 1.5s linear infinite;
+}
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
 .playback-control-btn:hover {
     background-color: rgba(255, 255, 255, 0.25);
 }
