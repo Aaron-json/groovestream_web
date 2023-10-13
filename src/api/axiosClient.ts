@@ -1,8 +1,9 @@
 import axios from "axios";
 
-const HOST_NAME = "http://localhost:5001";
+const DEV_HOST_NAME = "http://localhost:5001";
+const PROD_HOST_NAME = "https://fine-craft-385619.nn.r.appspot.com";
 const axiosClient = axios.create({
-  baseURL: HOST_NAME,
+  baseURL: DEV_HOST_NAME,
   withCredentials: true,
   // ovverride the content type header if you are not sending json data in your request
   headers: {

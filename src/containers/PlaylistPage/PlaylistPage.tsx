@@ -4,27 +4,28 @@ import { MediaList } from "../../components";
 import { useEffect, useState, useContext } from "react";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import axiosClient from "../../api/axiosClient";
+import { getMediaInfo } from "../../api/requests/media";
 
+// the type playlist is represented by the number 1 in its object under the type field
+// use this to make requests
+const PlaylistMediaType = 1;
 export default function PlaylistPage() {
   const { accessTokenRef, request } = useContext(authenticationContext)!;
   const { mediaID } = useParams();
-  const [playlist, setPlaylist] = useState(useLocation().state);
+  const [playlist, setPlaylist] = useState<Playlist>(useLocation().state);
   useEffect(() => {
     if (playlist) {
+      // is
       return;
     }
     requestPageInfo();
   }, []);
 
   async function requestPageInfo() {
-    console.log(mediaID);
-    const response = await request(async () => {
-      return await axiosClient.get(`media/info/1/${mediaID}`, {
-        headers: {
-          Authorization: `Bearer ${accessTokenRef.current}`,
-        },
-      });
-    });
+    if (!mediaID) return;
+    const response = await request(async () =>
+      getMediaInfo(mediaID, { accessToken: accessTokenRef.current })
+    );
     setPlaylist(response.data);
   }
   if (!playlist) {

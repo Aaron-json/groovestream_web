@@ -6,7 +6,7 @@ import {
   next,
   loading,
 } from "../../assets/default-icons/MediaBar";
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
 
 const PlaybackControls = () => {
@@ -16,7 +16,6 @@ const PlaybackControls = () => {
     playPauseToggle,
     seek,
     setSeek,
-    ifSeeking,
     setIfSeeking,
     updateSeek,
     playNext,
@@ -31,6 +30,22 @@ const PlaybackControls = () => {
         return loading;
       default:
         return play;
+    }
+  }
+  function formatSeconds(seconds: number) {
+    const hours = Math.floor(seconds / 3600);
+    seconds %= 3600;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+    } else {
+      return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+        .toString()
+        .padStart(2, "0")}`;
     }
   }
   function parseSeconds(secondsCount: number) {
@@ -61,11 +76,8 @@ const PlaybackControls = () => {
         </button>
       </div>
       <div className="playback-tracking-div">
-        <label htmlFor="seeker" className="seeker-label">
-          {parseSeconds(seek)}
-        </label>
+        <label className="left-seeker-label">{formatSeconds(seek)}</label>
         <input
-          id="seeker"
           className="seeker"
           type="range"
           max={
@@ -84,10 +96,10 @@ const PlaybackControls = () => {
           }}
           //onChange={(e) => setSeek(Number(e.target.value))}
         />
-        <label htmlFor="seeker" className="seeker-label">
+        <label className="right-seeker-label">
           {currentMedia && currentMedia.duration
-            ? parseSeconds(Math.round(currentMedia.duration))
-            : parseSeconds(0)}
+            ? formatSeconds(Math.round(currentMedia.duration))
+            : formatSeconds(0)}
         </label>
       </div>
     </div>

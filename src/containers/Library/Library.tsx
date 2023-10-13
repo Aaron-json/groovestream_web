@@ -7,30 +7,51 @@ import {
   CreatePlaylist,
   FileInput,
 } from "../../components";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useReducer, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { supportedAudioFormats } from "../../global/media";
 import { FileInputError } from "../../components/FileInput/FileInput";
 import { uploadAudioFile } from "../../api/requests/media";
-
-const categories = {
+import { MediaFilters } from "../../components/MediaList/types";
+interface MediaFiltersActions {
+  filter: keyof MediaFilters;
+  value: any;
+}
+const mediaTypesOptions = [
   /**
    * 0 : audioFiles
    * 1 : playlists
    */
-  All: [0, 1],
-  Songs: [0],
-  Playlists: [1],
-};
-const sortBy = { Name: "name", Date: "dateCreated" };
-const order = { "A-Z": "ascending", "Z-A": "descending" };
+  "All",
+  "Songs",
+  "Playlists",
+];
+const sortByOptions = ["Name", "Date Created"];
+const orderOptions = ["Ascending", "Descending"];
+function mediaFiltersReducer(
+  mediaFilters: MediaFilters,
+  action: MediaFiltersActions
+): MediaFilters {
+  switch (action.filter) {
+    case "mediaTypes":
+      return { ...mediaFilters, mediaTypes: action.value };
+    case "sortBy":
+      return { ...mediaFilters, sortBy: action.value };
+    case "sort":
+      return { ...mediaFilters, sort: action.value };
+    default:
+      return mediaFilters;
+  }
+}
 export default function Library() {
   const [addingMedia, setAddingMedia] = useState(false);
   const [addingPlaylist, setAddingPlaylist] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState("All");
-  const [currentSort, setCurrentSort] = useState("Name");
-  const [currentOrder, setCurrentOrder] = useState("A-Z");
+  const [mediaFilters, mediaFiltersDispatch] = useReducer(mediaFiltersReducer, {
+    mediaTypes: mediaTypesOptions[0],
+    sortBy: sortByOptions[0],
+    sort: orderOptions[0],
+  });
   const [results, setResults] = useState<
     Pick<User, "audioFiles" | "playlists"> | undefined
   >(undefined);
@@ -98,19 +119,34 @@ export default function Library() {
       <hr />
       <div className="library-results-options">
         <Dropdown
-          items={Object.keys(categories)}
-          currentItem={currentCategory}
-          setCurrentItem={setCurrentCategory}
+          items={mediaTypesOptions}
+          currentItemIndex={mediaTypesOptions.indexOf(mediaFilters.mediaTypes)}
+          setCurrentItemIndex={(newItemIndex: number) =>
+            mediaFiltersDispatch({
+              filter: "mediaTypes",
+              value: mediaTypesOptions[newItemIndex],
+            })
+          }
         />
         <Dropdown
-          items={Object.keys(sortBy)}
-          currentItem={currentSort}
-          setCurrentItem={setCurrentSort}
+          items={sortByOptions}
+          currentItemIndex={sortByOptions.indexOf(mediaFilters.sortBy)}
+          setCurrentItemIndex={(newItemIndex) => {
+            mediaFiltersDispatch({
+              filter: "sortBy",
+              value: sortByOptions[newItemIndex],
+            });
+          }}
         />
         <Dropdown
-          items={Object.keys(order)}
-          currentItem={currentOrder}
-          setCurrentItem={setCurrentOrder}
+          items={orderOptions}
+          currentItemIndex={orderOptions.indexOf(mediaFilters.sort)}
+          setCurrentItemIndex={(newItemIndex: number) => {
+            mediaFiltersDispatch({
+              filter: "sort",
+              value: orderOptions[newItemIndex],
+            });
+          }}
         />
       </div>
 

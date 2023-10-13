@@ -2,16 +2,15 @@
     color: white;
     position: relative;
     width: 20em;
-    user-select: none;
 }
 .dropdown-toggle{
     color: white;
-    font-size: 1.1em;
+    font-size: 0.96em;
     background-color: rgba(255, 255, 255, 0.18);
     width: 100%;
     padding: 0;
-    transition: all 0.2s;
-    height: 1.4em;
+    transition: all 0.1s;
+    height: 1.6em;
     border-radius: 5px;
     display: flex;
     align-items: center;
@@ -43,7 +42,10 @@
     gap: 0.2em;
 }
 .dropdown-item{
-    background-color: rgba(255, 255, 255, 0.18);
+    background-color: rgb(79,
+        79,
+        79);
+    /* background-color: rgba(255, 255, 255, 0.18); */
     transition: all 0.2s;
     font-size: 1em;
     padding-inline: 5px;

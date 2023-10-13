@@ -24,18 +24,22 @@ div#root {
   flex-direction: column;
   height: 100%;
   min-width: 1000px;
-  background: var(--default-background);
-  background-size: cover;
 }
+
 #App{
+  background-color: rgba(19, 19, 19);
+    /* For image background */
+    /* background: var(--default-background); */
+    /* background-size: cover; */
   transition: background 12s;
+}
+.login-register{
+
+  background:linear-gradient(to top right,rgb(15, 32, 39),rgb(32, 58, 67),rgb(44, 83, 100));
 }
 #App > section {
   width: 100%;
   min-width: inherit;
-}
-.login-register{
-  background:linear-gradient(to top right,rgb(15, 32, 39),rgb(32, 58, 67),rgb(44, 83, 100));
 }
 
 ::-webkit-scrollbar {

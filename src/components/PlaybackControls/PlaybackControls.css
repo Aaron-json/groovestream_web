@@ -14,16 +14,18 @@
     width: 100%;
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    
 }
 
 .playback-control-buttons {
-    flex: 1.5;
+    justify-content: center;
+    flex: 1.45;
     align-items: flex-end;
     column-gap: 25px;
 }
 
 .playback-tracking-div {
+    justify-content: center;
     flex: 1;
     align-items: center;
 }
@@ -58,20 +60,49 @@
 .playback-control-btn:active{
     opacity: 0.7;
 }
+.right-seeker-label,
+.left-seeker-label {
+    width: 49px;
+    color: white;
+    font-size: 13px;
+}
+
+.right-seeker-label {
+    text-align: right;
+}
 
 .seeker {
+    display: flex;
+    align-items: center;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 5px;
     color: green;
     flex: 1;
     min-width: 330px;
     max-width: 600px;
     height: 5px;
-    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.75);
+    outline: none;
 }
 
-.seeker-label {
-    color: white;
-    font-size: 13px;
-    padding-left: 4px;
-    padding-right: 4px;
-    word-break: unset;
+ .seeker::-webkit-slider-thumb {
+    height: 2px;
+    width: 2px;
+    background: white;
 }
+.seeker::-moz-range-thumb {
+}
+/* 
+.seeker::-webkit-slider-runnable-track{
+    background: grey;
+    border-radius: 5px;
+    height: 5%;
+}
+.seeker::-moz-range-track{
+    height: 5%;
+    background: grey;
+    border-radius: 5px;
+}
+  */

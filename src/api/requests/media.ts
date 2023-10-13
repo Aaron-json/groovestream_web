@@ -33,6 +33,14 @@ export async function deletePlaylist(
   });
 }
 
+export async function getMediaInfo(mediaID: string, config: RequestConfig) {
+  return await axiosClient.get(`media/info/1/${mediaID}`, {
+    headers: {
+      Authorization: `Bearer ${config.accessToken}`,
+    },
+  });
+}
+
 export async function uploadAudioFile(
   formData: FormData,
   config: RequestConfig

@@ -29,7 +29,7 @@ interface MediaListProps {
   title?: string;
   songClickHandler?: () => any;
   playlistClickHandler?: () => any;
-  options?: MediaListOptions;
+  filterOptions?: MediaListOptions;
 }
 
 interface MediaListItem {

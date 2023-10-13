@@ -1,23 +1,27 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "./Dropdown.css";
 import { dropdown_icon } from "../../assets/default-icons";
 
 interface DropdownProps {
   items: Array<string>;
-  currentItem: string;
-  setCurrentItem: React.Dispatch<React.SetStateAction<string>>;
+  currentItemIndex: number;
+  setCurrentItemIndex: (newValueIndex: number) => any;
 }
-const Dropdown = ({ items, currentItem, setCurrentItem }: DropdownProps) => {
+const Dropdown = ({
+  items,
+  currentItemIndex,
+  setCurrentItemIndex,
+}: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  function handleItemClick(item: string) {
-    setCurrentItem(item);
+  function handleItemClick(item: number) {
+    setCurrentItemIndex(item);
     setIsOpen(false);
   }
   return (
     <div className="dropdown">
       <button className="dropdown-toggle" onClick={() => setIsOpen(!isOpen)}>
-        {currentItem}
+        {items[currentItemIndex]}
         <img
           src={dropdown_icon}
           alt="img"
@@ -30,11 +34,11 @@ const Dropdown = ({ items, currentItem, setCurrentItem }: DropdownProps) => {
         <ul className="dropdown-menu">
           {items.map(
             (item, index) =>
-              item !== currentItem && (
+              index !== currentItemIndex && (
                 <li
                   key={index}
                   className="dropdown-item"
-                  onClick={() => handleItemClick(item)}
+                  onClick={() => handleItemClick(index)}
                 >
                   {item}
                 </li>

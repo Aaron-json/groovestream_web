@@ -78,7 +78,6 @@ export default function UserProfilePage() {
         async () =>
           await getUserFields(fields, { accessToken: accessTokenRef.current })
       );
-      console.log(userInfo);
       setUser(userInfo);
     } catch (err) {
       console.log(err);

@@ -1,5 +1,4 @@
 import React, {
-  Reducer,
   SetStateAction,
   createContext,
   useContext,
@@ -44,8 +43,10 @@ export const mediaContext = createContext<MediaContextValue | undefined>(
   undefined
 );
 const player = new MediaPlayer();
-type mediaReducer = Reducer<CurrentMedia, mediaStateAction>;
-const currentMediaReducer: mediaReducer = (state, action): CurrentMedia => {
+const currentMediaReducer = (
+  state: CurrentMedia,
+  action: mediaStateAction
+): CurrentMedia => {
   switch (action.type) {
     case "next":
       if (!state) return state;
@@ -108,7 +109,7 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
 
   // reducer is optimal since we expect currentMedia to change when index OR both to change
   // alsp supports future complex features eq. playNext queue
-  const [currentMediaStates, currentMediaDispatch] = useReducer<mediaReducer>(
+  const [currentMediaStates, currentMediaDispatch] = useReducer(
     currentMediaReducer,
     undefined
   );
