@@ -3,11 +3,11 @@ import {
   mediaListBackIcon,
   plusIcon,
 } from "../../assets/default-icons/MediaList";
-import moment from "moment";
 import "./MediaList.css";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { mediaContext } from "../../contexts/MediaContext";
+import { formatDistanceToNow } from "date-fns";
 import { FileInput } from "../";
 import {
   getSongIcon,
@@ -281,7 +281,7 @@ function LibrarySong({
           {audioFile.album ? audioFile.album : "Unknown Album"}
         </span>
         <span className="media-item-date-created">
-          Uploaded {moment(audioFile.dateUploaded).fromNow()}
+          Uploaded {formatDistanceToNow(new Date(audioFile.dateUploaded))} ago
         </span>
       </div>
       <span className="media-item-type">
@@ -363,7 +363,7 @@ function LibraryPlaylist({
           Songs: {playlist.audioFiles.length}
         </span>
         <span className="media-item-date-created">
-          Created {moment(playlist.dateCreated).fromNow()}
+          Created {formatDistanceToNow(new Date(playlist.dateCreated))} ago
         </span>
       </div>
       <span className="media-item-type">Playlist</span>
@@ -373,6 +373,7 @@ function LibraryPlaylist({
           <FileInput
             onInput={addSongToPlaylistHandler}
             formats={supportedAudioFormats}
+            multiple={true}
           />
         </label>
         {playlist.name !== "Favorites" && (

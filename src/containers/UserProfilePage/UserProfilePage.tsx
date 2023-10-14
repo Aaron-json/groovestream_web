@@ -1,20 +1,20 @@
-import React from "react";
 import "./UserProfilePage.css";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { useContext, useEffect, useState, useReducer } from "react";
 import { FileInput } from "../../components";
 import axiosClient from "../../api/axiosClient";
 import { profile_icon } from "../../assets/default-icons";
-import moment from "moment/moment";
 import { FileInputError } from "../../components/FileInput/FileInput";
 import { uploadProfilePicture } from "../../api/requests/media";
 import { getUserFields } from "../../api/requests/user";
+import { convertToTimeStamp } from "../../api/validation/FormInput";
+import { format } from "date-fns";
 const supportedProfilePictureFormats = ["image/jpeg", "image/png"];
-type ProfileChangesReducer = React.Reducer<
-  ProfileChangesState,
-  ProfileChangesAction
->;
-const profileChangesReducer: ProfileChangesReducer = (state, action) => {
+
+const profileChangesReducer = (
+  state: ProfileChangesState,
+  action: ProfileChangesAction
+) => {
   // fix to return a new object to cause a state change
   switch (action.field) {
     case "firstName":
@@ -51,8 +51,10 @@ export default function UserProfilePage() {
   // we do not want react to rerender the page when changes are made only when applied.
   // so do not create a new object on every change, just add to the mutabla object
   // useRef since it does not cause re-renders
-  const [profileChanges, profileChangesDispatch] =
-    useReducer<ProfileChangesReducer>(profileChangesReducer, {});
+  const [profileChanges, profileChangesDispatch] = useReducer(
+    profileChangesReducer,
+    {}
+  );
 
   const [ifApplyingChangesFailed, setIfApplyingChangesFailed] = useState(false);
 
@@ -102,7 +104,7 @@ export default function UserProfilePage() {
       }
       if (field === "dateOfBirth") {
         //change the date of Birth to its time stamp
-        const timestamp = getTimestamp(profileChanges.dateOfBirth!.value);
+        const timestamp = convertToTimeStamp(profileChanges.dateOfBirth!.value);
         if (timestamp !== user!.dateOfBirth) {
           updateQuery.dateOfBirth = timestamp;
           UpdateQueryEmpty = false;
@@ -256,7 +258,7 @@ export default function UserProfilePage() {
             // show the updated version
             profileChanges.dateOfBirth
               ? profileChanges.dateOfBirth.value
-              : moment(user.dateOfBirth).format("DD-MM-YYYY")
+              : format(new Date(user.dateOfBirth!), "dd-MM-yyyy")
           }
           className="form-input"
           type="text"
@@ -272,7 +274,7 @@ export default function UserProfilePage() {
         Friends: {user.friends!.length}
       </label>
       <label className="user-profile-page-label">
-        Date Joined: {moment(user.dateCreated).format("DD MMMM YYYY")}
+        Date Joined: {format(new Date(user.dateCreated!), "do MMMM yyyy")}
       </label>
       <div className="user-profile-page-footer">
         <button
@@ -293,11 +295,6 @@ export default function UserProfilePage() {
  * Takes date string and returns its timestamp
  * @param {String} dateString Date sting in format (DD-MM-YYYY)
  */
-function getTimestamp(dateString: string) {
-  const [day, month, year] = dateString.split("-").map(Number);
-  return new Date(year, month - 1, day).getTime();
-}
-
 interface ProfileChangesField {
   value: string;
   valid: boolean;

@@ -3,7 +3,6 @@ import { useLocation, useParams } from "react-router-dom";
 import { MediaList } from "../../components";
 import { useEffect, useState, useContext } from "react";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
-import axiosClient from "../../api/axiosClient";
 import { getMediaInfo } from "../../api/requests/media";
 
 // the type playlist is represented by the number 1 in its object under the type field
@@ -15,9 +14,9 @@ export default function PlaylistPage() {
   const [playlist, setPlaylist] = useState<Playlist>(useLocation().state);
   useEffect(() => {
     if (playlist) {
-      // is
       return;
     }
+    console.log("there is no playlist");
     requestPageInfo();
   }, []);
 
