@@ -8,9 +8,12 @@
 }
 
 :root{
-  --animation-speed: 0.2s;
+  --animation-speed: 0.15s;
   --text-color: white;
-  --default-background: url('assets/default-icons/background11small.jpg')
+  --default-background: url('assets/default-icons/background11small.jpg');
+  --primary-hue: rgba(255, 255, 255, 0.13);
+  --border-radius: 8px;
+  --tile-border: 1px solid grey;
 }
 
 html,
@@ -27,7 +30,7 @@ div#root {
 }
 
 #App{
-  background-color: rgba(19, 19, 19);
+  background-color: hsl(0deg, 0.0%, 7.5%);
     /* For image background */
     /* background: var(--default-background); */
     /* background-size: cover; */
@@ -70,6 +73,7 @@ span, p{
 hr {
   border: 1px solid grey;
   width: calc(100% - 25px);
+  margin-inline: auto;
 }
 
 .App button:active{
@@ -97,6 +101,7 @@ button:hover:disabled{
 }
 
 .form-input {
+  width: 100%;
   color: var(--text-color);
   background-color: transparent;
   border: 1px solid grey;
@@ -118,4 +123,22 @@ button:hover:disabled{
 }
 .loading-div{
   color: white;
+}
+
+.add-resource-button{
+  color: white;
+    background-color: rgba(255, 255, 255, 0.18);
+    width: 100%;
+    font-size: 25px;
+    height: 30px;
+    border-radius: 5px;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+.add-resource-button:hover {
+  background-color: rgba(255, 255, 255, 0.23);
+}
+
+.add-resource-button:active {
+  opacity: 0.8;
 }

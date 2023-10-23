@@ -1,5 +1,4 @@
 import "./NavButton.css";
-import { navButtons, infoButtons } from "../../containers/SideBar/SideBar";
 import { NavLink } from "react-router-dom";
 
 interface SideButtonProps {
@@ -7,20 +6,7 @@ interface SideButtonProps {
   icon: string;
 }
 const SideButton = (props: SideButtonProps) => {
-  return (
-    // anchor to add router support
-    <>
-      {props.text in navButtons && (
-        <NavButton text={props.text} icon={props.icon} />
-      )}
-      {props.text in infoButtons && (
-        <InfoButton text={props.text} icon={props.icon} />
-      )}
-      {props.text === "menu" && (
-        <InfoButton text={props.text} icon={props.icon} />
-      )}
-    </>
-  );
+  return <NavButton text={props.text} icon={props.icon} />;
 };
 
 function NavButton(props: SideButtonProps) {

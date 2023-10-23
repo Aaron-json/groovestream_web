@@ -7,42 +7,24 @@ import {
   library_icon,
   about_icon,
   settings_icon,
-} from "./default-icons";
+} from "../../assets/default-icons/SideBar";
+import { social_icon } from "../../assets/default-icons/SideBar";
 
 // side navigation buttons and their icons
-export const navButtons: any = {
-  home: home_icon,
-  search: search_icon,
-  library: library_icon,
-};
-export const infoButtons: any = {
-  about: about_icon,
-  settings: settings_icon,
-};
 export default function SideBar() {
   return (
     <section className="SideBar">
       <NavButton text="menu" icon={menu_icon} />
       <hr className="menu-nav-separator" />
       <div className="nav-buttons">
-        {Object.keys(navButtons).map((navLabel) => {
-          return (
-            <NavButton
-              key={navLabel}
-              icon={navButtons[navLabel]}
-              text={navLabel}
-            />
-          );
-        })}
+        <NavButton text="home" icon={home_icon} />
+        <NavButton text="search" icon={search_icon} />
+        <NavButton text="library" icon={library_icon} />
+        <NavButton text="social" icon={social_icon} />
       </div>
       <div className="info-sideButtons">
-        {Object.keys(infoButtons).map((infoLabel) => (
-          <NavButton
-            key={infoLabel}
-            text={infoLabel}
-            icon={infoButtons[infoLabel]}
-          />
-        ))}
+        <NavButton text="about" icon={about_icon} />
+        <NavButton text="settings" icon={settings_icon} />
       </div>
     </section>
   );

@@ -1,0 +1,52 @@
+.friend-requests-comp{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.friend-requests-view{
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.friend-request-tile,
+.empty-friend-request-tile{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    height: 3.2rem;
+    background-color: var(--primary-hue);
+    border: 1px solid gray;
+    border-radius: var(--border-radius);
+}
+
+.empty-friend-request-tile{
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.friend-request-sender{
+    flex: 1;
+    margin-inline: auto;
+}
+
+.friend-request-action-btns{
+    border-top: 1px solid grey;
+    height: 1.3rem;
+    display: flex;
+    width: 100%;
+}
+.friend-request-action-btns > button{
+    font-size: 0.85em;
+    color: var(--text-color);
+    flex: 1;
+    transition: background-color var(--animation-speed);
+}
+
+.friend-request-action-btns > button:hover{
+    background-color: rgba(1, 1, 1, 0.4);
+}

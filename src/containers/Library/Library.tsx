@@ -7,9 +7,8 @@ import {
   CreatePlaylist,
   FileInput,
 } from "../../components";
-import { useContext, useEffect, useReducer, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import axiosClient from "../../api/axiosClient";
-import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { supportedAudioFormats } from "../../global/media";
 import { FileInputError } from "../../components/FileInput/FileInput";
 import { uploadAudioFile } from "../../api/requests/media";
@@ -56,20 +55,13 @@ export default function Library() {
     Pick<User, "audioFiles" | "playlists"> | undefined
   >(undefined);
   const [searchValue, setSearchValue] = useState("");
-  const { accessTokenRef, request } = useContext(authenticationContext)!;
   async function fetchMedia() {
     // fetches all media at startup of the application
     try {
-      const response = await request(async () => {
-        console.log("fetching media");
-        return await axiosClient.get("/user", {
-          headers: {
-            Authorization: `Bearer ${accessTokenRef.current}`,
-          },
-          params: {
-            fields: ["audioFiles", "playlists"],
-          },
-        });
+      const response = await axiosClient.get("/user", {
+        params: {
+          fields: ["audioFiles", "playlists"],
+        },
       });
 
       // the order of arrays in results corresponds to the order in the fields
@@ -96,9 +88,8 @@ export default function Library() {
       console.log(error);
       return;
     }
-    await request(async () =>
-      uploadAudioFile(formData, { accessToken: accessTokenRef.current })
-    );
+    await uploadAudioFile(formData);
+
     await fetchMedia();
   }
 

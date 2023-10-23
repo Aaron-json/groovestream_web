@@ -48,16 +48,6 @@ const PlaybackControls = () => {
         .padStart(2, "0")}`;
     }
   }
-  function parseSeconds(secondsCount: number) {
-    // takes in number of seconds and returns it in the format
-    // hours: seconds: minutes
-    const seconds = secondsCount % 60;
-    const totalMinutes = Math.floor(secondsCount / 60);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    return `${hours}:${minutes}:${seconds}`;
-  }
   return (
     <div className="playback-controls-div">
       <div className="playback-control-buttons">

@@ -5,7 +5,7 @@
   flex-direction: row;
   align-items: center;
   color: white;
-  height: 35px;
+  height: 2em;
   width: 100%;
   border-radius: 7px;
   font-weight: 400;
@@ -25,7 +25,6 @@
 .nav-icon {
   height: 80%;
   transition: filter 0.15s;
-  filter: invert(1);
 }
 /*
 Icon not bright when not current, inverts when current

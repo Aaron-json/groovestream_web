@@ -58,9 +58,7 @@ export default function UserProfilePage() {
 
   const [ifApplyingChangesFailed, setIfApplyingChangesFailed] = useState(false);
 
-  const { accessTokenRef, request, logout } = useContext(
-    authenticationContext
-  )!;
+  const { logout } = useContext(authenticationContext)!;
   useEffect(() => {
     fetchUserData();
   }, []);
@@ -72,14 +70,10 @@ export default function UserProfilePage() {
         "firstName",
         "lastName",
         "dateOfBirth",
-        "dateCreated",
+        "createdAt",
         "email",
-        "friends",
       ];
-      const userInfo = await request(
-        async () =>
-          await getUserFields(fields, { accessToken: accessTokenRef.current })
-      );
+      const userInfo = await getUserFields(fields);
       setUser(userInfo);
     } catch (err) {
       console.log(err);
@@ -95,18 +89,18 @@ export default function UserProfilePage() {
 
     let field: keyof ProfileChangesState;
     for (field in profileChanges) {
-      // new change is the same as the old version
-      if (profileChanges[field]!.value === user![field]) continue;
       // changes made are not valid values for that field
       if (profileChanges[field]!.valid === false) {
         setIfApplyingChangesFailed(true);
         return;
       }
+      // new change is the same as the old version
+      if (profileChanges[field]!.value === user![field]) continue;
       if (field === "dateOfBirth") {
         //change the date of Birth to its time stamp
         const timestamp = convertToTimeStamp(profileChanges.dateOfBirth!.value);
-        if (timestamp !== user!.dateOfBirth) {
-          updateQuery.dateOfBirth = timestamp;
+        if (timestamp !== convertToTimeStamp(user!.dateOfBirth!)) {
+          updateQuery.dateOfBirth = new Date(timestamp).toDateString();
           UpdateQueryEmpty = false;
         }
       } else {
@@ -117,18 +111,8 @@ export default function UserProfilePage() {
     // check if any valid changes happened
     if (UpdateQueryEmpty) return;
     try {
-      await request(async () => {
-        return await axiosClient.put(
-          "/user",
-          {
-            fields: updateQuery,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${accessTokenRef.current}`,
-            },
-          }
-        );
+      await axiosClient.put("/user", {
+        fields: updateQuery,
       });
     } catch (error) {
       console.log(error);
@@ -139,9 +123,8 @@ export default function UserProfilePage() {
 
   function getProfilePicture() {
     if (user!.profilePicture) {
-      return `data:${user!.profilePicture.mimeType};base64,${
-        user!.profilePicture.data
-      }`;
+      const { mimeType, data, encoding } = user!.profilePicture;
+      return `data:${mimeType};${encoding},${data}`;
     } else {
       return profile_icon;
     }
@@ -157,14 +140,7 @@ export default function UserProfilePage() {
       return;
     }
     try {
-      console.log((formData.get("files") as File).type);
-      await request(
-        async () =>
-          await uploadProfilePicture(formData, {
-            accessToken: accessTokenRef.current,
-          })
-      );
-      await fetchUserData();
+      await uploadProfilePicture(formData);
     } catch (error) {}
   }
 
@@ -271,10 +247,7 @@ export default function UserProfilePage() {
         />
       </label>
       <label className="user-profile-page-label">
-        Friends: {user.friends!.length}
-      </label>
-      <label className="user-profile-page-label">
-        Date Joined: {format(new Date(user.dateCreated!), "do MMMM yyyy")}
+        Date Joined: {format(new Date(user.createdAt!), "do MMMM yyyy")}
       </label>
       <div className="user-profile-page-footer">
         <button
@@ -304,15 +277,13 @@ interface ProfileChangesState {
   lastName?: ProfileChangesField;
   email?: ProfileChangesField;
   dateOfBirth?: ProfileChangesField;
-  friends?: ProfileChangesField;
-  dateCreated?: ProfileChangesField;
+  createdAt?: ProfileChangesField;
 }
 // interface UserUpdateQuery{
 //   firstName?: User["firstName"];
 //   lastName?: User["lastName"];
 //   email?:User["email"];
 //   dateOfBirth?:User["dateOfBirth"];
-//   friends?:User["friends"];
 //   dateCreated?: User["dateCreated"];
 // }
 interface ProfileChangesAction {

@@ -1,29 +1,21 @@
 import { FormEventHandler } from "react";
 import axiosClient from "../../api/axiosClient";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import "./CreatePlaylist.css";
-import { authenticationContext } from "../../contexts/AuthenticationContext";
 
 interface CreatePlaylistProps {
   onFinish: () => any;
 }
 export default function CreatePlaylist({ onFinish }: CreatePlaylistProps) {
-  const { request, accessTokenRef } = useContext(authenticationContext)!;
   const [isLoading, setIsLoading] = useState(false);
   async function createPlaylist(playlistName: String) {
-    await request(async () => {
-      axiosClient.post(
-        "/media/1",
-        {
-          name: playlistName,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessTokenRef.current}`,
-          },
-        }
-      );
-    });
+    try {
+      await axiosClient.post("/media/1", {
+        name: playlistName,
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   const submitHandler: FormEventHandler<HTMLFormElement> = async (e) => {

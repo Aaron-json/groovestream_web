@@ -43,57 +43,6 @@ export const mediaContext = createContext<MediaContextValue | undefined>(
   undefined
 );
 const player = new MediaPlayer();
-const currentMediaReducer = (
-  state: CurrentMedia,
-  action: mediaStateAction
-): CurrentMedia => {
-  switch (action.type) {
-    case "next":
-      if (!state) return state;
-
-      let nextIndex = (state.index + 1) % state.queue.length;
-
-      while (
-        state.queue[nextIndex].type !== 0 &&
-        state.queue[nextIndex].type !== 2
-      ) {
-        // loop to the next audioFile i.e type = 0
-        // there will be at least 1 audioFile since only audioFiles clicks
-        // can set the currentMedia
-        nextIndex = (nextIndex + 1) % state.queue.length;
-      }
-      if (nextIndex === state.index) {
-        return undefined;
-      }
-      return { ...state, index: nextIndex };
-    case "previous":
-      if (!state) return state;
-
-      let prevIndex = mod(state.index - 1, state.queue.length);
-      while (
-        state.queue[prevIndex].type !== 0 &&
-        state.queue[prevIndex].type !== 2
-      ) {
-        // loop to the previous audioFile i.e type = 0
-        // there will be at least 1 audioFile since only audioFiles clicks
-        // can set the currentMedia
-        prevIndex = mod(prevIndex - 1, state.queue.length);
-      }
-      if (prevIndex === state.index) {
-        return undefined;
-      }
-      return { ...state, index: prevIndex };
-    case "newMedia":
-      // set a new queue and index entirely
-      const { queue, index } = action.payload;
-      return { index, queue };
-
-    case "unload":
-      return undefined;
-    default:
-      return state;
-  }
-};
 
 export const MediaContextProvider: React.FC<ContextProvider> = ({
   children,
@@ -118,7 +67,7 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
     // cleanup for when the media context unmounts, unload the source
     // DO NOT place with the useEffect that changes the current media
     // it will cause media to be unloaded and set back to null on every media change
-    return unloadMedia;
+    return () => currentMediaDispatch({ type: "unload" });
   }, []);
   //load media when current media changes
   useEffect(() => {
@@ -148,11 +97,71 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
     player.mute(mute);
   }, [mute]);
 
+  function currentMediaReducer(state: CurrentMedia, action: mediaStateAction) {
+    switch (action.type) {
+      case "next":
+        if (!state) return state;
+
+        let nextIndex = (state.index + 1) % state.queue.length;
+
+        while (
+          state.queue[nextIndex].type !== 0 &&
+          state.queue[nextIndex].type !== 2
+        ) {
+          // loop to the next audioFile i.e type = 0
+          // there will be at least 1 audioFile since only audioFiles clicks
+          // can set the currentMedia
+          nextIndex = (nextIndex + 1) % state.queue.length;
+        }
+        if (nextIndex === state.index) {
+          player.unloadSource();
+          setPlaybackState("unloaded");
+          setSeek(0);
+          return undefined;
+        }
+        return { ...state, index: nextIndex };
+      case "previous":
+        if (!state) return state;
+
+        let prevIndex = mod(state.index - 1, state.queue.length);
+        while (
+          state.queue[prevIndex].type !== 0 &&
+          state.queue[prevIndex].type !== 2
+        ) {
+          // loop to the previous audioFile i.e type = 0
+          // there will be at least 1 audioFile since only audioFiles clicks
+          // can set the currentMedia
+          prevIndex = mod(prevIndex - 1, state.queue.length);
+        }
+        if (prevIndex === state.index) {
+          player.unloadSource();
+          setPlaybackState("unloaded");
+          setSeek(0);
+          return undefined;
+        }
+        return { ...state, index: prevIndex };
+      case "newMedia":
+        // set a new queue and index entirely
+        const { queue, index } = action.payload;
+        return { index, queue };
+
+      case "unload":
+        player.unloadSource();
+        setPlaybackState("unloaded");
+        setSeek(0);
+        return undefined;
+      default:
+        return state;
+    }
+  }
+
   function playPauseToggle() {
     /**
      * Function to toggle between play and pause
      */
-    if (player.isPlaying()) {
+    if (!currentMediaStates) {
+      return;
+    } else if (player.isPlaying()) {
       player.pause();
       setPlaybackState("paused");
     } else if (
@@ -195,18 +204,10 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
       setPlaybackState("playing");
     } catch (err) {
       console.log(err);
-      unloadMedia();
+      currentMediaDispatch({
+        type: "unload",
+      });
     }
-  }
-
-  function unloadMedia() {
-    player.unloadSource();
-    // usually only playback state is flushed immediately but these state updates
-    // are next to each other so flush together
-    // do both synchronously since they are next to thother
-    currentMediaDispatch({ type: "unload" });
-    setPlaybackState("unloaded");
-    setSeek(0);
   }
 
   function updateMedia(mediaList: AudioFile[], index = 0) {

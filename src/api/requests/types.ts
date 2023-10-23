@@ -1,3 +1,3 @@
 interface RequestConfig {
-  accessToken: string;
+  accessToken?: string;
 }

@@ -79,9 +79,7 @@ const RegistrationForm = () => {
           },
         };
       case "password":
-        let ifValidPassword =
-          validatePassword(action.payload) &&
-          action.payload === prevState.confirmPassword.value;
+        let ifValidPassword = validatePassword(action.payload);
         return {
           ...prevState,
           password: { value: action.payload, valid: ifValidPassword },

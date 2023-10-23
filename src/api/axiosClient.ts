@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const DEV_HOST_NAME = "http://localhost:5001";
-const PROD_HOST_NAME = "https://fine-craft-385619.nn.r.appspot.com";
+export const DEV_HOST_NAME = "http://localhost:5001";
+export const PROD_HOST_NAME = "https://fine-craft-385619.nn.r.appspot.com";
 const axiosClient = axios.create({
   baseURL: DEV_HOST_NAME,
   withCredentials: true,

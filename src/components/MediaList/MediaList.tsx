@@ -5,7 +5,6 @@ import {
 } from "../../assets/default-icons/MediaList";
 import "./MediaList.css";
 import { useContext, useEffect, useMemo, useState } from "react";
-import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { mediaContext } from "../../contexts/MediaContext";
 import { formatDistanceToNow } from "date-fns";
 import { FileInput } from "../";
@@ -51,7 +50,6 @@ type MediaListRootMedia = MediaListProps["items"];
 
 type MediaListStack = [MediaListRootItem, ...MediaListItem[]];
 type PushToMediaListStack = (mediaID: string, title: string) => void;
-type PopFromMediaListStack = () => void;
 
 export default function MediaList({
   items,
@@ -251,15 +249,10 @@ function LibrarySong({
   refreshMedia,
 }: MediaListSong) {
   const { updateMedia, currentMedia } = useContext(mediaContext)!;
-  const { request, accessTokenRef } = useContext(authenticationContext)!;
   // the media list from mapping all over again
   async function deleteAudioFileHandler() {
-    await request(
-      async () =>
-        await deleteAudioFile(audioFile, {
-          accessToken: accessTokenRef.current,
-        })
-    );
+    await deleteAudioFile(audioFile);
+
     // if a function to refresh media was passed,
     // call it to get updated media list
     refreshMedia && (await refreshMedia());
@@ -281,7 +274,7 @@ function LibrarySong({
           {audioFile.album ? audioFile.album : "Unknown Album"}
         </span>
         <span className="media-item-date-created">
-          Uploaded {formatDistanceToNow(new Date(audioFile.dateUploaded))} ago
+          Uploaded {formatDistanceToNow(new Date(audioFile.createdAt))} ago
         </span>
       </div>
       <span className="media-item-type">
@@ -316,8 +309,6 @@ function LibraryPlaylist({
   addMediaListToStack,
   refreshMedia,
 }: MediaListPlaylistProps) {
-  const { request, accessTokenRef } = useContext(authenticationContext)!;
-
   async function addSongToPlaylistHandler(
     formData: FormData | undefined,
     error: FileInputError | undefined
@@ -326,12 +317,8 @@ function LibraryPlaylist({
       console.log(error);
       return;
     }
-    await request(
-      async () =>
-        await uploadPlaylistAudioFile(formData, playlist, {
-          accessToken: accessTokenRef.current,
-        })
-    );
+    await uploadPlaylistAudioFile(formData, playlist);
+
     refreshMedia && (await refreshMedia());
   }
   function handlePlaylistClick() {
@@ -346,10 +333,7 @@ function LibraryPlaylist({
      * Function for deleting any type of media.
      * FUnction is shared so it is on the parent list.
      */
-    await request(
-      async () =>
-        await deletePlaylist(playlist, { accessToken: accessTokenRef.current })
-    );
+    await deletePlaylist(playlist);
     // if a function to refresh media was passed,
     // call it to get updated media list
     refreshMedia && (await refreshMedia());
@@ -363,7 +347,7 @@ function LibraryPlaylist({
           Songs: {playlist.audioFiles.length}
         </span>
         <span className="media-item-date-created">
-          Created {formatDistanceToNow(new Date(playlist.dateCreated))} ago
+          Created {formatDistanceToNow(new Date(playlist.createdAt))} ago
         </span>
       </div>
       <span className="media-item-type">Playlist</span>

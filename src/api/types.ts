@@ -3,15 +3,16 @@ interface User {
   firstName?: string;
   lastName?: string;
   email?: string;
-  dateOfBirth?: number;
+  dateOfBirth?: string; //date string
   audioFiles?: AudioFile[];
   playlists?: Playlist[];
   friends?: User[];
   recentSearches?: RecentSearch[];
-  dateCreated?: number;
+  createdAt?: string;
   profilePicture?: {
     mimeType: string;
     data: string;
+    encoding: string;
   };
 }
 // listed in the order of their indexes
@@ -30,7 +31,7 @@ interface AudioFile {
   trackNumber: number | NullOrUndefined;
   duration: number;
   genre: string | NullOrUndefined;
-  dateUploaded: number;
+  createdAt: number;
   playbackCount: number;
   lastPlayed: number;
   format: any;
@@ -44,7 +45,7 @@ interface Playlist {
   _id: string;
   type: number;
   name: string;
-  dateCreated: number;
+  createdAt: number;
   audioFiles: AudioFile[];
   playbackCount: number;
   lastPlayed: number;
@@ -62,5 +63,25 @@ interface RecentSearch {
   _id: string;
   mediaID: string;
   mediaType: number;
-  dateCreated: number;
+  createdAt: number;
+}
+
+interface Friend {
+  createdAt: Date;
+  updatedAt: Date;
+  friendID: {
+    _id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+interface FriendRequest {
+  createdAt: Date;
+  updatedAt: Date;
+  senderID: {
+    email: string;
+    _id: string;
+  };
 }

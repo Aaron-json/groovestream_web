@@ -7,6 +7,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { authenticationContext } from "./contexts/AuthenticationContext";
 import { AppHeader } from "./components";
 import { colorContext } from "./contexts/ColorContext";
+import LoadingSpinner from "./components/Spinner/Spinner";
 
 export default function App() {
   const { authenticated } = useContext(authenticationContext)!;
@@ -37,6 +38,22 @@ export default function App() {
             {/* All other paths lead to login page if not authenticated */}
             <Route path="*" element={<Navigate to="/login" />}></Route>
           </Routes>
+        </div>
+      )}
+
+      {authenticated === undefined && (
+        <div
+          style={{
+            background: "black",
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flex: 1,
+          }}
+        >
+          <LoadingSpinner size={100} />
         </div>
       )}
     </>

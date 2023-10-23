@@ -1,0 +1,96 @@
+.friends-list-component{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    color: var(--text-color);
+    gap: 5px;
+
+}
+.friends-list-header{
+    width: 100%;
+    font-size: 1.1em;
+}
+.friends-view{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+.friend-tile,
+.empty-friend-tile{
+    overflow: hidden;
+    display: flex;
+    min-width: 200px;
+    max-width: 380px;
+    flex: 1 1 auto;
+    height: 4.5rem;
+    background-color: var(--primary-hue);
+    border-radius: var(--border-radius);
+    border: var(--tile-border);
+    gap: 2px;
+}
+.empty-friend-tile{
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.friend-tile-pfp-div{
+    height: 100%;
+    width: 4.5rem;
+    display: flex;
+    justify-items: center;
+    align-items: center;
+}
+.friend-tile-pfp{
+    height: 100%;
+}
+
+.friend-tile-info-div{
+    font-size: 0.9em;
+    display: flex;
+    overflow: hidden;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+}
+.friend-tile-email{
+    font-weight: 300;
+}
+.friend-tile-friend-since{
+    font-size: 0.9em;
+    font-weight: 300;
+}
+
+.friend-tile-options-div{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.4rem;
+
+}
+
+.friend-tile-action-btns{
+    height: 18px;
+}
+
+.friend-tile-action-btns > button,
+.friend-tile-action-btns>button>img{
+    height: 100%;
+}
+
+
+.add-friends-comp {
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.add-friends-comp-header > h1{
+    font-size: 1em;
+    font-weight: 400;
+}
+.add-friend-comp-email-label{
+    font-size: 0.95em;
+}

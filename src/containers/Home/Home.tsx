@@ -1,22 +1,17 @@
 import "./Home.css";
 import { MediaGrid, HorizontalScroll, Modal } from "../../components";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { profile_icon } from "../../assets/default-icons";
-import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { UserProfilePage } from "..";
 import { getUserFields } from "../../api/requests/user";
 
 export default function Home() {
-  const { accessTokenRef, request } = useContext(authenticationContext)!;
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [user, setUser] = useState<User | undefined>(undefined);
   async function fetchUserData() {
     try {
       const fields = ["firstName", "audioFiles", "playlists"];
-      const response = await request(
-        async () =>
-          await getUserFields(fields, { accessToken: accessTokenRef.current })
-      );
+      const response = await getUserFields(fields);
       setUser(response);
     } catch (err) {
       console.log(err);

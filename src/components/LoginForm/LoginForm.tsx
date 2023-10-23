@@ -5,10 +5,11 @@ import { authenticationContext } from "../../contexts/AuthenticationContext";
 import axiosClient from "../../api/axiosClient";
 
 const LoginForm = () => {
-  const { accessTokenRef, setAuthenticated } = useContext(
-    authenticationContext
-  )!;
+  const { accessTokenRef, login } = useContext(authenticationContext)!;
   const [sendingRequest, setSendingRequest] = useState(false);
+  const [failedLoginMessage, setFailedLoginMessage] = useState<
+    string | undefined
+  >(undefined);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -19,17 +20,14 @@ const LoginForm = () => {
     const password = (
       document.getElementById("login-password-input") as HTMLInputElement
     ).value;
-    const body = { email, password };
+    const credentials = { email, password };
     try {
-      const loginResponse = await axiosClient.post("user/login", body);
-      console.log(loginResponse);
-      const { accessToken } = loginResponse.data;
-      // update authentication state
-      accessTokenRef.current = accessToken;
-      setAuthenticated(true);
+      await login(credentials);
       setSendingRequest(false);
     } catch (error) {
-      console.log(error);
+      setFailedLoginMessage(
+        "Could not log in. Please check your login information"
+      );
       setSendingRequest(false);
     }
   }

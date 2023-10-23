@@ -1,65 +1,114 @@
-import React, { SetStateAction } from "react";
+import React from "react";
 import { createContext, useEffect, useRef, useState } from "react";
 import axiosClient from "../api/axiosClient";
-
+import { InternalAxiosRequestConfig } from "axios";
 interface AuthenticationContextValue {
-  authenticated: boolean;
-  setAuthenticated: React.Dispatch<SetStateAction<boolean>>;
-  refreshAuthentication: () => Promise<void>;
+  authenticated: boolean | undefined;
   accessTokenRef: React.MutableRefObject<string>;
   request: (requestFunction: () => Promise<any>) => Promise<any>;
+  login: (loginCredentials: LoginCredentials) => Promise<any>;
   logout: () => Promise<void>;
 }
+type LoginCredentials = {
+  email: string;
+  password: String;
+};
 export const authenticationContext = createContext<
   AuthenticationContextValue | undefined
 >(undefined);
 
+const NO_RETRY_URLS = new Set(["/login", "/refresh", "/logout"]);
 export const AuthenticationContextProvider = ({
   children,
 }: ContextProvider) => {
-  const [authenticated, setAuthenticated] = useState(false);
+  const [authenticated, setAuthenticated] = useState<boolean | undefined>(
+    undefined
+  );
   const accessTokenRef = useRef<string>("");
   // const [refreshToken, setRefreshToken] = useState()
   // persist refresh token in local storage
 
   useEffect(() => {
-    refreshAuthentication();
+    onAuthLoad();
   }, []);
 
-  async function refreshAuthentication() {
-    // checks if you have any refresh tokens
-    // if you do, gets new access tokens
-
-    console.log("access token is ", accessTokenRef.current);
+  async function onAuthLoad() {
+    setAuthRequestInterceptor();
+    setAuthResponseInterceptor();
+    await __getAccessToken();
+  }
+  async function __getAccessToken() {
+    // sends a request to the server for a new access token,
+    // if you have a valid refresh token, you get a new access tokens
     try {
-      const refreshResponse = await axiosClient.get("/refresh", {
-        // include http only cookie with refresh token
-        withCredentials: true,
-      });
+      const refreshResponse = await axiosClient.get("/refresh");
       const { accessToken } = refreshResponse.data;
       accessTokenRef.current = accessToken;
       setAuthenticated(true);
     } catch (error) {
       // failed to authenticate
-      console.log(error);
       setAuthenticated(false);
+    }
+  }
+
+  interface CustomRequestConfig extends InternalAxiosRequestConfig {
+    _retry: boolean;
+  }
+  function setAuthRequestInterceptor() {
+    axiosClient.interceptors.request.use((config: CustomRequestConfig) => {
+      config.headers.Authorization = `Bearer ${accessTokenRef.current}`;
+      if (config._retry === undefined && !NO_RETRY_URLS.has(config.url)) {
+        config._retry = true;
+      }
+      return config;
+    });
+  }
+
+  function setAuthResponseInterceptor() {
+    axiosClient.interceptors.response.use(undefined, async (error) => {
+      const { config, response } = error;
+      if (
+        (response?.status === 401 || response?.status === 403) &&
+        config._retry
+      ) {
+        config._retry = false;
+        await __getAccessToken();
+        try {
+          // this time with a new access token if the refresh token
+          // was still valid
+          return axiosClient(config);
+        } catch (retryError) {
+          return Promise.reject(error);
+        }
+      } else {
+        return Promise.reject(error);
+      }
+    });
+  }
+
+  async function login(loginCredentials: LoginCredentials) {
+    try {
+      const loginResponse = await axiosClient.post(
+        "user/login",
+        loginCredentials
+      );
+      const { accessToken } = loginResponse.data;
+      // update authentication state
+      accessTokenRef.current = accessToken;
+      setAuthenticated(true);
+    } catch (error) {
+      console.log(error);
     }
   }
   async function logout() {
     // clear refresh token with a server request since
     // httpOnly cookies cannot be accessed through javascript
     try {
-      request(async () => {
-        await axiosClient.post("/user/logout", undefined, {
-          headers: {
-            Authorization: `Bearer ${accessTokenRef.current}`,
-          },
-        });
-      });
+      await axiosClient.post("user/logout");
       // clear the access token
       accessTokenRef.current = "";
       // set authenticated to false to update the ui
-      await refreshAuthentication();
+      setAuthenticated(false);
     } catch (err) {
       console.log(err);
     }
@@ -78,7 +127,7 @@ export const AuthenticationContextProvider = ({
     } catch (err: any) {
       if (err?.response?.status === 401 || err?.response?.status === 403) {
         console.log(err);
-        await refreshAuthentication();
+        await __getAccessToken();
         return await requestFunction();
       } else {
         throw err;
@@ -90,10 +139,9 @@ export const AuthenticationContextProvider = ({
     <authenticationContext.Provider
       value={{
         authenticated,
-        setAuthenticated,
-        refreshAuthentication,
         accessTokenRef,
         request,
+        login,
         logout,
       }}
     >
