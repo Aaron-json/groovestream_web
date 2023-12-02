@@ -2,7 +2,7 @@ import { mediaContext } from "../../contexts/MediaContext";
 import "./MediaInfo.css";
 import { useContext } from "react";
 import { sound_waves } from "../../assets/default-icons/MediaBar";
-import { getSongIcon } from "../../global/media";
+import { getSongIcon } from "../../global/media/media";
 
 const default_txt_icon = {
   music: sound_waves,

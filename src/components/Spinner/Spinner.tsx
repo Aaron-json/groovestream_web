@@ -1,16 +1,14 @@
-import React from "react";
-
 interface LoadingSpinnerProps {
   size: number;
   strokeWidth?: number;
   color?: string;
 }
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+export default function LoadingSpinner({
   size,
   strokeWidth = 2,
   color = "white",
-}) => {
+}: LoadingSpinnerProps) {
   const radius = size / 2 - strokeWidth / 2;
   const innerRadius = radius * 0.6; // Adjust the inner radius as needed
   const circumference = 2 * Math.PI * radius;
@@ -60,6 +58,4 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       </g>
     </svg>
   );
-};
-
-export default LoadingSpinner;
+}

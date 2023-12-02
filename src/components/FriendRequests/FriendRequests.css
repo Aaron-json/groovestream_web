@@ -5,17 +5,18 @@
 }
 
 .friend-requests-view{
-    display: grid;
-    grid-auto-flow: column;
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .friend-request-tile,
 .empty-friend-request-tile{
+    flex: 1;
+    min-width: 200px;
+    max-width: 380px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    width: 100%;
     height: 3.2rem;
     background-color: var(--primary-hue);
     border: 1px solid gray;

@@ -1,10 +1,11 @@
-import { options_icon, delete_icon } from "../../assets/default-icons";
 import {
-  mediaListBackIcon,
-  plusIcon,
-} from "../../assets/default-icons/MediaList";
+  options_icon,
+  delete_icon,
+  playlist_icon,
+} from "../../assets/default-icons";
+import { uploadIcon } from "../../assets/default-icons/MediaList";
 import "./MediaList.css";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
 import { formatDistanceToNow } from "date-fns";
 import { FileInput } from "../";
@@ -12,13 +13,14 @@ import {
   getSongIcon,
   getPlaylistIcon,
   supportedAudioFormats,
-} from "../../global/media";
+} from "../../global/media/media";
 import { FileInputError } from "../FileInput/FileInput";
 import {
   deleteAudioFile,
   deletePlaylist,
   uploadPlaylistAudioFile,
 } from "../../api/requests/media";
+import { useNavigate } from "react-router-dom";
 
 interface MediaListOptions {}
 interface MediaListProps {
@@ -31,26 +33,6 @@ interface MediaListProps {
   filterOptions?: MediaListOptions;
 }
 
-interface MediaListItem {
-  //media string is for the id of the nested object that contains the media
-  // typicallly referencing a playlists's audioFiles array
-  title: string;
-  media: string;
-}
-
-interface HydratedMediaListItem extends Omit<MediaListItem, "media"> {
-  media: MediaListRootMedia;
-}
-
-interface MediaListRootItem {
-  title: string | undefined;
-  media: MediaListRootMedia;
-}
-type MediaListRootMedia = MediaListProps["items"];
-
-type MediaListStack = [MediaListRootItem, ...MediaListItem[]];
-type PushToMediaListStack = (mediaID: string, title: string) => void;
-
 export default function MediaList({
   items,
   searchValue,
@@ -61,168 +43,51 @@ export default function MediaList({
 }: MediaListProps) {
   // used when an object containing other media is clicked to be able to return
   // to previous lists
-  const [mediaListStack, setMediaListStack] = useState<MediaListStack>([
-    { title, media: items },
-  ]);
   //const [debouncedSearchValue, setDebouncedSearchValue] = useState(searchValue);
-
-  const currentMedia = useMemo(_getCurrentObj, [mediaListStack]);
-  const currentMediaList = currentMedia.media;
-  const currentMediaTitle = currentMedia.title;
-  // consider applying useMemo if other states can also cause a rerender
-  // but we want the filters to be  memoized and not re-filter the list
-  // CAUTION in setting dependencies to it doesnt cause rerenders
-
   // useEffect(() => {
   //   return debounced(() => {
   //     setDebouncedSearchValue(searchValue);
   //   }, 0);
   // }, [searchValue]);
 
-  useEffect(
-    /**
-     * Updates the root in the stack when it changes.
-     * Ideally the "_getCUrrentObj" method should be ran again to
-     * get the current path in case any changes happened to it
-     */
-    () => {
-      const originalTitle = mediaListStack[0].title; //get the title of root
-      const updatedStack: MediaListStack = [...mediaListStack]; // copy to new list so react updates
-      updatedStack[0] = {
-        media: items,
-        title: originalTitle,
-      }; // replace old root with new items
-      setMediaListStack(updatedStack);
-    },
-    [items]
-  );
-
-  /**
-   * Function that traverses the path in the stack to get the current list from the object.
-   * Runs everytime and "update" method, such as "delete", is done on the list elements.
-   */
-  function _getCurrentObj(): MediaListRootItem | HydratedMediaListItem {
-    if (mediaListStack.length === 1) {
-      return mediaListStack[0];
-    } else {
-      let currentList = mediaListStack[0].media;
-      for (let i = 1; i < mediaListStack.length; i++) {
-        currentList = currentList.find(
-          (element) => element._id === mediaListStack[i].media
-        )!;
-      }
-      // if cannot find the nested list, reset back to root
-      if (!currentList) {
-        return {
-          media: items,
-          title: mediaListStack[0].title,
-        };
-      }
-      return {
-        media: currentList.audioFiles,
-        title: mediaListStack[mediaListStack.length - 1].title,
-      };
-    }
-  }
-
   // filteredItems will only change if the mediaStack or the debouncedSearch value
   // is changed to prevent unnecessary recalculations and filters
-  const filteredItems = useMemo(
-    () => filterMedia(currentMediaList, searchValue),
-    [mediaListStack]
-  );
   /**
    * @param {Array} mediaList - the original list of media to be modified
    * @param {string} searchFilter - search value used to filter the media
    * @returns {Array} a NEW array after the filters have been applied.
    * does NOT modify original array
    */
-  function filterMedia(
-    mediaList: MediaListProps["items"],
-    searchFilter?: string
-  ) {
-    if (searchFilter === "" || searchFilter === " " || !searchFilter)
-      return mediaList;
-    searchFilter = searchFilter.toLowerCase();
-    return mediaList.filter((mediaItem) => {
-      // check if mediaItem's name, album or artists match the search filter
-      if (mediaItem.type === 0) {
-        if (
-          (mediaItem as AudioFile).filename.toLowerCase().includes(searchFilter)
-        )
-          return true;
-        if (
-          (mediaItem as AudioFile).artists &&
-          (mediaItem as AudioFile).artists
-            .join(" ")
-            .toLowerCase()
-            .includes(searchFilter)
-        )
-          return true;
-        if (
-          (mediaItem as AudioFile).album &&
-          (mediaItem as AudioFile).album.toLowerCase().includes(searchFilter)
-        )
-          return true;
-
-        return false;
-      } else if (mediaItem.type === 1) {
-        return (mediaItem as Playlist).name
-          .toLowerCase()
-          .includes(searchFilter);
-      } else {
-        return false;
-      }
-    });
-  }
-
-  function addMediaListToStack(mediaID: string, title: string) {
-    setMediaListStack([...mediaListStack, { title, media: mediaID }]);
-  }
-  function popMediaListFromStack() {
-    if (mediaListStack.length === 1) return;
-    setMediaListStack(mediaListStack.slice(0, mediaListStack.length - 1));
-  }
-
   return (
     <div className="media-list-div">
-      {(mediaListStack.length > 1 || currentMediaTitle) && (
+      {title && (
         // render header ii title is passed or if we are displaying a nested media list
         <div className="media-list-header">
-          {mediaListStack.length > 1 && (
-            <button
-              onClick={popMediaListFromStack}
-              className="media-list-back-btn"
-            >
-              <img src={mediaListBackIcon} alt="" />
-            </button>
-          )}
           {/*react will not render the title if it is a null object */}
-          <h2 className="media-list-title">{currentMediaTitle}</h2>
+          <h2 className="media-list-title">{title}</h2>
         </div>
       )}
-      {filteredItems.length > 0 ? (
+      {items.length > 0 ? (
         <ol className="media-list">
-          {filteredItems.map((media, index) => {
+          {items.map((media, index) => {
             // return all the objects inside the category
-            if (media.type === 0 || media.type === 2) {
+            if (media.type === 0 || media.type === 2 || media.type === 4) {
               return (
-                <LibrarySong
+                <AudioFileTille
                   key={media._id}
-                  audioFile={media}
+                  audioFile={media as AudioFile | PlaylistAudioFile}
                   index={index}
                   songClickHandler={songClickHandler}
-                  allMedia={filteredItems}
+                  allMedia={items}
                   refreshMedia={refreshMedia}
                 />
               );
-            } else if (media.type === 1) {
+            } else if (media.type === 1 || media.type === 3) {
               return (
-                <LibraryPlaylist
+                <PlaylistTile
                   key={media._id}
-                  playlist={media}
+                  playlist={media as Playlist}
                   playlistClickHandler={playlistClickHandler}
-                  addMediaListToStack={addMediaListToStack}
                   refreshMedia={refreshMedia}
                 />
               );
@@ -241,7 +106,7 @@ interface MediaListSong
   allMedia: MediaListProps["items"];
   index: number;
 }
-function LibrarySong({
+function AudioFileTille({
   audioFile,
   songClickHandler,
   allMedia,
@@ -251,7 +116,15 @@ function LibrarySong({
   const { updateMedia, currentMedia } = useContext(mediaContext)!;
   // the media list from mapping all over again
   async function deleteAudioFileHandler() {
-    await deleteAudioFile(audioFile);
+    if (audioFile.type === 0) {
+      await deleteAudioFile(audioFile.type, audioFile._id);
+    } else {
+      await deleteAudioFile(
+        audioFile.type,
+        audioFile._id,
+        (audioFile as PlaylistAudioFile).playlistID
+      );
+    }
 
     // if a function to refresh media was passed,
     // call it to get updated media list
@@ -301,14 +174,13 @@ function LibrarySong({
 interface MediaListPlaylistProps
   extends Pick<MediaListProps, "playlistClickHandler" | "refreshMedia"> {
   playlist: Playlist;
-  addMediaListToStack: PushToMediaListStack;
 }
-function LibraryPlaylist({
+function PlaylistTile({
   playlist,
   playlistClickHandler,
-  addMediaListToStack,
   refreshMedia,
 }: MediaListPlaylistProps) {
+  const navigator = useNavigate();
   async function addSongToPlaylistHandler(
     formData: FormData | undefined,
     error: FileInputError | undefined
@@ -317,7 +189,13 @@ function LibraryPlaylist({
       console.log(error);
       return;
     }
-    await uploadPlaylistAudioFile(formData, playlist);
+    if (playlist.type === 1) {
+      // type 2 is playlist audiofile
+      // type 4 is shared playlist audiofile
+      await uploadPlaylistAudioFile(formData, playlist._id, 2);
+    } else if (playlist.type === 3) {
+      await uploadPlaylistAudioFile(formData, playlist._id, 4);
+    }
 
     refreshMedia && (await refreshMedia());
   }
@@ -325,7 +203,9 @@ function LibraryPlaylist({
     if (playlistClickHandler) {
       playlistClickHandler();
     } else {
-      addMediaListToStack(playlist._id, playlist.name);
+      navigator(`/library/media/${playlist.type}/${playlist._id}`, {
+        state: playlist,
+      });
     }
   }
   async function deletePlaylistHandler() {
@@ -333,7 +213,7 @@ function LibraryPlaylist({
      * Function for deleting any type of media.
      * FUnction is shared so it is on the parent list.
      */
-    await deletePlaylist(playlist);
+    await deletePlaylist(playlist.type, playlist._id);
     // if a function to refresh media was passed,
     // call it to get updated media list
     refreshMedia && (await refreshMedia());
@@ -350,10 +230,13 @@ function LibraryPlaylist({
           Created {formatDistanceToNow(new Date(playlist.createdAt))} ago
         </span>
       </div>
-      <span className="media-item-type">Playlist</span>
+      <span className="media-item-type">
+        {playlist.type === 1 && "Playlist"}
+        {playlist.type === 3 && "Shared Playlist"}
+      </span>
       <div className="media-item-options">
         <label onClick={(e) => e.stopPropagation()}>
-          <img src={plusIcon} alt="" />
+          <img src={uploadIcon} alt="" />
           <FileInput
             onInput={addSongToPlaylistHandler}
             formats={supportedAudioFormats}

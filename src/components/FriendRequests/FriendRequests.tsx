@@ -6,7 +6,7 @@ import {
   rejectFriendRequest,
 } from "../../api/requests/social";
 import { useState } from "react";
-import LoadingSpinner from "../Spinner/Spinner";
+import { LoadingSpinnerDiv } from "..";
 
 export default function FriendRequests() {
   const [page, setPage] = useState(1);
@@ -63,6 +63,7 @@ function FriendRequestTile({ friendRequest, onChange }: any) {
     setSendingRequest(true);
     try {
       await rejectFriendRequest(friendRequest.senderID._id);
+      await onChange();
     } catch (error) {}
     setSendingRequest(false);
   }
@@ -94,7 +95,7 @@ function FriendRequestTile({ friendRequest, onChange }: any) {
 function LoadingTile() {
   return (
     <div className="empty-friend-request-tile">
-      <LoadingSpinner size={50} />
+      <LoadingSpinnerDiv spinnerSize={40} />
     </div>
   );
 }

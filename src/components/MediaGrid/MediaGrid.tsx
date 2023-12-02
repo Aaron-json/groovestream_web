@@ -2,7 +2,7 @@ import { useContext } from "react";
 import "./MediaGrid.css";
 import { mediaContext } from "../../contexts/MediaContext";
 import { useNavigate } from "react-router-dom";
-import { getSongIcon, getPlaylistIcon } from "../../global/media";
+import { getSongIcon, getPlaylistIcon } from "../../global/media/media";
 
 interface MediaGridProps {
   items: Array<AudioFile | PlaylistAudioFile | Playlist>;
@@ -72,7 +72,9 @@ const PlaylistTile = ({ playlist }: PlaylistTileInterface) => {
   return (
     <div
       className="media-grid-playlist-tile home-media-tile"
-      onClick={() => navigate(`/media/1/${playlist._id}`, { state: playlist })}
+      onClick={() =>
+        navigate(`/library/media/1/${playlist._id}`, { state: playlist })
+      }
     >
       <img
         className="media-grid-tile-icon"

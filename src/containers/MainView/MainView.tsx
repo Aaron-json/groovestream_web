@@ -8,12 +8,15 @@ const MainView = () => {
     <section className="MainView">
       <SideBar />
       <Routes>
-        <Route path="/" element={<Navigate to="/home" />} />
+        <Route index element={<Navigate to="/home" />} />
         <Route path="/home" element={<Home />} />
         <Route path="/search" element={<Search />} />
-        <Route path="/library" element={<Library />} />
+        <Route path="/library">
+          <Route index element={<Library />} />
+          <Route path="media/:mediaType/:mediaID" element={<PlaylistPage />} />
+          <Route path="*" element={<Navigate to="/library" />} />
+        </Route>
         <Route path="/social" element={<SocialPage />} />
-        <Route path="/media/1/:mediaID" element={<PlaylistPage />} />
         <Route path="*" element={<Navigate to="/home" />} />
       </Routes>
     </section>

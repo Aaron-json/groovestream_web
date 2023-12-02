@@ -40,13 +40,12 @@ interface AudioFile {
     data: string | NullOrUndefined;
   };
 }
-
 interface Playlist {
   _id: string;
   type: number;
   name: string;
   createdAt: number;
-  audioFiles: AudioFile[];
+  audioFiles: PlaylistAudioFile[];
   playbackCount: number;
   lastPlayed: number;
 }
@@ -56,7 +55,9 @@ interface PlaylistAudioFile extends Omit<AudioFile, "type"> {
   playlistID: string;
 }
 
-type Playable = AudioFile | PlaylistAudioFile;
+interface SharedPlaylistAudioFile extends AudioFile {}
+
+type Playable = AudioFile | PlaylistAudioFile | SharedPlaylistAudioFile;
 type Media = Playlist | Playable;
 
 interface RecentSearch {

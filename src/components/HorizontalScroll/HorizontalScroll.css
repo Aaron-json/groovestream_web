@@ -7,9 +7,11 @@
 }
 
 .horizontal-scroll-title {
-  height: 27px;
+  display: flex;
+  align-items: center;
+  height: 1.8rem;
   width: 100%;
-  font-size: 19px;
+  font-size: 1.15rem;
   font-weight: 400;
 }
 .scroll-area {
@@ -30,8 +32,8 @@
   flex-direction: column;
   color: white;
   align-items: center;
-  align-self: center;
   justify-content: center;
+  align-self: center;
   justify-self: center;
   padding: 5px;
   border-radius: 8px;
@@ -43,6 +45,7 @@
   transform: scale(1.035);
 }
 .horizontal-scroll-media-info{
+  font-size: 1rem;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -56,7 +59,7 @@
 }
 
 .horizontal-scroll-media-name {
-  font-size: 0.9em;
+  font-size: 0.95em;
   font-weight: 400;
 }
 .horizontal-scroll-media-artist{

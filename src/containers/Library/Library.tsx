@@ -6,13 +6,15 @@ import {
   Modal,
   CreatePlaylist,
   FileInput,
+  LoadingSpinnerDiv,
 } from "../../components";
-import { useEffect, useReducer, useState } from "react";
-import axiosClient from "../../api/axiosClient";
-import { supportedAudioFormats } from "../../global/media";
+import { useReducer, useState } from "react";
+import { supportedAudioFormats } from "../../global/media/media";
 import { FileInputError } from "../../components/FileInput/FileInput";
-import { uploadAudioFile } from "../../api/requests/media";
+import { getAllUserMedia, uploadAudioFile } from "../../api/requests/media";
 import { MediaFilters } from "../../components/MediaList/types";
+import { useQuery } from "@tanstack/react-query";
+import { getLibraryPageData } from "../../api/requests/page";
 interface MediaFiltersActions {
   filter: keyof MediaFilters;
   value: any;
@@ -51,34 +53,18 @@ export default function Library() {
     sortBy: sortByOptions[0],
     sort: orderOptions[0],
   });
-  const [results, setResults] = useState<
-    Pick<User, "audioFiles" | "playlists"> | undefined
-  >(undefined);
-  const [searchValue, setSearchValue] = useState("");
-  async function fetchMedia() {
-    // fetches all media at startup of the application
-    try {
-      const response = await axiosClient.get("/user", {
-        params: {
-          fields: ["audioFiles", "playlists"],
-        },
-      });
 
-      // the order of arrays in results corresponds to the order in the fields
-      // query params
-      setResults(response.data);
-    } catch (err) {
-      console.log(err);
-    }
-  }
+  const [searchValue, setSearchValue] = useState("");
+  const {
+    data: allMedia,
+    error,
+    isLoading,
+    refetch,
+  } = useQuery(["library"], getAllUserMedia);
 
   function handleAddingMedia() {
     setAddingMedia(!addingMedia);
   }
-
-  useEffect(() => {
-    fetchMedia();
-  }, []);
 
   async function handleFileInput(
     formData: FormData | undefined,
@@ -90,12 +76,12 @@ export default function Library() {
     }
     await uploadAudioFile(formData);
 
-    await fetchMedia();
+    await refetch();
   }
 
   async function createdPlaylistHandler() {
     setAddingPlaylist(false);
-    await fetchMedia();
+    await refetch();
   }
   return (
     <section className="library-page">
@@ -142,19 +128,20 @@ export default function Library() {
       </div>
 
       <div className="file-upload-div">
-        <button className="add-file-btn" onClick={handleAddingMedia}>
-          &#43;
+        <button className="add-resource-button" onClick={handleAddingMedia}>
+          {/* &#43; */}
+          Add Media
         </button>
 
         {addingMedia && (
           <>
             <button
-              className="add-media-options"
+              className="add-resource-button"
               onClick={() => setAddingPlaylist(true)}
             >
               Create New Playlist
             </button>
-            <label className="add-media-options">
+            <label className="add-resource-button">
               Upload Song
               <FileInput
                 onInput={handleFileInput}
@@ -170,22 +157,15 @@ export default function Library() {
         <CreatePlaylist onFinish={createdPlaylistHandler} />
       </Modal>
 
-      {!results ? (
-        <div className="loading-div">Loading...</div>
+      {isLoading ? (
+        <LoadingSpinnerDiv />
       ) : (
         <MediaList
-          items={filterMedia(results!.playlists!, results!.audioFiles!)}
+          items={allMedia}
           searchValue={searchValue}
-          refreshMedia={fetchMedia}
+          refreshMedia={refetch}
         />
       )}
     </section>
   );
-}
-
-function filterMedia(
-  playlists: Playlist[],
-  audioFiles: AudioFile[]
-): Array<AudioFile | Playlist> {
-  return [...playlists, ...audioFiles];
 }

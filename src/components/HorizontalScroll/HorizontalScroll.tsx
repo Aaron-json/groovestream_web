@@ -2,7 +2,7 @@ import "./HorizontalScroll.css";
 import { useContext } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
 import { useNavigate } from "react-router-dom";
-import { getSongIcon, getPlaylistIcon } from "../../global/media";
+import { getSongIcon, getPlaylistIcon } from "../../global/media/media";
 interface HorizontalScrollProps {
   items: Array<AudioFile | PlaylistAudioFile | Playlist>;
   title: string;
@@ -72,7 +72,9 @@ const PlaylistTile = ({ playlist }: PlaylistTileProps) => {
   return (
     <div
       className="horizontal-scroll-artist-tile home-media-tile"
-      onClick={() => navigate(`/media/1/${playlist._id}`, { state: playlist })}
+      onClick={() =>
+        navigate(`/library/media/1/${playlist._id}`, { state: playlist })
+      }
     >
       <img
         className="horizontal-scroll-media-icon"

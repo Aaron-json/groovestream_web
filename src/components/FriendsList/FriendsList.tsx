@@ -1,7 +1,7 @@
 import "./FriendsList.css";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Modal } from "..";
+import { LoadingSpinnerDiv, Modal } from "..";
 import {
   deleteFriend,
   getFriendProfilePicture,
@@ -54,7 +54,7 @@ export default function FriendsList() {
           className="add-resource-button"
           onClick={() => setShowAddFriendsModal(true)}
         >
-          &#43;
+          Send Friend Request
         </button>
       </div>
       {getDisplayComponent()}
@@ -79,7 +79,7 @@ function FriendTile({ friendObj, refreshData }: any) {
   );
   function getDisplayPhoto() {
     if (loadingPhoto) {
-      return <LoadingSpinner size={50} />;
+      return <LoadingSpinner size={40} />;
     } else if (error || !friendPhoto) {
       return <img className="friend-tile-pfp" src={profile_icon} alt="" />;
     } else {
@@ -135,7 +135,7 @@ function NoFriendsTile() {
 function LoadingTile() {
   return (
     <div className="empty-friend-tile">
-      <LoadingSpinner size={50} />
+      <LoadingSpinner size={45} />
     </div>
   );
 }

@@ -1,33 +1,35 @@
 import "./Home.css";
-import { MediaGrid, HorizontalScroll, Modal } from "../../components";
-import { useEffect, useState } from "react";
+import {
+  MediaGrid,
+  HorizontalScroll,
+  Modal,
+  LoadingSpinnerDiv,
+} from "../../components";
+import { useState } from "react";
 import { profile_icon } from "../../assets/default-icons";
 import { UserProfilePage } from "..";
-import { getUserFields } from "../../api/requests/user";
+import { useQuery } from "@tanstack/react-query";
+import { getHomePageData } from "../../api/requests/page";
 
 export default function Home() {
   const [showProfileDialog, setShowProfileDialog] = useState(false);
-  const [user, setUser] = useState<User | undefined>(undefined);
-  async function fetchUserData() {
-    try {
-      const fields = ["firstName", "audioFiles", "playlists"];
-      const response = await getUserFields(fields);
-      setUser(response);
-    } catch (err) {
-      console.log(err);
-    }
+  const {
+    data: userData,
+    isLoading,
+    error,
+  } = useQuery(["homePage"], getHomePageData);
+  if (isLoading) {
+    return <LoadingSpinnerDiv />;
   }
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  if (!user) {
-    return <div className="loading">Loading...</div>;
+  if (error) {
+    return <div>Error Occcured</div>;
   }
   return (
     <section className="home-page">
       <div className="home-header">
-        <h1 className="welcome-message">Hello {user && user.firstName}</h1>
+        <h1 className="welcome-message">
+          Hello {userData && userData.firstName}
+        </h1>
         <div className="home-profile-div">
           <img src={profile_icon} alt="" className="home-profile-picture" />
           <button
@@ -45,23 +47,23 @@ export default function Home() {
         <UserProfilePage />
       </Modal>
       <hr className="home-header-bottom-line" />
-      {user && (
+      {userData && (
         <MediaGrid
-          items={getRecentlyPlayed(user.playlists!, user.audioFiles!)}
+          items={getRecentlyPlayed(userData.playlists!, userData.audioFiles!)}
           title="Recently Played"
         />
       )}
 
-      {user && (
+      {userData && (
         <HorizontalScroll
-          items={getMostPlayedTracks(user.audioFiles!)}
+          items={getMostPlayedTracks(userData.audioFiles!)}
           title="Most Played Tracks"
         />
       )}
 
-      {user && (
+      {userData && (
         <HorizontalScroll
-          items={getMostPlayedPlaylists(user.playlists!)}
+          items={getMostPlayedPlaylists(userData.playlists!)}
           title="Most Played Playlists"
         />
       )}

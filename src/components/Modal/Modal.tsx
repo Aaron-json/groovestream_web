@@ -1,5 +1,5 @@
 import "./Modal.css";
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useLayoutEffect } from "react";
 
 interface ModalProps {
   show: boolean;
@@ -7,9 +7,9 @@ interface ModalProps {
   children: React.ReactNode;
 }
 export default function Modal({ show, onClose, children }: ModalProps) {
-  const modalRef = useRef();
+  const modalRef = useRef<HTMLDialogElement | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!modalRef.current) {
       return;
     }
@@ -17,7 +17,6 @@ export default function Modal({ show, onClose, children }: ModalProps) {
       // open modal and add event listener for close event
       // when modal closes outside of state change, the state will still be appropriately handled
       modalRef.current.showModal();
-
       modalRef.current.addEventListener("close", onClose);
     } else {
       // remove event listener then close modal

@@ -1,17 +1,16 @@
 import axiosClient from "../axiosClient";
 
 export async function deleteAudioFile(
-  audioFile: AudioFile | PlaylistAudioFile,
-  config?: RequestConfig
+  mediaType: string | number,
+  audioFileID: string,
+  playlistID?: string
 ) {
   let requestURL: string;
-  if (audioFile.type === 0) {
-    requestURL = `/media/0/${audioFile._id}`;
-  } else if (audioFile.type === 2) {
+  if (mediaType === 0) {
+    requestURL = `/media/0/${audioFileID}`;
+  } else if (mediaType === 2 || mediaType === 4) {
     // audioFile in a playlist
-    requestURL = `/media/2/${audioFile._id}/${
-      (audioFile as PlaylistAudioFile).playlistID
-    }`;
+    requestURL = `/media/${mediaType}/${audioFileID}/${playlistID}`;
   } else {
     return;
   }
@@ -19,21 +18,17 @@ export async function deleteAudioFile(
 }
 
 export async function deletePlaylist(
-  playlist: Playlist,
-  config?: RequestConfig
+  playlistType: string | number,
+  playlistID: string
 ) {
-  return await axiosClient.delete(`/media/1/${playlist._id}`);
-}
-
-export async function getMediaInfo(mediaID: string, config?: RequestConfig) {
-  return await axiosClient.get(`media/info/1/${mediaID}`);
+  return await axiosClient.delete(`/media/${playlistType}/${playlistID}`);
 }
 
 export async function uploadAudioFile(
-  formData: FormData,
-  config?: RequestConfig
+  formData: FormData
+  // config?: RequestConfig
 ) {
-  return await axiosClient.post("/media/0", formData, {
+  return await axiosClient.post("/media/audioFile/0", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -41,24 +36,88 @@ export async function uploadAudioFile(
 }
 
 export async function uploadPlaylistAudioFile(
+  /**
+   * Used for both a playlist and shared playlist
+   * Server knows type based on the playlist audiofile type param
+   */
   formData: FormData,
-  playlist: Playlist,
-  config?: RequestConfig
+  playlistID: string,
+  audioFileType: string | number
 ) {
-  return await axiosClient.post(`/media/2/${playlist._id}`, formData, {
+  return await axiosClient.post(
+    `/media/audioFile/${audioFileType}/${playlistID}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+}
+
+export async function uploadProfilePicture(formData: FormData) {
+  return await axiosClient.put("/user/profilePicture", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
 }
 
-export async function uploadProfilePicture(
-  formData: FormData,
-  config?: RequestConfig
-) {
-  return await axiosClient.put("/user/profilePicture", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+export async function createPlaylist(playlistName: string) {
+  const response = await axiosClient.post("/media/1", {
+    name: playlistName,
   });
+  return response.data;
+}
+
+export async function createSharedPlaylist(playlistName: string) {
+  const response = await axiosClient.post("/media/3", {
+    name: playlistName,
+  });
+
+  return response.data;
+}
+
+export async function getPlaylistData(
+  playlistType: number | string,
+  playlistID: string
+) {
+  // can be used to get non nested media like audiofiles outside playlists,
+  // playlists and shared playlists
+  const respose = await axiosClient.get(`/media/${playlistType}/${playlistID}`);
+  return respose.data;
+}
+
+export async function getAllUserMedia() {
+  const response = await axiosClient.get("/media");
+  return response.data;
+}
+
+export async function getPlaylistAudioFileInfo(
+  mediaType: number | string,
+  playlistID: string,
+  audioFileID: string
+) {
+  // get nested media like playlist audiofiles
+  const response = await axiosClient.get(
+    `/media/info/${mediaType}/${playlistID}/${audioFileID}`
+  );
+  return response.data;
+}
+
+export async function streamAudioFile(
+  mediaType: number | string,
+  audioFileID: string,
+  playlistID?: string
+) {
+  let url;
+  if (mediaType === 0 || mediaType === 2) {
+    url = `media/${mediaType}/${audioFileID}`;
+  } else if (mediaType === 4) {
+    url = `media/${mediaType}/${audioFileID}/${playlistID}`;
+  } else {
+    throw new Error("Invalid media type");
+  }
+  const response = await axiosClient.get(url);
+  return response.data;
 }

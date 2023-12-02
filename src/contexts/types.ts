@@ -7,11 +7,11 @@ type ContextProvider = {
 type CurrentMedia =
   | {
       index: number;
-      queue: AudioFile[];
+      queue: Media[];
     }
   | NullorUndefined;
 
 type mediaStateAction = {
-  type: string;
+  type: "next" | "previous" | "newMedia" | "unload";
   payload?: any | NullorUndefined;
 };

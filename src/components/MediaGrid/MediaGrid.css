@@ -10,7 +10,7 @@
 .media-grid-title {
   grid-column: 1/-1;
   width: 100%;
-  font-size: 19px;
+  font-size: 1.15rem;
   font-weight: 400;
 }
 .media-grid-playlist-tile,

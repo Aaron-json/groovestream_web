@@ -3,34 +3,34 @@ export default class MediaPlayer {
   #HowlInstance: Howl | undefined;
   currentSourceID: string | undefined;
   #DefaultConfiguration = {
-    html5: true,
+    html5: false,
     volume: 1,
     loop: false,
   };
   // #GlobalHowler = Howler.init()
 
-  #loadSourceHelper(source: MediaSource) {
+  async #loadSourceHelper(source: MediaSourceConfig) {
     return new Promise((resolve, reject) => {
       this.#HowlInstance = new Howl({
         ...this.#DefaultConfiguration,
         src: [source.data],
-      })
-        .once("load", resolve)
-        .once("loaderror", reject);
+        // format: source.format,
+        onload: resolve,
+        onloaderror: reject,
+      });
     });
   }
 
-  async loadSource(source: MediaSource) {
+  async loadSource(source: MediaSourceConfig) {
     if (!this.#HowlInstance) {
-      // now Howl created
+      // new Howl created
       await this.#loadSourceHelper(source);
+      console.log("other side");
+
       this.currentSourceID = source._id;
-    } else if (source._id === this.currentSourceID) {
-      // if same song is selected just reset seeker to the start
-      this.#HowlInstance.seek(0);
     } else {
       // A different song is selected
-      this.#HowlInstance.unload();
+      this.unloadSource();
       await this.#loadSourceHelper(source);
       this.currentSourceID = source._id;
     }
@@ -40,7 +40,8 @@ export default class MediaPlayer {
     if (!this.#HowlInstance) {
       return;
     }
-    this.#HowlInstance.unload();
+
+    Howler.unload();
     this.#HowlInstance = undefined;
     this.currentSourceID = undefined;
   }
@@ -112,7 +113,8 @@ export default class MediaPlayer {
   }
 }
 
-interface MediaSource {
+interface MediaSourceConfig {
   data: string;
   _id: string;
+  format: string;
 }

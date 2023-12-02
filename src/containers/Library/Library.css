@@ -50,7 +50,7 @@
     width: 100%;
     row-gap: 5px;
 }
-.add-file-btn, .add-media-options{
+.add-file-btn{
     color: white;
     background-color: rgba(255, 255, 255, 0.18);
     width: 100%;
@@ -58,18 +58,4 @@
     height: 30px;
     border-radius: 5px;
     transition: background-color 0.2s, opacity 0.2s;
-}
-.add-media-options{
-    font-size: 0.9em;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    
-}
-.add-file-btn:hover, .add-media-options:hover{
-    background-color: rgba(255, 255, 255, 0.23);
-}
-
-.add-file-btn:active, .add-media-options:active{
-    opacity: 0.8;
 }
