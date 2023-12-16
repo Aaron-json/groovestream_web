@@ -1,7 +1,7 @@
 import { FormEventHandler } from "react";
 import { useState } from "react";
 import "./CreatePlaylist.css";
-import { createPlaylist, createSharedPlaylist } from "../../api/requests/media";
+import { createPlaylist } from "../../api/requests/media";
 import { validatePlaylistName } from "../../api/validation/media";
 
 interface CreatePlaylistProps {
@@ -28,9 +28,9 @@ export default function CreatePlaylist({ onFinish }: CreatePlaylistProps) {
         return;
       }
       if (playlistType === 1) {
-        await createPlaylist(playlistName);
+        await createPlaylist(playlistName, 1);
       } else if (playlistType === 3) {
-        await createSharedPlaylist(playlistName);
+        await createPlaylist(playlistName, 3);
       }
       onFinish();
     } catch (err) {

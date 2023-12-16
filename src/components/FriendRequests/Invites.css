@@ -1,53 +1,52 @@
-.friend-requests-comp{
+.invites{
     width: 100%;
     display: flex;
     flex-direction: column;
 }
 
-.friend-requests-view{
+.invites-view{
     display: flex;
     flex-wrap: wrap;
 }
 
-.friend-request-tile,
-.empty-friend-request-tile{
+.invite-tile,
+.empty-invite-tile{
+    font-size: 0.96rem;
     flex: 1;
     min-width: 200px;
     max-width: 380px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 3.2rem;
+    height: 5rem;
     background-color: var(--primary-hue);
     border: 1px solid gray;
     border-radius: var(--border-radius);
+    overflow: hidden;
 }
 
-.empty-friend-request-tile{
+.empty-invite-tile{
     font-size: 0.9rem;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.friend-request-sender{
-    flex: 1;
-    margin-inline: auto;
-}
 
-.friend-request-action-btns{
+
+.invite-action-btns{
     border-top: 1px solid grey;
     height: 1.3rem;
     display: flex;
     width: 100%;
 }
-.friend-request-action-btns > button{
+.invite-action-btns > button{
     font-size: 0.85em;
     color: var(--text-color);
     flex: 1;
     transition: background-color var(--animation-speed);
 }
 
-.friend-request-action-btns > button:hover{
+.invite-action-btns > button:hover{
     background-color: rgba(1, 1, 1, 0.4);
 }

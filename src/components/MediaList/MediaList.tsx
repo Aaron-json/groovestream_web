@@ -156,6 +156,7 @@ function AudioFileTille({
 
       <div className="media-item-options">
         <button
+          className="action-icon"
           onClick={(e) => {
             deleteAudioFileHandler();
             e.stopPropagation();
@@ -163,7 +164,7 @@ function AudioFileTille({
         >
           <img src={delete_icon} alt="" />
         </button>
-        <button onClick={(e) => e.stopPropagation()}>
+        <button className="action-icon" onClick={(e) => e.stopPropagation()}>
           <img src={options_icon} alt="" />
         </button>
       </div>
@@ -235,7 +236,7 @@ function PlaylistTile({
         {playlist.type === 3 && "Shared Playlist"}
       </span>
       <div className="media-item-options">
-        <label onClick={(e) => e.stopPropagation()}>
+        <label className="action-icon" onClick={(e) => e.stopPropagation()}>
           <img src={uploadIcon} alt="" />
           <FileInput
             onInput={addSongToPlaylistHandler}
@@ -245,6 +246,7 @@ function PlaylistTile({
         </label>
         {playlist.name !== "Favorites" && (
           <button
+            className="action-icon"
             onClick={(e) => {
               deletePlaylistHandler();
               e.stopPropagation();
@@ -254,7 +256,7 @@ function PlaylistTile({
           </button>
         )}
 
-        <button onClick={(e) => e.stopPropagation()}>
+        <button className="action-icon" onClick={(e) => e.stopPropagation()}>
           <img src={options_icon} alt="" />
         </button>
       </div>

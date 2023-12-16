@@ -118,14 +118,7 @@
    background: transparent;
    height: 20px;
    z-index: 1000;
-   transition: scale 0.15s, opacity 0.15s;
    place-content: center;
-}
-.media-item-options > *:hover{
-   scale: 1.15
-}
-.media-item-options > *:active{
-   opacity: 0.5;
 }
 .media-item-options img{
    height: 100%;

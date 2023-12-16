@@ -15,6 +15,7 @@ export default class MediaPlayer {
         ...this.#DefaultConfiguration,
         src: [source.data],
         // format: source.format,
+        onend: source.onSongEnd,
         onload: resolve,
         onloaderror: reject,
       });
@@ -37,10 +38,6 @@ export default class MediaPlayer {
   }
 
   unloadSource() {
-    if (!this.#HowlInstance) {
-      return;
-    }
-
     Howler.unload();
     this.#HowlInstance = undefined;
     this.currentSourceID = undefined;
@@ -117,4 +114,5 @@ interface MediaSourceConfig {
   data: string;
   _id: string;
   format: string;
+  onSongEnd: () => any;
 }

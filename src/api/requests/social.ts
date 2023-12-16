@@ -9,13 +9,8 @@ export async function getFriends(skip: number, limit: number) {
   });
   return response.data;
 }
-export async function getFriendRequests(skip: number, limit: number) {
-  const response = await axiosClient.get("/social/friend-requests", {
-    params: {
-      skip,
-      limit,
-    },
-  });
+export async function getFriendRequests() {
+  const response = await axiosClient.get("/social/friend-requests");
   return response.data;
 }
 export async function sendFriendRequest(receiverEmail: string) {

@@ -19,13 +19,16 @@ interface RegistrationFieldObj {
   value: string;
   valid: boolean;
 }
+interface PasswordFieldObj extends RegistrationFieldObj {
+  show: boolean;
+}
 interface RegistrationFields {
   firstName: RegistrationFieldObj;
   lastName: RegistrationFieldObj;
   email: RegistrationFieldObj;
   dateOfBirth: RegistrationFieldObj;
-  password: RegistrationFieldObj;
-  confirmPassword: RegistrationFieldObj;
+  password: PasswordFieldObj;
+  confirmPassword: PasswordFieldObj;
 }
 type RegistrationFieldsReducer = React.Reducer<
   RegistrationFields,
@@ -40,8 +43,8 @@ const RegistrationForm = () => {
       lastName: { value: "", valid: true },
       email: { value: "", valid: true },
       dateOfBirth: { value: "", valid: true },
-      password: { value: "", valid: true },
-      confirmPassword: { value: "", valid: true },
+      password: { value: "", valid: true, show: false },
+      confirmPassword: { value: "", valid: true, show: false },
     });
 
   function registrationFieldsReducer(
@@ -82,7 +85,11 @@ const RegistrationForm = () => {
         let ifValidPassword = validatePassword(action.payload);
         return {
           ...prevState,
-          password: { value: action.payload, valid: ifValidPassword },
+          password: {
+            value: action.payload,
+            valid: ifValidPassword,
+            show: false,
+          },
         };
       case "confirmPassword":
         let ifValidConfirmPassword =
@@ -93,6 +100,7 @@ const RegistrationForm = () => {
           confirmPassword: {
             value: action.payload,
             valid: ifValidConfirmPassword,
+            show: false,
           },
         };
     }
@@ -141,6 +149,7 @@ const RegistrationForm = () => {
       </label>
       <input
         id="register-firstname-input"
+        className="form-input"
         value={registrationFields.firstName.value}
         onChange={(e) =>
           registrationFieldsDispatch({
@@ -160,6 +169,7 @@ const RegistrationForm = () => {
       </label>
       <input
         id="register-lastname-input"
+        className="form-input"
         value={registrationFields.lastName.value}
         onChange={(e) =>
           registrationFieldsDispatch({
@@ -179,6 +189,7 @@ const RegistrationForm = () => {
       </label>
       <input
         id="register-username-input"
+        className="form-input"
         type="email"
         value={registrationFields.email.value}
         onChange={(e) =>
@@ -197,6 +208,7 @@ const RegistrationForm = () => {
       </label>
       <input
         id="register-password-input"
+        className="form-input"
         type="password"
         value={registrationFields.password.value}
         onChange={(e) =>
@@ -215,6 +227,7 @@ const RegistrationForm = () => {
       </label>
       <input
         id="register-confirm-password-input"
+        className="form-input"
         type="password"
         value={registrationFields.confirmPassword.value}
         onChange={(e) =>
@@ -230,6 +243,7 @@ const RegistrationForm = () => {
       </label>
       <input
         id="register-date-of-birth"
+        className="form-input"
         type="text"
         value={registrationFields.dateOfBirth.value}
         onChange={(e) =>

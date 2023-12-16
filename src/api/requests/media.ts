@@ -63,18 +63,13 @@ export async function uploadProfilePicture(formData: FormData) {
   });
 }
 
-export async function createPlaylist(playlistName: string) {
-  const response = await axiosClient.post("/media/1", {
+export async function createPlaylist(
+  playlistName: string,
+  playlistType: number | string
+) {
+  const response = await axiosClient.post(`/media/${playlistType}`, {
     name: playlistName,
   });
-  return response.data;
-}
-
-export async function createSharedPlaylist(playlistName: string) {
-  const response = await axiosClient.post("/media/3", {
-    name: playlistName,
-  });
-
   return response.data;
 }
 
@@ -104,7 +99,53 @@ export async function getPlaylistAudioFileInfo(
   );
   return response.data;
 }
+export async function getPlaylistInvites() {
+  const response = await axiosClient.get(`/media/3/invites`);
+  return response.data;
+}
+export async function sendPlaylistInvite(
+  playlistID: string,
+  memberEmail: string
+) {
+  const response = await axiosClient.post(`/media/3/invite/${playlistID}`, {
+    memberEmail,
+  });
+  return response.data;
+}
 
+export async function acceptPlaylistInvite(
+  senderID: string,
+  playlistID: string
+) {
+  const response = await axiosClient.post(
+    `/media/3/member/${senderID}/${playlistID}`
+  );
+  return response.data;
+}
+
+export async function rejectPlaylistInvite(
+  senderID: string,
+  playlistID: string
+) {
+  const response = await axiosClient.delete(
+    `/media/3/invite/${senderID}/${playlistID}`
+  );
+  return response.data;
+}
+
+export async function leavePlaylist(playlistID: string) {
+  const response = await axiosClient.delete(`/media/3/member/${playlistID}`);
+  return response.data;
+}
+export async function removePlaylistMember(
+  playlistID: string,
+  memberID: string
+) {
+  const response = await axiosClient.delete(
+    `/media/3/member/${playlistID}/${memberID}`
+  );
+  return response.data;
+}
 export async function streamAudioFile(
   mediaType: number | string,
   audioFileID: string,

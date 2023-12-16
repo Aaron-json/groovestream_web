@@ -1,15 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500&display=swap");
 
-@font-face {
-  font-family: "Mot";
-  src: url();
-}
-* {
-  font-family: "Montserrat", sans-serif;
-  margin: 0;
-  border: 0;
-  box-sizing: border-box;
-}
 
 :root{
   --animation-speed: 0.15s;
@@ -22,7 +12,13 @@
   --default-border-radius: 5px;
   --tile-border: 1px solid grey;
 }
-
+* {
+  font-family: "Montserrat", sans-serif;
+  color: var(--text-color);
+  margin: 0;
+  border: 0;
+  box-sizing: border-box;
+}
 html,
 body,
 div#root {
@@ -111,6 +107,7 @@ button:hover:disabled{
 }
 
 .form-input {
+  background-color: transparent;
   width: 100%;
   color: var(--text-color);
   background-color: transparent;
@@ -157,4 +154,16 @@ button:hover:disabled{
 
 .add-resource-button:active {
   opacity: 0.8;
+}
+
+.action-icon{
+  transition: scale 0.15s, opacity 0.15s;
+}
+
+.action-icon:hover {
+  scale: 1.15
+}
+
+.action-icon:active {
+  opacity: 0.5;
 }

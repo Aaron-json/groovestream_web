@@ -20,6 +20,8 @@ enum MediaTypes {
   AudioFile,
   Playlist,
   PlaylistAudioFile,
+  SharedPlaylist,
+  SharedPlaylistAudioFile,
 }
 interface AudioFile {
   _id: string;
@@ -29,9 +31,8 @@ interface AudioFile {
   album: string | NullOrUndefined;
   artists: string[] | NullOrUndefined;
   trackNumber: number | NullOrUndefined;
-  duration: number;
+  duration: number | NullOrUndefined;
   genre: string | NullOrUndefined;
-  createdAt: number;
   playbackCount: number;
   lastPlayed: number;
   format: any;
@@ -39,6 +40,8 @@ interface AudioFile {
     mimeType: string | NullOrUndefined;
     data: string | NullOrUndefined;
   };
+  createdAt: Date;
+  updatedAt: Date;
 }
 interface Playlist {
   _id: string;
@@ -48,17 +51,40 @@ interface Playlist {
   audioFiles: PlaylistAudioFile[];
   playbackCount: number;
   lastPlayed: number;
+  updatedAt: number;
+}
+interface SharedPlaylist extends Playlist {
+  audioFiles: SharedPlaylistAudioFile[];
+  owner: string;
+  members: PlaylistMember[];
 }
 
-interface PlaylistAudioFile extends Omit<AudioFile, "type"> {
-  type: number;
+interface PlaylistAudioFile extends AudioFile {
+  // shared playlist audioFile has the same signature
   playlistID: string;
 }
-
-interface SharedPlaylistAudioFile extends AudioFile {}
-
+interface PlaylistMember {
+  memberID: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+interface SharedPlaylistAudioFile extends PlaylistAudioFile {
+  uploadedBy: PlaylistMember;
+}
+interface PlaylistInvite {
+  createdAt: Date;
+  updatedAt: Date;
+  playlistID: {
+    _id: string;
+    name: string;
+  };
+  senderID: {
+    _id: string;
+    email: string;
+  };
+}
 type Playable = AudioFile | PlaylistAudioFile | SharedPlaylistAudioFile;
-type Media = Playlist | Playable;
+type Media = Playlist | SharedPlaylist | Playable;
 
 interface RecentSearch {
   _id: string;

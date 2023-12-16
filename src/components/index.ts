@@ -12,7 +12,7 @@ export { default as Dialog } from "./Dialog/Dialog";
 export { default as CreatePlaylist } from "./CreatePlaylist/CreatePlaylist";
 export { default as FileInput } from "./FileInput/FileInput";
 export { default as FriendsList } from "./FriendsList/FriendsList";
-export { default as FriendRequests } from "./FriendRequests/FriendRequests";
+export { default as Invites } from "./FriendRequests/Invites";
 export { default as LoadingSpinner } from "./Spinner/Spinner";
 export { default as LoadingSpinnerDiv } from "./Spinner/SpinnerDiv";
 // Media Bar section components below

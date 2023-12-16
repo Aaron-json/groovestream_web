@@ -2,7 +2,6 @@ import { NavLink } from "react-router-dom";
 import "./LoginForm.css";
 import { FormEvent, useContext, useState } from "react";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
-import axiosClient from "../../api/axiosClient";
 
 const LoginForm = () => {
   const { accessTokenRef, login } = useContext(authenticationContext)!;

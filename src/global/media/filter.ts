@@ -1,7 +1,4 @@
-function filterMedia(
-  mediaList: (Playlist | AudioFile | PlaylistAudioFile)[],
-  searchFilter?: string
-) {
+function filterMedia(mediaList: Media[], searchFilter: string) {
   if (searchFilter === "" || searchFilter === " " || !searchFilter)
     return mediaList;
   searchFilter = searchFilter.toLowerCase();
@@ -14,15 +11,15 @@ function filterMedia(
         return true;
       if (
         (mediaItem as AudioFile).artists &&
-        (mediaItem as AudioFile).artists
-          .join(" ")
+        (mediaItem as AudioFile)
+          .artists!.join(" ")
           .toLowerCase()
           .includes(searchFilter)
       )
         return true;
       if (
         (mediaItem as AudioFile).album &&
-        (mediaItem as AudioFile).album.toLowerCase().includes(searchFilter)
+        (mediaItem as AudioFile).album!.toLowerCase().includes(searchFilter)
       )
         return true;
 

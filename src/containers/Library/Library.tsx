@@ -60,7 +60,10 @@ export default function Library() {
     error,
     isLoading,
     refetch,
-  } = useQuery(["library"], getAllUserMedia);
+  } = useQuery({
+    queryKey: ["library"],
+    queryFn: getAllUserMedia,
+  });
 
   function handleAddingMedia() {
     setAddingMedia(!addingMedia);

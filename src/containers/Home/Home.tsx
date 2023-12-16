@@ -17,7 +17,7 @@ export default function Home() {
     data: userData,
     isLoading,
     error,
-  } = useQuery(["homePage"], getHomePageData);
+  } = useQuery({ queryKey: ["homePage"], queryFn: getHomePageData });
   if (isLoading) {
     return <LoadingSpinnerDiv />;
   }

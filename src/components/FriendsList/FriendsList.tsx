@@ -21,7 +21,10 @@ export default function FriendsList() {
     isLoading,
     error,
     refetch,
-  } = useQuery(["friends", page], async () => getFriends(10 * (page - 1), 10));
+  } = useQuery({
+    queryKey: ["friends", page],
+    queryFn: async () => getFriends(10 * (page - 1), 10),
+  });
 
   function getDisplayComponent() {
     if (isLoading) {
@@ -74,9 +77,10 @@ function FriendTile({ friendObj, refreshData }: any) {
     data: friendPhoto,
     error,
     isLoading: loadingPhoto,
-  } = useQuery(["friendPhoto", friendObj.friendID._id], async () =>
-    getFriendProfilePicture(friendObj.friendID._id)
-  );
+  } = useQuery({
+    queryKey: ["friendPhoto", friendObj.friendID._id],
+    queryFn: async () => getFriendProfilePicture(friendObj.friendID._id),
+  });
   function getDisplayPhoto() {
     if (loadingPhoto) {
       return <LoadingSpinner size={40} />;

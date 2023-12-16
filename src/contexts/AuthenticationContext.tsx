@@ -2,22 +2,21 @@ import React from "react";
 import { createContext, useEffect, useRef, useState } from "react";
 import axiosClient from "../api/axiosClient";
 import { InternalAxiosRequestConfig } from "axios";
-interface AuthenticationContextValue {
+type AuthenticationContextValue = {
   authenticated: boolean | undefined;
   accessTokenRef: React.MutableRefObject<string>;
-  request: (requestFunction: () => Promise<any>) => Promise<any>;
   login: (loginCredentials: LoginCredentials) => Promise<any>;
   logout: () => Promise<void>;
-}
+};
 type LoginCredentials = {
   email: string;
   password: String;
 };
+const NO_RETRY_URLS = new Set(["auth/login", "auth/refresh", "auth/logout"]);
 export const authenticationContext = createContext<
   AuthenticationContextValue | undefined
 >(undefined);
 
-const NO_RETRY_URLS = new Set(["/login", "/refresh", "/logout"]);
 export const AuthenticationContextProvider = ({
   children,
 }: ContextProvider) => {
@@ -41,7 +40,7 @@ export const AuthenticationContextProvider = ({
     // sends a request to the server for a new access token,
     // if you have a valid refresh token, you get a new access tokens
     try {
-      const refreshResponse = await axiosClient.get("/refresh");
+      const refreshResponse = await axiosClient.get("auth/refresh");
       const { accessToken } = refreshResponse.data;
       accessTokenRef.current = accessToken;
       setAuthenticated(true);
@@ -52,12 +51,16 @@ export const AuthenticationContextProvider = ({
   }
 
   interface CustomRequestConfig extends InternalAxiosRequestConfig {
-    _retry: boolean;
+    _retry?: boolean;
   }
   function setAuthRequestInterceptor() {
     axiosClient.interceptors.request.use((config: CustomRequestConfig) => {
       config.headers.Authorization = `Bearer ${accessTokenRef.current}`;
-      if (config._retry === undefined && !NO_RETRY_URLS.has(config.url)) {
+      if (
+        config._retry === undefined &&
+        config.url &&
+        !NO_RETRY_URLS.has(config.url)
+      ) {
         config._retry = true;
       }
       return config;
@@ -89,7 +92,7 @@ export const AuthenticationContextProvider = ({
   async function login(loginCredentials: LoginCredentials) {
     try {
       const loginResponse = await axiosClient.post(
-        "user/login",
+        "auth/login",
         loginCredentials
       );
       const { accessToken } = loginResponse.data;
@@ -104,7 +107,7 @@ export const AuthenticationContextProvider = ({
     // clear refresh token with a server request since
     // httpOnly cookies cannot be accessed through javascript
     try {
-      await axiosClient.post("user/logout");
+      await axiosClient.post("auth/logout");
       // clear the access token
       accessTokenRef.current = "";
       // set authenticated to false to update the ui
@@ -114,33 +117,11 @@ export const AuthenticationContextProvider = ({
     }
   }
 
-  type requestFunctionType = () => Promise<any>;
-  /**
-   *
-   * @param {Function} requestFunction - Async function that sends request to the backend.
-   * If failed, it will try to grab a new access Token using the refreshAuthentication function and retry the request
-   * @returns {Promise}
-   */
-  async function request(requestFunction: requestFunctionType) {
-    try {
-      return await requestFunction();
-    } catch (err: any) {
-      if (err?.response?.status === 401 || err?.response?.status === 403) {
-        console.log(err);
-        await __getAccessToken();
-        return await requestFunction();
-      } else {
-        throw err;
-      }
-    }
-  }
-
   return (
     <authenticationContext.Provider
       value={{
         authenticated,
         accessTokenRef,
-        request,
         login,
         logout,
       }}
