@@ -158,7 +158,7 @@ function AddFriendsComponent() {
     if (ifValidEmail) {
       try {
         await sendFriendRequest(email);
-        setFormState({ state: "submitted" });
+        setFormState({ state: "submitted", message: "Request sent!" });
       } catch (error) {
         setFormState({
           state: "error",
@@ -175,6 +175,9 @@ function AddFriendsComponent() {
       <div className="add-friends-comp-header">
         <h1>Add A Friend</h1>
       </div>
+      {(formState.state === "error" || formState.state === "submitted") && (
+        <h3 className="form-err-message">{formState.message}</h3>
+      )}
       <label className="add-friend-comp-email-label">
         Enter an email address
         <input

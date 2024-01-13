@@ -153,7 +153,7 @@ function AddSharedPlaylistMember({ playlistID }: AddSharedPlaylistMemberProps) {
     <form onSubmit={handleSubmit} className="add-playlist-member-form">
       <h2>Invite User to Playlist</h2>
       {(formState.state === "error" || formState.state === "submitted") && (
-        <h3>{formState.message}</h3>
+        <h3 className="form-err-message">{formState.message}</h3>
       )}
       <label>
         Enter recipient email

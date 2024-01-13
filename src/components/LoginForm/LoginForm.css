@@ -15,9 +15,7 @@
 .login-form > * {
     width: 90%;
 }
-.login-form > .form-err-message{
-    white-space:unset;
-}
+
 .login-form > input{
     background-color: transparent;
     border-radius: 3px;

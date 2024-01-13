@@ -131,6 +131,7 @@ button:hover:disabled{
 
 .form-err-message{
   color: red;
+  white-space: unset;
 }
 .loading-div{
   display: grid;
