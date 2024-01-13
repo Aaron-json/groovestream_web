@@ -12,7 +12,7 @@ interface CreatePlaylistProps {
 }
 export default function CreatePlaylist({ onFinish }: CreatePlaylistProps) {
   const [formState, setFormState] = useState<FormState>({ state: "input" });
-  const [playlistType, setPlaylistType] = useState<1 | 3>(1);
+  const [selectedPlaylistType, setSelectedPlaylistType] = useState<1 | 3>(1);
   const [playlistName, setPlaylistName] = useState("");
 
   const submitHandler: FormEventHandler<HTMLFormElement> = async (e) => {
@@ -24,9 +24,9 @@ export default function CreatePlaylist({ onFinish }: CreatePlaylistProps) {
         setFormState({ state: "error", message: "Invalid Name" });
         return;
       }
-      if (playlistType === 1) {
+      if (selectedPlaylistType === 1) {
         await createPlaylist(playlistName, 1);
-      } else if (playlistType === 3) {
+      } else if (selectedPlaylistType === 3) {
         await createPlaylist(playlistName, 3);
       }
       setFormState({ state: "submitted", message: "Playlist created" });
@@ -36,7 +36,7 @@ export default function CreatePlaylist({ onFinish }: CreatePlaylistProps) {
     }
   };
   function getPlaylistClassName(playlistType: 1 | 3) {
-    if (playlistType === playlistType) {
+    if (selectedPlaylistType === playlistType) {
       return "create-playlist-type-selected-option";
     } else {
       return "create-playlist-type-option";
@@ -68,13 +68,13 @@ export default function CreatePlaylist({ onFinish }: CreatePlaylistProps) {
       />
       <div className="create-playlist-type-div">
         <span
-          onClick={() => setPlaylistType(1)}
+          onClick={() => setSelectedPlaylistType(1)}
           className={getPlaylistClassName(1)}
         >
           Playlist
         </span>
         <span
-          onClick={() => setPlaylistType(3)}
+          onClick={() => setSelectedPlaylistType(3)}
           className={getPlaylistClassName(3)}
         >
           Shared Playlist
