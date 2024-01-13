@@ -18,10 +18,10 @@ import { FileInputError } from "../FileInput/FileInput";
 import {
   deleteAudioFile,
   deletePlaylist,
-  uploadPlaylistAudioFile,
+  uploadAudioFile,
 } from "../../api/requests/media";
 import { useNavigate } from "react-router-dom";
-
+import { Task, tasksContext } from "../../contexts/TasksContext";
 interface MediaListOptions {}
 interface MediaListProps {
   items: (Playlist | AudioFile | PlaylistAudioFile)[];
@@ -182,6 +182,7 @@ function PlaylistTile({
   refreshMedia,
 }: MediaListPlaylistProps) {
   const navigator = useNavigate();
+  const { addTask, updateTask, removeTask } = useContext(tasksContext)!;
   async function addSongToPlaylistHandler(
     formData: FormData | undefined,
     error: FileInputError | undefined
@@ -190,16 +191,39 @@ function PlaylistTile({
       console.log(error);
       return;
     }
-    if (playlist.type === 1) {
-      // type 2 is playlist audiofile
-      // type 4 is shared playlist audiofile
-      await uploadPlaylistAudioFile(formData, playlist._id, 2);
-    } else if (playlist.type === 3) {
-      await uploadPlaylistAudioFile(formData, playlist._id, 4);
+    let audioFileType: 2 | 4;
+    switch (playlist.type) {
+      case 1:
+        audioFileType = 2;
+        break;
+      case 3:
+        audioFileType = 4;
+        break;
+      default:
+        return;
+    }
+    const taskID = Date.now().toString + (Math.random() * 100).toString();
+    const task: Task = {
+      mode: "progress",
+      progress: 0,
+      name: "Uploading audio files",
+      originID: playlist._id,
+    };
+    try {
+      await uploadAudioFile(formData, audioFileType, playlist._id, {
+        task,
+        taskID,
+        addTask,
+        removeTask,
+        updateTask,
+      });
+    } catch (e) {
+      removeTask(taskID);
     }
 
     refreshMedia && (await refreshMedia());
   }
+
   function handlePlaylistClick() {
     if (playlistClickHandler) {
       playlistClickHandler();

@@ -3,6 +3,7 @@ import { useContext } from "react";
 import "./App.css";
 import { MainView, MediaBar, LoginPage, RegistrationPage } from "./containers";
 import { MediaContextProvider } from "./contexts/MediaContext";
+import { TasksContextProvider } from "./contexts/TasksContext";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { authenticationContext } from "./contexts/AuthenticationContext";
 import { AppHeader, LoadingSpinnerDiv } from "./components";
@@ -21,10 +22,12 @@ export default function App() {
             background: color,
           }}
         >
-          <MediaContextProvider>
-            <MainView />
-            <MediaBar />
-          </MediaContextProvider>
+          <TasksContextProvider>
+            <MediaContextProvider>
+              <MainView />
+              <MediaBar />
+            </MediaContextProvider>
+          </TasksContextProvider>
         </div>
       )}
 

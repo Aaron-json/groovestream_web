@@ -4,7 +4,7 @@ import { FileInput, MediaList, Modal } from "../../components";
 import {
   getPlaylistData,
   getPlaylistAudioFileInfo,
-  uploadPlaylistAudioFile,
+  uploadAudioFile,
   sendPlaylistInvite,
 } from "../../api/requests/media";
 import { useQuery } from "@tanstack/react-query";
@@ -15,7 +15,8 @@ import {
 } from "../../global/media/media";
 import { FileInputError } from "../../components/FileInput/FileInput";
 import { social_icon } from "../../assets/default-icons/SideBar";
-import { FormEvent, useState } from "react";
+import { FormEvent, useContext, useState } from "react";
+import { Task, tasksContext } from "../../contexts/TasksContext";
 
 export default function PlaylistPage() {
   // playlistID will always be ine url to navigate to this page
@@ -31,6 +32,7 @@ export default function PlaylistPage() {
     queryKey: ["playlist", mediaID],
     queryFn: () => getPlaylistData(mediaType!, mediaID!),
   });
+  const { addTask, removeTask, updateTask } = useContext(tasksContext)!;
   if (isLoading) {
     return (
       <div className="loading-div">
@@ -48,17 +50,40 @@ export default function PlaylistPage() {
     if (!formData || error) {
       return;
     }
+    const taskID = Date.now().toString + (Math.random() * 100).toString();
+
+    const task: Task = {
+      mode: "progress",
+      progress: 0,
+      name: "Uploading audio files",
+      originID: mediaID,
+    };
     try {
-      if (playlistData.type === 1) {
-        // type 2 is playlist audiofile
-        // type 4 is shared playlist audiofile
-        await uploadPlaylistAudioFile(formData, mediaID!, 2);
-      } else if (playlistData.type === 3) {
-        await uploadPlaylistAudioFile(formData, playlistData._id, 4);
+      let audioFileType: 2 | 4;
+      switch (playlistData.type) {
+        case 1:
+          audioFileType = 2;
+          break;
+        case 3:
+          audioFileType = 4;
+          break;
+        default:
+          return;
       }
+      await uploadAudioFile(formData, audioFileType, mediaID!, {
+        task,
+        taskID,
+        addTask,
+        removeTask,
+        updateTask,
+      });
+
       refetch();
-    } catch (error) {}
+    } catch (error) {
+      removeTask(taskID);
+    }
   }
+
   return (
     <section className="playlist-page">
       <div className="playlist-page-background">
@@ -77,12 +102,15 @@ export default function PlaylistPage() {
         <div className="playlist-page-header-right">
           {/* contains all the options ex. add a member for a shared playlist */}
           <div className="playlist-page-header-options">
-            <img
-              onClick={() => setAddingMember(true)}
-              className="action-icon"
-              src={social_icon}
-              alt=""
-            />
+            {mediaType === "3" && (
+              // only for shared playlists
+              <img
+                onClick={() => setAddingMember(true)}
+                className="action-icon"
+                src={social_icon}
+                alt=""
+              />
+            )}
           </div>
         </div>
       </div>
@@ -107,21 +135,26 @@ type AddSharedPlaylistMemberProps = {
 };
 function AddSharedPlaylistMember({ playlistID }: AddSharedPlaylistMemberProps) {
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [formState, setFormState] = useState<FormState>({ state: "input" });
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setFormState({ state: "loading" });
 
     try {
       await sendPlaylistInvite(playlistID, email);
-    } catch (error) {}
-    setLoading(false);
+      setFormState({ state: "submitted", message: "Invite Sent" });
+    } catch (error) {
+      setFormState({ state: "error", message: "Request failed" });
+    }
   }
 
   return (
     <form onSubmit={handleSubmit} className="add-playlist-member-form">
       <h2>Invite User to Playlist</h2>
+      {(formState.state === "error" || formState.state === "submitted") && (
+        <h3>{formState.message}</h3>
+      )}
       <label>
         Enter recipient email
         <input
@@ -131,7 +164,7 @@ function AddSharedPlaylistMember({ playlistID }: AddSharedPlaylistMemberProps) {
         />
       </label>
       <button className="form-button">
-        {loading ? "Loading..." : "Invite Member"}
+        {formState.state === "loading" ? "Loading..." : "Invite Member"}
       </button>
     </form>
   );

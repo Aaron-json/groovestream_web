@@ -10,34 +10,26 @@
     padding-block: 0.8em;
     overflow: auto;
     flex: 1 0 auto;
+    gap: 10px;
 }
 
 .register-form > label{
     font-size: 0.93em;
 }
 
-.register-form>h3 {
-    margin-bottom: 1.2em;
+.register-form>h2 {
+    margin-bottom: 20px;
 }
 
 .register-form>* {
     width: 90%;
 }
-
+.registration-field-error{
+    color: red;
+}
 .register-form>input {
     border-radius: 3px;
     height: 1.9em;
-    margin-bottom: 2em;
-
-}
-
-.register-form>button {
-    border-radius: 5px;
-    height: 2.5em;
-    color: white;
-    background-color: transparent;
-    border: 2px solid white;
-    margin-bottom: 2em;
 }
 
 .register-form>p {
@@ -46,5 +38,4 @@
 
 .register-login-toggle:visited {
     color: white;
-
 }

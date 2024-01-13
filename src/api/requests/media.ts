@@ -1,4 +1,6 @@
+import { AxiosRequestConfig } from "axios";
 import axiosClient from "../axiosClient";
+import { Task } from "../../contexts/TasksContext";
 
 export async function deleteAudioFile(
   mediaType: string | number,
@@ -24,35 +26,56 @@ export async function deletePlaylist(
   return await axiosClient.delete(`/media/${playlistType}/${playlistID}`);
 }
 
+/**
+ * Uploads audiofiles to all types of playlists
+ * @param formData FormData object
+ * @param playlistID
+ * @param audioFileType - Type of the playlist audiofile
+ * @param onUploadProgress Function to update the upload's progress
+ * @returns null
+ */
 export async function uploadAudioFile(
-  formData: FormData
-  // config?: RequestConfig
+  formData: FormData,
+  audioFileType: 0 | 2 | 4,
+  playlistID?: string,
+  taskConfig?: {
+    task: Task,
+    taskID: string,
+    addTask: (taskId: string, task: Task) => any
+    updateTask: (id: string, updatedTask: Task) => any,
+    removeTask: (id: string) => any
+  }
 ) {
-  return await axiosClient.post("/media/audioFile/0", formData, {
+
+  // set up the request config including the onUploadProgress event handler
+  let config: AxiosRequestConfig = {
     headers: {
       "Content-Type": "multipart/form-data",
     },
-  });
-}
+    onUploadProgress: (progressEvent) => {
+      // add the mode manually to TS knowns its a progressing task
+      taskConfig?.updateTask(taskConfig.taskID, { ...taskConfig.task, mode: "progress", progress: progressEvent.progress! })
+    },
+  };
 
-export async function uploadPlaylistAudioFile(
-  /**
-   * Used for both a playlist and shared playlist
-   * Server knows type based on the playlist audiofile type param
-   */
-  formData: FormData,
-  playlistID: string,
-  audioFileType: string | number
-) {
-  return await axiosClient.post(
-    `/media/audioFile/${audioFileType}/${playlistID}`,
+  let url;
+  if (audioFileType === 0) {
+    url = `/media/audioFile/0`;
+  } else if (audioFileType === 2 || audioFileType === 4) {
+    url = `/media/audioFile/${audioFileType}/${playlistID}`;
+  } else {
+    // unexpected media type
+    return;
+  }
+  console.log("we got here")
+  taskConfig?.addTask(taskConfig.taskID, taskConfig.task)
+  const response = await axiosClient.post(
+    url,
     formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
+    config
   );
+  taskConfig?.removeTask(taskConfig.taskID)
+  return response
 }
 
 export async function uploadProfilePicture(formData: FormData) {

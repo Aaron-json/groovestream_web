@@ -19,7 +19,7 @@ export const authenticationContext = createContext<
 
 export const AuthenticationContextProvider = ({
   children,
-}: ContextProvider) => {
+}: ContextProviderProps) => {
   const [authenticated, setAuthenticated] = useState<boolean | undefined>(
     undefined
   );
@@ -90,18 +90,14 @@ export const AuthenticationContextProvider = ({
   }
 
   async function login(loginCredentials: LoginCredentials) {
-    try {
-      const loginResponse = await axiosClient.post(
-        "auth/login",
-        loginCredentials
-      );
-      const { accessToken } = loginResponse.data;
-      // update authentication state
-      accessTokenRef.current = accessToken;
-      setAuthenticated(true);
-    } catch (error) {
-      console.log(error);
-    }
+    const loginResponse = await axiosClient.post(
+      "auth/login",
+      loginCredentials
+    );
+    const { accessToken } = loginResponse.data;
+    // update authentication state
+    accessTokenRef.current = accessToken;
+    setAuthenticated(true);
   }
   async function logout() {
     // clear refresh token with a server request since

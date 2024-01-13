@@ -128,6 +128,10 @@ button:hover:disabled{
     background-color: transparent;
     border: 1px solid white;
 }
+
+.form-err-message{
+  color: red;
+}
 .loading-div{
   display: grid;
   place-content: center;

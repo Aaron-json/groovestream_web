@@ -7,14 +7,16 @@ import {
   CreatePlaylist,
   FileInput,
   LoadingSpinnerDiv,
+  ProgressBar,
 } from "../../components";
-import { useReducer, useState } from "react";
+import { useContext, useReducer, useState } from "react";
 import { supportedAudioFormats } from "../../global/media/media";
 import { FileInputError } from "../../components/FileInput/FileInput";
 import { getAllUserMedia, uploadAudioFile } from "../../api/requests/media";
 import { MediaFilters } from "../../components/MediaList/types";
 import { useQuery } from "@tanstack/react-query";
 import { getLibraryPageData } from "../../api/requests/page";
+import { Task, tasksContext } from "../../contexts/TasksContext";
 interface MediaFiltersActions {
   filter: keyof MediaFilters;
   value: any;
@@ -47,13 +49,15 @@ function mediaFiltersReducer(
 }
 export default function Library() {
   const [addingMedia, setAddingMedia] = useState(false);
-  const [addingPlaylist, setAddingPlaylist] = useState(false);
+  const [creatingPlaylist, setCreatingPlaylist] = useState(false);
   const [mediaFilters, mediaFiltersDispatch] = useReducer(mediaFiltersReducer, {
+    /// first element used as the default
     mediaTypes: mediaTypesOptions[0],
     sortBy: sortByOptions[0],
     sort: orderOptions[0],
   });
-
+  const { getTasksCount, addTask, updateTask, removeTask } =
+    useContext(tasksContext)!;
   const [searchValue, setSearchValue] = useState("");
   const {
     data: allMedia,
@@ -77,13 +81,29 @@ export default function Library() {
       console.log(error);
       return;
     }
-    await uploadAudioFile(formData);
-
-    await refetch();
+    // create a new task
+    const taskID = Date.now().toString + (Math.random() * 100).toString();
+    const task: Task = {
+      mode: "progress",
+      progress: 0,
+      name: "Uploading audio files",
+    };
+    try {
+      await uploadAudioFile(formData, 0, undefined, {
+        task,
+        taskID,
+        addTask,
+        removeTask,
+        updateTask,
+      });
+      await refetch();
+    } catch (error) {
+      removeTask(taskID);
+    }
   }
 
   async function createdPlaylistHandler() {
-    setAddingPlaylist(false);
+    setCreatingPlaylist(false);
     await refetch();
   }
   return (
@@ -140,7 +160,7 @@ export default function Library() {
           <>
             <button
               className="add-resource-button"
-              onClick={() => setAddingPlaylist(true)}
+              onClick={() => setCreatingPlaylist(true)}
             >
               Create New Playlist
             </button>
@@ -155,8 +175,8 @@ export default function Library() {
           </>
         )}
       </div>
-
-      <Modal show={addingPlaylist} onClose={() => setAddingPlaylist(false)}>
+      {getTasksCount() > 0 && <ProgressBar task={{ mode: "loading" }} />}
+      <Modal show={creatingPlaylist} onClose={() => setCreatingPlaylist(false)}>
         <CreatePlaylist onFinish={createdPlaylistHandler} />
       </Modal>
 

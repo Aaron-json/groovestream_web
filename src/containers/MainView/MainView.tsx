@@ -13,6 +13,7 @@ const MainView = () => {
         <Route path="/search" element={<Search />} />
         <Route path="/library">
           <Route index element={<Library />} />
+          {/* Should only pass playlist (1) or shared playlist (3) to this path */}
           <Route path="media/:mediaType/:mediaID" element={<PlaylistPage />} />
           <Route path="*" element={<Navigate to="/library" />} />
         </Route>

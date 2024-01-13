@@ -1,0 +1,29 @@
+.progress-bar-container{
+    width: 100%;
+    border-radius: 10px;
+    height: 5px;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    cursor: pointer;
+}
+.progress-bar, .loading-bar{
+    border-radius: 5px;
+    height: 100%;
+    background-color: grey;
+}
+.progress-bar{
+    transition: width 0.2s ease-out;
+}
+.loading-bar{
+    width: 18%;
+    animation: slide 2s linear infinite;
+}
+
+@keyframes slide {
+    0% {
+        margin-left: -18%;
+    }
+    100%{
+        margin-left: 100%;
+    }
+}

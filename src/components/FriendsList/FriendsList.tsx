@@ -147,27 +147,28 @@ function ErrorTile() {
   return <div className="empty-friend-tile">Error Occured</div>;
 }
 function AddFriendsComponent() {
+  const [formState, setFormState] = useState<FormState>({ state: "input" });
   const [email, setEmail] = useState("");
-  const [sendingRequest, setSendingRequest] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(
-    undefined
-  );
   async function sendFriendRequestHandler(
     e: React.MouseEvent<HTMLButtonElement>
   ) {
-    setSendingRequest(true);
+    setFormState({ state: "loading" });
     e.preventDefault();
     const ifValidEmail = validateEmail(email);
     if (ifValidEmail) {
       try {
         await sendFriendRequest(email);
+        setFormState({ state: "submitted" });
       } catch (error) {
+        setFormState({
+          state: "error",
+          message: "Error sending friend request",
+        });
         console.log(error);
       }
     } else {
-      setErrorMessage("Invalid Email");
+      setFormState({ state: "error", message: "Invalid Email" });
     }
-    setSendingRequest(false);
   }
   return (
     <div className="add-friends-comp">
@@ -185,11 +186,11 @@ function AddFriendsComponent() {
         />
       </label>
       <button
-        disabled={sendingRequest}
+        disabled={formState.state === "loading"}
         className="form-button"
         onClick={sendFriendRequestHandler}
       >
-        {sendingRequest ? "Loading..." : "Add"}
+        {formState.state === "loading" ? "Loading..." : "Add"}
       </button>
     </div>
   );

@@ -1,10 +1,10 @@
 import "./PlaybackControls.css";
 import {
-  play,
-  pause,
-  back,
-  next,
-  loading,
+  play as playIcon,
+  pause as pauseIcon,
+  back as backIcon,
+  next as nextIcon,
+  loading as loadingIcon,
 } from "../../assets/default-icons/MediaBar";
 import { useContext } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
@@ -25,11 +25,11 @@ const PlaybackControls = () => {
   function getPlaybackIcon() {
     switch (playbackState) {
       case "playing":
-        return pause;
+        return pauseIcon;
       case "loading":
-        return loading;
+        return loadingIcon;
       default:
-        return play;
+        return playIcon;
     }
   }
   function formatSeconds(seconds: number) {
@@ -52,17 +52,21 @@ const PlaybackControls = () => {
     <div className="playback-controls-div">
       <div className="playback-control-buttons">
         <button className="playback-control-btn" onClick={playPrev}>
-          <img src={back} alt="back" />
+          <img src={backIcon} alt="back" />
         </button>
         <button className={`playback-control-btn`} onClick={playPauseToggle}>
           <img
-            className={playbackState === "loading" ? "loading" : undefined}
+            className={
+              playbackState === "loading" && getPlaybackIcon() === loadingIcon
+                ? "loading"
+                : undefined
+            }
             src={getPlaybackIcon()}
             alt="play"
           />
         </button>
         <button className="playback-control-btn" onClick={playNext}>
-          <img src={next} alt="next" />
+          <img src={nextIcon} alt="next" />
         </button>
       </div>
       <div className="playback-tracking-div">

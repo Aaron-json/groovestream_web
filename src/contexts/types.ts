@@ -1,14 +1,14 @@
 type NullorUndefined = null | undefined;
 
-type ContextProvider = {
+type ContextProviderProps = {
   children: React.ReactNode;
 };
 
 type CurrentMedia =
   | {
-      index: number;
-      queue: Media[];
-    }
+    index: number;
+    queue: Media[];
+  }
   | NullorUndefined;
 
 type mediaStateAction = {

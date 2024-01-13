@@ -26,8 +26,6 @@ export default class MediaPlayer {
     if (!this.#HowlInstance) {
       // new Howl created
       await this.#loadSourceHelper(source);
-      console.log("other side");
-
       this.currentSourceID = source._id;
     } else {
       // A different song is selected

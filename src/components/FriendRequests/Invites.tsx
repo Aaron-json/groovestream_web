@@ -34,7 +34,7 @@ export default function Invites({
     } else if (loading) {
       return <LoadingTile />;
     } else if (data.length === 0) {
-      return <NoInviteTile />;
+      return <NoInviteTile type={type} />;
     } else {
       return data.map((invite) => {
         let key;
@@ -73,9 +73,10 @@ type InviteTileProps = {
   type: InvitesProps["type"];
 };
 function InviteTile({ invite, onChange, type }: InviteTileProps) {
-  const [sendingRequest, setSendingRequest] = useState(false);
+  const [formState, setFormState] = useState<FormState>({ state: "input" });
+
   async function acceptInvite() {
-    setSendingRequest(true);
+    setFormState({ state: "loading" });
     try {
       if (type === "friend-requests") {
         await acceptFriendRequest(invite.senderID._id);
@@ -85,15 +86,15 @@ function InviteTile({ invite, onChange, type }: InviteTileProps) {
           (invite as PlaylistInvite).playlistID._id
         );
       }
-      await onChange();
+      setFormState({ state: "submitted", message: "Invite sent successfully" });
+      await onChange(); // updates the invites and gets new ones
     } catch (error) {
-      console.log(error);
+      setFormState({ state: "error", message: "Error sending request" });
     }
-    setSendingRequest(false);
   }
 
   async function rejectInvite() {
-    setSendingRequest(true);
+    setFormState({ state: "loading" });
     try {
       if (type === "friend-requests") {
         await rejectFriendRequest(invite.senderID._id);
@@ -103,9 +104,12 @@ function InviteTile({ invite, onChange, type }: InviteTileProps) {
           (invite as PlaylistInvite).playlistID._id
         );
       }
+      setFormState({ state: "submitted", message: "Invite sent successfully" });
+
       await onChange();
-    } catch (error) {}
-    setSendingRequest(false);
+    } catch (error) {
+      setFormState({ state: "error", message: "Error sending request" });
+    }
   }
   return (
     <div className="invite-tile">
@@ -121,14 +125,14 @@ function InviteTile({ invite, onChange, type }: InviteTileProps) {
       )}
       <div className="invite-action-btns">
         <button
-          disabled={sendingRequest}
+          disabled={formState.state === "loading"}
           className="invite-accept"
           onClick={acceptInvite}
         >
           Accept
         </button>
         <button
-          disabled={sendingRequest}
+          disabled={formState.state === "loading"}
           className="invite-reject"
           onClick={rejectInvite}
         >
@@ -146,9 +150,16 @@ function LoadingTile() {
     </div>
   );
 }
-
-function NoInviteTile() {
-  return <div className="empty-invite-tile">You have no friend requests!</div>;
+type NoInviteTileProps = {
+  type: InvitesProps["type"];
+};
+function NoInviteTile({ type }: NoInviteTileProps) {
+  return (
+    <div className="empty-invite-tile">
+      {type === "friend-requests" && "You have no friend requests!"}
+      {type === "playlist-invites" && "You have no playlist invites!"}
+    </div>
+  );
 }
 function ErrorTile() {
   return <div className="empty-invite-tile">Error occured</div>;

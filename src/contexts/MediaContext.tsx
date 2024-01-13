@@ -41,7 +41,7 @@ export const mediaContext = createContext<MediaContextValue | undefined>(
 );
 const player = new MediaPlayer();
 
-export const MediaContextProvider: React.FC<ContextProvider> = ({
+export const MediaContextProvider: React.FC<ContextProviderProps> = ({
   children,
 }) => {
   const [seek, setSeek] = useState(0);
@@ -53,7 +53,10 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
 
   // internal media. includes list of media and index of the current media.
   const [_currentMedia, _setCurrentMedia] = useState<CurrentMedia>(undefined);
-
+  useEffect(() => {
+    // unload all media when this component unmounts
+    return () => unloadMedia();
+  }, []);
   useEffect(() => {
     let timeout: number | undefined;
     if (playbackState === "playing" && !ifSeeking) {
@@ -112,7 +115,6 @@ export const MediaContextProvider: React.FC<ContextProvider> = ({
     const { _id, format, type, playlistID } = mediaObj as any;
 
     try {
-      console.log(playlistID);
       const audioData = await streamAudioFile(type, _id, playlistID);
       await player.loadSource({
         data: `data:${format.mimeType};base64,${audioData}`,

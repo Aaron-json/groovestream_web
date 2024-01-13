@@ -1,124 +1,110 @@
-import React, { useReducer } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-// import { useContext } from "react";
 import "./RegistrationForm.css";
-import axiosClient from "../../api/axiosClient";
+import { useReducer, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   convertToTimeStamp,
-  validateDateString,
-  validateFirstName,
-  validateLastName,
-  validatePassword,
+  userInfoInputValidator,
 } from "../../api/validation/FormInput";
+import { userSignUp } from "../../api/requests/user";
+import { AxiosError } from "axios";
 
-interface RegistrationFieldsAction {
-  type: keyof RegistrationFields;
-  payload: string;
-}
-interface RegistrationFieldObj {
-  value: string;
-  valid: boolean;
-}
-interface PasswordFieldObj extends RegistrationFieldObj {
-  show: boolean;
-}
-interface RegistrationFields {
-  firstName: RegistrationFieldObj;
-  lastName: RegistrationFieldObj;
-  email: RegistrationFieldObj;
-  dateOfBirth: RegistrationFieldObj;
-  password: PasswordFieldObj;
-  confirmPassword: PasswordFieldObj;
-}
-type RegistrationFieldsReducer = React.Reducer<
-  RegistrationFields,
-  RegistrationFieldsAction
->;
 const RegistrationForm = () => {
-  // const { refreshAuthentication } = useContext(authenticationContext)
   const navigator = useNavigate();
-  const [registrationFields, registrationFieldsDispatch] =
-    useReducer<RegistrationFieldsReducer>(registrationFieldsReducer, {
-      firstName: { value: "", valid: true },
-      lastName: { value: "", valid: true },
-      email: { value: "", valid: true },
-      dateOfBirth: { value: "", valid: true },
-      password: { value: "", valid: true, show: false },
-      confirmPassword: { value: "", valid: true, show: false },
-    });
+  const [registrationFields, registrationFieldsDispatch] = useReducer(
+    registrationFieldsReducer,
+    {
+      firstName: { value: "", errMessage: undefined },
+      lastName: { value: "", errMessage: undefined },
+      email: { value: "", errMessage: undefined },
+      dateOfBirth: { value: "", errMessage: undefined },
+      password: { value: "", show: false, errMessage: undefined },
+    }
+  );
+  const [formState, setFormState] = useState<FormState>({ state: "input" });
 
   function registrationFieldsReducer(
-    prevState: RegistrationFields,
-    action: RegistrationFieldsAction
-  ): RegistrationFields {
+    prevState: UserInfo,
+    action: UserInfoUpdate
+  ): UserInfo {
     switch (action.type) {
+      case "error":
+        const field = action.payload.field;
+        const errMessage = action.payload.errMessage;
+        return {
+          ...prevState,
+          // add all the previous values in registration fields
+          [field]: {
+            // add all the previous values in this field's object and update its error message
+            ...prevState[field],
+            errMessage: errMessage,
+          },
+        };
+
       case "firstName":
-        return {
-          ...prevState,
-          firstName: {
-            value: action.payload,
-            valid: validateFirstName(action.payload),
-          },
-        };
       case "lastName":
-        return {
-          ...prevState,
-          lastName: {
-            value: action.payload,
-            valid: validateLastName(action.payload),
-          },
-        };
       case "email":
-        return {
-          ...prevState,
-          email: { value: action.payload, valid: true },
-        };
       case "dateOfBirth":
         return {
           ...prevState,
-          dateOfBirth: {
+          [action.type]: {
+            ...prevState[action.type],
             value: action.payload,
-            valid: validateDateString(action.payload),
           },
         };
       case "password":
-        let ifValidPassword = validatePassword(action.payload);
         return {
           ...prevState,
           password: {
+            ...prevState.password,
             value: action.payload,
-            valid: ifValidPassword,
             show: false,
           },
         };
-      case "confirmPassword":
-        let ifValidConfirmPassword =
-          action.payload === prevState.password.value;
-
-        return {
-          ...prevState,
-          confirmPassword: {
-            value: action.payload,
-            valid: ifValidConfirmPassword,
-            show: false,
-          },
-        };
+      default:
+        return prevState;
     }
   }
-  type RegistrationQueryBody = {
-    [key in keyof RegistrationFields]?: any;
-  };
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // get values from input fieldsr
-    let key: keyof RegistrationFields;
-    const registrationQuery: RegistrationQueryBody = {};
+    setFormState({ state: "loading" });
+    // validate input
+    const registrationQuery: any = {};
+    let invalidCount = 0;
+    let key: keyof UserInfo;
     for (key in registrationFields) {
       //check if any field is invalid
-      if (registrationFields[key].valid === false) {
-        console.log(`${key} is invalid`);
-        return;
+      // set the error message for an invalid field
+      const validation = userInfoInputValidator(
+        key,
+        registrationFields[key].value
+      );
+      if (!validation.valid) {
+        invalidCount++;
+        registrationFieldsDispatch({
+          type: "error",
+          payload: {
+            field: key,
+            errMessage: validation.message,
+          },
+        });
+      } else if (validation.valid && registrationFields[key].errMessage) {
+        registrationFieldsDispatch({
+          type: "error",
+          payload: {
+            field: key,
+            errMessage: undefined,
+          },
+        });
       }
+    }
+
+    // if any field was invalid stop the action
+    if (invalidCount > 0) {
+      setFormState({
+        state: "error",
+        message: "Invalid",
+      });
+      return;
     }
     registrationQuery.firstName = registrationFields.firstName.value;
     registrationQuery.lastName = registrationFields.lastName.value;
@@ -127,133 +113,145 @@ const RegistrationForm = () => {
     );
     registrationQuery.email = registrationFields.email.value;
     registrationQuery.password = registrationFields.password.value;
-    console.log(registrationQuery);
     try {
-      const response = await axiosClient.post("/user", registrationQuery);
-      console.log(response);
+      const response = await userSignUp(registrationQuery);
       if (response.status == 201) {
         navigator("/login");
       }
     } catch (error) {
-      console.log(error);
+      if ((error as AxiosError).code === "ERR_NETWORK") {
+        setFormState({ state: "error", message: "Network Error" });
+      } else {
+        setFormState({
+          state: "error",
+          message: "Could not sign up. Please try again later!",
+        });
+      }
     }
   }
   return (
     <form className="register-form" onSubmit={handleSubmit}>
-      <h3 className="register-form-header">Sign up</h3>
-      <label
-        className="register-firname-label"
-        htmlFor="register-firstname-input"
-      >
+      <h2 className="register-form-header">Sign up</h2>
+      <span className="form-err-message">
+        {formState.state === "error" ? formState.message : undefined}
+      </span>
+      <label htmlFor="register-firstname-input">
         First Name
-      </label>
-      <input
-        id="register-firstname-input"
-        className="form-input"
-        value={registrationFields.firstName.value}
-        onChange={(e) =>
-          registrationFieldsDispatch({
-            type: "firstName",
-            payload: e.target.value,
-          })
+        <br />
+        {
+          <span className="form-err-message">
+            {registrationFields.firstName.errMessage}
+          </span>
         }
-        type="text"
-        placeholder="first name"
-      />
-
+        <input
+          id="register-firstname-input"
+          className="form-input"
+          value={registrationFields.firstName.value}
+          onChange={(e) =>
+            registrationFieldsDispatch({
+              type: "firstName",
+              payload: e.target.value,
+            })
+          }
+          type="text"
+          placeholder="first name"
+        />
+      </label>
       <label
         className="register-lastname-label"
         htmlFor="register-lastname-input"
       >
         Last Name
+        <br />
+        <span className="form-err-message">
+          {registrationFields.lastName.errMessage}
+        </span>
+        <input
+          id="register-lastname-input"
+          className="form-input"
+          value={registrationFields.lastName.value}
+          onChange={(e) =>
+            registrationFieldsDispatch({
+              type: "lastName",
+              payload: e.target.value,
+            })
+          }
+          type="text"
+          placeholder="last name"
+        />
       </label>
-      <input
-        id="register-lastname-input"
-        className="form-input"
-        value={registrationFields.lastName.value}
-        onChange={(e) =>
-          registrationFieldsDispatch({
-            type: "lastName",
-            payload: e.target.value,
-          })
-        }
-        type="text"
-        placeholder="last name"
-      />
 
       <label
         className="register-username-label"
         htmlFor="register-username-input"
       >
         Username
+        <br />
+        <span className="form-err-message">
+          {registrationFields.email.errMessage}
+        </span>
+        <input
+          id="register-username-input"
+          className="form-input"
+          type="email"
+          value={registrationFields.email.value}
+          onChange={(e) =>
+            registrationFieldsDispatch({
+              type: "email",
+              payload: e.target.value,
+            })
+          }
+          placeholder="email"
+        />
       </label>
-      <input
-        id="register-username-input"
-        className="form-input"
-        type="email"
-        value={registrationFields.email.value}
-        onChange={(e) =>
-          registrationFieldsDispatch({
-            type: "email",
-            payload: e.target.value,
-          })
-        }
-        placeholder="email"
-      />
       <label
         className="register-password-label"
         htmlFor="register-password-input"
       >
         Password
+        <br />
+        <span className="form-err-message">
+          {registrationFields.password.errMessage}
+        </span>
+        <input
+          id="register-password-input"
+          className="form-input"
+          type={registrationFields.password.show ? "text" : "password"}
+          value={registrationFields.password.value}
+          onChange={(e) =>
+            registrationFieldsDispatch({
+              type: "password",
+              payload: e.target.value,
+            })
+          }
+          placeholder="password"
+        />
       </label>
-      <input
-        id="register-password-input"
-        className="form-input"
-        type="password"
-        value={registrationFields.password.value}
-        onChange={(e) =>
-          registrationFieldsDispatch({
-            type: "password",
-            payload: e.target.value,
-          })
-        }
-        placeholder="password"
-      />
-      <label
-        className="register-confirm-password-label"
-        htmlFor="register-confirm-password-input"
-      >
-        Confirm Password
-      </label>
-      <input
-        id="register-confirm-password-input"
-        className="form-input"
-        type="password"
-        value={registrationFields.confirmPassword.value}
-        onChange={(e) =>
-          registrationFieldsDispatch({
-            type: "confirmPassword",
-            payload: e.target.value,
-          })
-        }
-        placeholder="password"
-      />
+
       <label htmlFor="">
         Date of Birth <small>(DD-MM-YYYY)</small>
+        <br />
+        <span className="form-err-message">
+          {registrationFields.dateOfBirth.errMessage}
+        </span>
+        <input
+          id="register-date-of-birth"
+          className="form-input"
+          type="text"
+          value={registrationFields.dateOfBirth.value}
+          onChange={(e) =>
+            registrationFieldsDispatch({
+              type: "dateOfBirth",
+              payload: e.target.value,
+            })
+          }
+        />
       </label>
-      <input
-        id="register-date-of-birth"
-        className="form-input"
-        type="text"
-        value={registrationFields.dateOfBirth.value}
-        onChange={(e) =>
-          registrationFieldsDispatch({
-            type: "dateOfBirth",
-            payload: e.target.value,
-          })
-        }
-      />
-      <button type="submit" className="login-submit">
+      <button
+        disabled={formState.state === "loading"}
+        type="submit"
+        className="form-button"
+      >
         Submit
       </button>
       <p>

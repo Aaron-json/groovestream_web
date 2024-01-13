@@ -7,40 +7,32 @@ import { profile_icon } from "../../assets/default-icons";
 import { FileInputError } from "../../components/FileInput/FileInput";
 import { uploadProfilePicture } from "../../api/requests/media";
 import { getUserFields } from "../../api/requests/user";
-import { convertToTimeStamp } from "../../api/validation/FormInput";
+import {
+  convertToTimeStamp,
+  userInfoInputValidator,
+} from "../../api/validation/FormInput";
 import { format } from "date-fns";
 const supportedProfilePictureFormats = ["image/jpeg", "image/png"];
 
 const profileChangesReducer = (
-  state: ProfileChangesState,
-  action: ProfileChangesAction
+  state: ProfileChanges,
+  action: ProfileChangesUpdateAction | ProfileChangesResetAction
 ) => {
   // fix to return a new object to cause a state change
-  switch (action.field) {
-    case "firstName":
-      const firstNamePattern = "^[a-zA-Z-]{2,}$";
-      const ifValidFirstName = RegExp(firstNamePattern).test(action.value);
+  switch (action.type) {
+    case "update":
+      // update a field's object with the new value in the payload
       return {
         ...state,
-        firstName: { value: action.value, valid: ifValidFirstName },
-      };
-    case "lastName":
-      const lastNamePattern = "^[a-zA-Z-]{2,}$";
-      const ifValidLastName = RegExp(lastNamePattern).test(action.value);
-      return {
-        ...state,
-        lastName: { value: action.value, valid: ifValidLastName },
-      };
-    case "dateOfBirth":
-      const datePattern =
-        "^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-([0-9]{4})$";
-      const ifValidDate = RegExp(datePattern).test(action.value);
-      return {
-        ...state,
-        dateOfBirth: { value: action.value, valid: ifValidDate },
+        [action.field]: {
+          ...state[action.field],
+          ...action.payload,
+        },
       };
     case "reset":
+      // remove all changes
       return {};
+
     default:
       return state;
   }
@@ -55,8 +47,6 @@ export default function UserProfilePage() {
     profileChangesReducer,
     {}
   );
-
-  const [ifApplyingChangesFailed, setIfApplyingChangesFailed] = useState(false);
 
   const { logout } = useContext(authenticationContext)!;
   useEffect(() => {
@@ -81,21 +71,31 @@ export default function UserProfilePage() {
   }
 
   type UserUpdateQuery = {
-    [key in keyof ProfileChangesState]: User[key];
+    [key in keyof ProfileChanges]: User[key];
   };
   async function applyChanges() {
     const updateQuery: UserUpdateQuery = {};
     let UpdateQueryEmpty = true;
-
-    let field: keyof ProfileChangesState;
+    let field: keyof ProfileChanges;
     for (field in profileChanges) {
-      // changes made are not valid values for that field
-      if (profileChanges[field]!.valid === false) {
-        setIfApplyingChangesFailed(true);
-        return;
-      }
-      // new change is the same as the old version
+      // new change is the same as the old version of that field
       if (profileChanges[field]!.value === user![field]) continue;
+      const ifValid = userInfoInputValidator(
+        field,
+        profileChanges[field]?.value
+      );
+      if (!ifValid.valid) {
+        // changes made are not valid values for that field
+        profileChangesDispatch({
+          type: "update",
+          field,
+          payload: {
+            errMessage: ifValid.message,
+          },
+        });
+        // skip the iteration
+        continue;
+      }
       if (field === "dateOfBirth") {
         //change the date of Birth to its time stamp
         const timestamp = convertToTimeStamp(profileChanges.dateOfBirth!.value);
@@ -108,6 +108,7 @@ export default function UserProfilePage() {
         UpdateQueryEmpty = false;
       }
     }
+
     // check if any valid changes happened
     if (UpdateQueryEmpty) return;
     try {
@@ -117,7 +118,6 @@ export default function UserProfilePage() {
     } catch (error) {
       console.log(error);
     }
-    setIfApplyingChangesFailed(false);
     await fetchUserData();
   }
 
@@ -161,18 +161,13 @@ export default function UserProfilePage() {
           />
         </label>
       </div>
-      {ifApplyingChangesFailed && (
-        <label className="user-profile-page-label changes-failed">
-          One or more fields are invalid
-        </label>
-      )}
+
       <div className="user-profile-page-name-div">
-        <label
-          className={`user-profile-page-label${
-            profileChanges?.firstName?.valid === false ? " invalid" : ""
-          }`}
-        >
-          First Name
+        <label className={`user-profile-page-label`}>
+          First Name <br />
+          <span className="form-err-message">
+            {profileChanges.firstName?.errMessage}
+          </span>
           <input
             className="user-profile-page-name-input form-input"
             value={
@@ -184,18 +179,18 @@ export default function UserProfilePage() {
             type="text"
             onChange={(e) => {
               profileChangesDispatch({
+                type: "update",
                 field: "firstName",
-                value: e.target.value,
+                payload: { value: e.target.value },
               });
             }}
           />
         </label>
-        <label
-          className={`user-profile-page-label${
-            profileChanges?.lastName?.valid === false ? " invalid" : ""
-          }`}
-        >
-          Last Name
+        <label className={`user-profile-page-label`}>
+          Last Name <br />
+          <span className="form-err-message">
+            {profileChanges.lastName?.errMessage}
+          </span>
           <input
             className="user-profile-page-name-input form-input"
             value={
@@ -207,8 +202,9 @@ export default function UserProfilePage() {
             type="text"
             onChange={(e) => {
               profileChangesDispatch({
+                type: "update",
                 field: "lastName",
-                value: e.target.value,
+                payload: { value: e.target.value },
               });
             }}
           />
@@ -223,12 +219,11 @@ export default function UserProfilePage() {
           type="email"
         />
       </label>
-      <label
-        className={`user-profile-page-label${
-          profileChanges?.dateOfBirth?.valid === false ? " invalid" : ""
-        }`}
-      >
-        Birthday <small>(DD-MM-YYYY)</small>
+      <label className={`user-profile-page-label`}>
+        Birthday <small>(DD-MM-YYYY)</small> <br />
+        <span className="form-err-message">
+          {profileChanges.dateOfBirth?.errMessage}
+        </span>
         <input
           value={
             // show the updated version
@@ -240,8 +235,9 @@ export default function UserProfilePage() {
           type="text"
           onChange={(e) => {
             profileChangesDispatch({
+              type: "update",
               field: "dateOfBirth",
-              value: e.target.value,
+              payload: { value: e.target.value },
             });
           }}
         />
@@ -264,20 +260,15 @@ export default function UserProfilePage() {
   );
 }
 
-/**
- * Takes date string and returns its timestamp
- * @param {String} dateString Date sting in format (DD-MM-YYYY)
- */
 interface ProfileChangesField {
   value: string;
-  valid: boolean;
+  errMessage: string;
 }
-interface ProfileChangesState {
+interface ProfileChanges {
   firstName?: ProfileChangesField;
   lastName?: ProfileChangesField;
   email?: ProfileChangesField;
   dateOfBirth?: ProfileChangesField;
-  createdAt?: ProfileChangesField;
 }
 // interface UserUpdateQuery{
 //   firstName?: User["firstName"];
@@ -286,7 +277,16 @@ interface ProfileChangesState {
 //   dateOfBirth?:User["dateOfBirth"];
 //   dateCreated?: User["dateCreated"];
 // }
-interface ProfileChangesAction {
-  field: string;
-  value: string;
-}
+type ProfileChangesUpdateAction = {
+  type: "update";
+  field: keyof ProfileChanges;
+  payload: {
+    // these values will overwrite the current state values
+    value?: string;
+    errMessage?: string;
+  };
+};
+
+type ProfileChangesResetAction = {
+  type: "reset";
+};

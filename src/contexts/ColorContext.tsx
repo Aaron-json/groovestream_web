@@ -12,7 +12,7 @@ interface ColorContextValue {
 export const colorContext = createContext<ColorContextValue | undefined>(
   undefined
 );
-export const ColorContextProvider: React.FC<ContextProvider> = ({
+export const ColorContextProvider: React.FC<ContextProviderProps> = ({
   children,
 }) => {
   const [color, setColor] = useState(DEFAULT_COLOR);
@@ -23,7 +23,6 @@ export const ColorContextProvider: React.FC<ContextProvider> = ({
     setColor(colorTemplate);
   }
   useEffect(() => {
-    console.log("Initializing colors");
     setColor("var(--default-background)");
   }, []);
 

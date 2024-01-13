@@ -16,7 +16,7 @@ interface User {
   };
 }
 // listed in the order of their indexes
-enum MediaTypes {
+enum MediaType {
   AudioFile,
   Playlist,
   PlaylistAudioFile,
