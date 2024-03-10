@@ -12,7 +12,7 @@ export default function SocialPage() {
     refetch: refetchFriendRequests,
   } = useQuery({
     queryKey: ["friendRequests"],
-    queryFn: async () => await getFriendRequests(),
+    queryFn: getFriendRequests,
   });
   const {
     data: playlistInvites,
@@ -21,14 +21,13 @@ export default function SocialPage() {
     refetch: refetchPlaylistInvites,
   } = useQuery({
     queryKey: ["playlistInvites"],
-    queryFn: async () => await getPlaylistInvites(),
+    queryFn: getPlaylistInvites,
   });
 
   return (
     <section className="social-page">
       <div className="social-page-header">
         <h1>Socials</h1>
-        {/* <span>Friend Count: {pageData.friends.length}</span> */}
       </div>
       <hr />
       <FriendsList />

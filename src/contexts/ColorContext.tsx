@@ -1,5 +1,6 @@
 import React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
+import { ContextProviderProps } from "./types";
 
 export const DEFAULT_COLOR: string =
   "linear-gradient(to top right,rgb(15, 32, 39),rgb(32, 58, 67),rgb(44, 83, 100))";

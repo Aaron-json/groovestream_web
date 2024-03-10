@@ -3,9 +3,10 @@ import "./MediaGrid.css";
 import { mediaContext } from "../../contexts/MediaContext";
 import { useNavigate } from "react-router-dom";
 import { getSongIcon, getPlaylistIcon } from "../../global/media/media";
+import { AudioFile, MediaType, Playlist } from "../../types/media";
 
 interface MediaGridProps {
-  items: Array<AudioFile | PlaylistAudioFile | Playlist>;
+  items: (AudioFile | Playlist)[];
   title: string;
 }
 export default function MediaGrid({ items, title }: MediaGridProps) {
@@ -14,17 +15,17 @@ export default function MediaGrid({ items, title }: MediaGridProps) {
     <div className="media-grid">
       <h2 className="media-grid-title">{title}</h2>
       {items.map((media, index) => {
-        if (media.type === 0 || media.type === 2) {
+        if (media.type === MediaType.AudioFile) {
           return (
             <SongTile
-              key={media._id}
-              audioFile={media as AudioFile | PlaylistAudioFile}
+              key={media.storageId}
+              audioFile={media}
               allMedia={items}
               index={index}
             />
           );
-        } else if (media.type === 1) {
-          return <PlaylistTile key={media._id} playlist={media as Playlist} />;
+        } else if (media.type === MediaType.Playlist) {
+          return <PlaylistTile key={media.id} playlist={media as Playlist} />;
         }
       })}
     </div>
@@ -32,7 +33,7 @@ export default function MediaGrid({ items, title }: MediaGridProps) {
 }
 
 interface SongTileProps {
-  audioFile: PlaylistAudioFile | AudioFile;
+  audioFile: AudioFile;
   allMedia: MediaGridProps["items"];
   index: number;
 }
@@ -73,7 +74,7 @@ const PlaylistTile = ({ playlist }: PlaylistTileInterface) => {
     <div
       className="media-grid-playlist-tile home-media-tile"
       onClick={() =>
-        navigate(`/library/media/1/${playlist._id}`, { state: playlist })
+        navigate(`/library/media/1/${playlist.id}`, { state: playlist })
       }
     >
       <img

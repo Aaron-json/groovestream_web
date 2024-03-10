@@ -11,13 +11,13 @@ const LoginForm = () => {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setFormState({ state: "loading" });
-    const email = (
+    const username = (
       document.getElementById("login-username-input") as HTMLInputElement
     ).value;
     const password = (
       document.getElementById("login-password-input") as HTMLInputElement
     ).value;
-    const credentials = { email, password };
+    const credentials = { username, password };
     try {
       await login(credentials);
     } catch (error) {
@@ -43,7 +43,7 @@ const LoginForm = () => {
         <input
           className="form-input"
           id="login-username-input"
-          type="email"
+          type="text"
           placeholder="Email"
         />
       </label>

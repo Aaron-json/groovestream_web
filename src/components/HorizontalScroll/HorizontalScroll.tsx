@@ -3,8 +3,9 @@ import { useContext } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
 import { useNavigate } from "react-router-dom";
 import { getSongIcon, getPlaylistIcon } from "../../global/media/media";
+import { AudioFile, MediaType, Playlist } from "../../types/media";
 interface HorizontalScrollProps {
-  items: Array<AudioFile | PlaylistAudioFile | Playlist>;
+  items: (AudioFile | Playlist)[];
   title: string;
 }
 export default function HorizontalScroll({
@@ -17,19 +18,17 @@ export default function HorizontalScroll({
       <h2 className="horizontal-scroll-title">{title}</h2>
       <div className="scroll-area">
         {items.map((media, index) => {
-          if (media.type === 0 || media.type === 2) {
+          if (media.type === MediaType.AudioFile) {
             return (
               <SongTile
-                key={media._id}
-                audioFile={media as AudioFile | PlaylistAudioFile}
+                key={media.storageId}
+                audioFile={media}
                 allMedia={items}
                 index={index}
               />
             );
-          } else if (media.type === 1) {
-            return (
-              <PlaylistTile key={media._id} playlist={media as Playlist} />
-            );
+          } else if (media.type === MediaType.Playlist) {
+            return <PlaylistTile key={media.id} playlist={media as Playlist} />;
           }
         })}
       </div>
@@ -37,7 +36,7 @@ export default function HorizontalScroll({
   );
 }
 interface SongTileProps {
-  audioFile: AudioFile | PlaylistAudioFile;
+  audioFile: AudioFile;
   allMedia: HorizontalScrollProps["items"];
   index: number;
 }
@@ -73,7 +72,7 @@ const PlaylistTile = ({ playlist }: PlaylistTileProps) => {
     <div
       className="horizontal-scroll-artist-tile home-media-tile"
       onClick={() =>
-        navigate(`/library/media/1/${playlist._id}`, { state: playlist })
+        navigate(`/library/media/1/${playlist.id}`, { state: playlist })
       }
     >
       <img

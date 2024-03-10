@@ -2,6 +2,7 @@ import React from "react";
 import { createContext, useEffect, useRef, useState } from "react";
 import axiosClient from "../api/axiosClient";
 import { InternalAxiosRequestConfig } from "axios";
+import { ContextProviderProps } from "./types";
 type AuthenticationContextValue = {
   authenticated: boolean | undefined;
   accessTokenRef: React.MutableRefObject<string>;
@@ -9,7 +10,7 @@ type AuthenticationContextValue = {
   logout: () => Promise<void>;
 };
 type LoginCredentials = {
-  email: string;
+  username: string;
   password: String;
 };
 const NO_RETRY_URLS = new Set(["auth/login", "auth/refresh", "auth/logout"]);
@@ -51,6 +52,7 @@ export const AuthenticationContextProvider = ({
   }
 
   interface CustomRequestConfig extends InternalAxiosRequestConfig {
+    // starts with _ to avoid naming clashes
     _retry?: boolean;
   }
   function setAuthRequestInterceptor() {
@@ -70,20 +72,16 @@ export const AuthenticationContextProvider = ({
   function setAuthResponseInterceptor() {
     axiosClient.interceptors.response.use(undefined, async (error) => {
       const { config, response } = error;
-      if (
-        (response?.status === 401 || response?.status === 403) &&
-        config._retry
-      ) {
-        config._retry = false;
-        await __getAccessToken();
-        try {
-          // this time with a new access token if the refresh token
-          // was still valid
-          return axiosClient(config);
-        } catch (retryError) {
-          return Promise.reject(error);
-        }
-      } else {
+      if (response?.status !== 401 || !config._retry) {
+        return Promise.reject(error);
+      }
+      config._retry = false;
+      await __getAccessToken();
+      try {
+        // this time with a new access token if the refresh token
+        // was still valid
+        return axiosClient(config);
+      } catch (retryError) {
         return Promise.reject(error);
       }
     });
@@ -108,9 +106,7 @@ export const AuthenticationContextProvider = ({
       accessTokenRef.current = "";
       // set authenticated to false to update the ui
       setAuthenticated(false);
-    } catch (err) {
-      console.log(err);
-    }
+    } catch (err) {}
   }
 
   return (

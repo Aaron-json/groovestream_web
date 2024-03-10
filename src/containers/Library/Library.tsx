@@ -5,18 +5,15 @@ import {
   MediaList,
   Modal,
   CreatePlaylist,
-  FileInput,
   LoadingSpinnerDiv,
   ProgressBar,
 } from "../../components";
-import { useContext, useReducer, useState } from "react";
-import { supportedAudioFormats } from "../../global/media/media";
-import { FileInputError } from "../../components/FileInput/FileInput";
-import { getAllUserMedia, uploadAudioFile } from "../../api/requests/media";
+import { useContext, useMemo, useReducer, useState } from "react";
+
+import { getAllUserMedia } from "../../api/requests/media";
 import { MediaFilters } from "../../components/MediaList/types";
 import { useQuery } from "@tanstack/react-query";
-import { getLibraryPageData } from "../../api/requests/page";
-import { Task, tasksContext } from "../../contexts/TasksContext";
+import { TaskType, tasksContext } from "../../contexts/TasksContext";
 interface MediaFiltersActions {
   filter: keyof MediaFilters;
   value: any;
@@ -48,7 +45,6 @@ function mediaFiltersReducer(
   }
 }
 export default function Library() {
-  const [addingMedia, setAddingMedia] = useState(false);
   const [creatingPlaylist, setCreatingPlaylist] = useState(false);
   const [mediaFilters, mediaFiltersDispatch] = useReducer(mediaFiltersReducer, {
     /// first element used as the default
@@ -56,8 +52,8 @@ export default function Library() {
     sortBy: sortByOptions[0],
     sort: orderOptions[0],
   });
-  const { getTasksCount, addTask, updateTask, removeTask } =
-    useContext(tasksContext)!;
+  const { getTasks } = useContext(tasksContext)!;
+  const mediaTasks = getTasks(TaskType.Media);
   const [searchValue, setSearchValue] = useState("");
   const {
     data: allMedia,
@@ -69,42 +65,24 @@ export default function Library() {
     queryFn: getAllUserMedia,
   });
 
-  function handleAddingMedia() {
-    setAddingMedia(!addingMedia);
-  }
-
-  async function handleFileInput(
-    formData: FormData | undefined,
-    error: FileInputError | undefined
-  ) {
-    if (error || !formData) {
-      console.log(error);
-      return;
-    }
-    // create a new task
-    const taskID = Date.now().toString + (Math.random() * 100).toString();
-    const task: Task = {
-      mode: "progress",
-      progress: 0,
-      name: "Uploading audio files",
-    };
-    try {
-      await uploadAudioFile(formData, 0, undefined, {
-        task,
-        taskID,
-        addTask,
-        removeTask,
-        updateTask,
-      });
-      await refetch();
-    } catch (error) {
-      removeTask(taskID);
-    }
-  }
-
   async function createdPlaylistHandler() {
     setCreatingPlaylist(false);
     await refetch();
+  }
+  function getDisplapy() {
+    if (error) {
+      return <div>Error Encountered</div>;
+    } else if (isLoading) {
+      return <LoadingSpinnerDiv />;
+    } else {
+      return (
+        <MediaList
+          items={allMedia!}
+          searchValue={searchValue}
+          refreshMedia={refetch}
+        />
+      );
+    }
   }
   return (
     <section className="library-page">
@@ -151,44 +129,18 @@ export default function Library() {
       </div>
 
       <div className="file-upload-div">
-        <button className="add-resource-button" onClick={handleAddingMedia}>
-          {/* &#43; */}
-          Add Media
+        <button
+          className="add-resource-button"
+          onClick={() => setCreatingPlaylist(true)}
+        >
+          Create New Playlist
         </button>
-
-        {addingMedia && (
-          <>
-            <button
-              className="add-resource-button"
-              onClick={() => setCreatingPlaylist(true)}
-            >
-              Create New Playlist
-            </button>
-            <label className="add-resource-button">
-              Upload Song
-              <FileInput
-                onInput={handleFileInput}
-                multiple={true}
-                formats={supportedAudioFormats}
-              />
-            </label>
-          </>
-        )}
       </div>
-      {getTasksCount() > 0 && <ProgressBar task={{ mode: "loading" }} />}
+      {mediaTasks.length > 0 && <ProgressBar tasks={mediaTasks} />}
       <Modal show={creatingPlaylist} onClose={() => setCreatingPlaylist(false)}>
         <CreatePlaylist onFinish={createdPlaylistHandler} />
       </Modal>
-
-      {isLoading ? (
-        <LoadingSpinnerDiv />
-      ) : (
-        <MediaList
-          items={allMedia}
-          searchValue={searchValue}
-          refreshMedia={refetch}
-        />
-      )}
+      {getDisplapy()}
     </section>
   );
 }

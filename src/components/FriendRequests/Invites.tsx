@@ -1,8 +1,6 @@
 import "./Invites.css";
-import { useQuery } from "@tanstack/react-query";
 import {
   acceptFriendRequest,
-  getFriendRequests,
   rejectFriendRequest,
 } from "../../api/requests/social";
 import { useState } from "react";
@@ -12,8 +10,9 @@ import {
   rejectPlaylistInvite,
 } from "../../api/requests/media";
 import { formatDistanceToNow } from "date-fns";
+import { FriendRequest, PlaylistInvite } from "../../types/invites";
 type InvitesProps = {
-  data: (FriendRequest | PlaylistInvite)[];
+  data: (Omit<FriendRequest, "to"> | Omit<PlaylistInvite, "to">)[] | undefined;
   type: "friend-requests" | "playlist-invites";
   title: string;
   refreshData: () => any;
@@ -33,22 +32,13 @@ export default function Invites({
       return <ErrorTile />;
     } else if (loading) {
       return <LoadingTile />;
-    } else if (data.length === 0) {
+    } else if (data?.length === 0) {
       return <NoInviteTile type={type} />;
     } else {
-      return data.map((invite) => {
-        let key;
-        if (type === "friend-requests") {
-          key = invite.senderID._id;
-        } else if (type === "playlist-invites") {
-          // the same sender can invite you to multiple playlists but
-          // you can only be invited to the same playlist once
-          // use playlist id as key if type is playlist invite
-          key = (invite as PlaylistInvite).playlistID._id;
-        }
+      return data?.map((invite) => {
         return (
           <InviteTile
-            key={key}
+            key={invite.id}
             onChange={refreshData}
             invite={invite}
             type={type}
@@ -68,7 +58,7 @@ export default function Invites({
   );
 }
 type InviteTileProps = {
-  invite: FriendRequest | PlaylistInvite;
+  invite: Omit<FriendRequest, "to"> | Omit<PlaylistInvite, "to">;
   onChange: () => any;
   type: InvitesProps["type"];
 };
@@ -79,11 +69,12 @@ function InviteTile({ invite, onChange, type }: InviteTileProps) {
     setFormState({ state: "loading" });
     try {
       if (type === "friend-requests") {
-        await acceptFriendRequest(invite.senderID._id);
+        await acceptFriendRequest(invite.id, invite.from.id);
       } else if (type === "playlist-invites") {
         await acceptPlaylistInvite(
-          invite.senderID._id,
-          (invite as PlaylistInvite).playlistID._id
+          invite.from.id,
+          (invite as PlaylistInvite).playlist.id,
+          invite.id
         );
       }
       setFormState({ state: "submitted", message: "Invite sent successfully" });
@@ -97,11 +88,12 @@ function InviteTile({ invite, onChange, type }: InviteTileProps) {
     setFormState({ state: "loading" });
     try {
       if (type === "friend-requests") {
-        await rejectFriendRequest(invite.senderID._id);
+        await rejectFriendRequest(invite.id);
       } else if (type === "playlist-invites") {
         await rejectPlaylistInvite(
-          invite.senderID._id,
-          (invite as PlaylistInvite).playlistID._id
+          invite.from.id,
+          (invite as PlaylistInvite).playlist.id,
+          invite.id
         );
       }
       setFormState({ state: "submitted", message: "Invite sent successfully" });
@@ -113,14 +105,13 @@ function InviteTile({ invite, onChange, type }: InviteTileProps) {
   }
   return (
     <div className="invite-tile">
-      <span className="invite-sender">From: {invite.senderID.email}</span>
+      <span className="invite-sender">From: {invite.from.username}</span>
       <span className="invite-date">
-        Sent{" "}
-        {formatDistanceToNow(new Date(invite.createdAt), { addSuffix: true })}
+        Sent {formatDistanceToNow(new Date(invite.sentAt), { addSuffix: true })}
       </span>
       {type === "playlist-invites" && (
         <span className="invite-name">
-          Playlist Name: {(invite as PlaylistInvite).playlistID.name}
+          Playlist Name: {(invite as PlaylistInvite).playlist.name}
         </span>
       )}
       <div className="invite-action-btns">

@@ -2,7 +2,7 @@ import { FormEventHandler } from "react";
 import { useState } from "react";
 import "./CreatePlaylist.css";
 import { createPlaylist } from "../../api/requests/media";
-import { validatePlaylistName } from "../../api/validation/media";
+import { validatePlaylistName } from "../../validation/media";
 
 interface CreatePlaylistProps {
   // function to execute after playlist has been created
@@ -12,7 +12,6 @@ interface CreatePlaylistProps {
 }
 export default function CreatePlaylist({ onFinish }: CreatePlaylistProps) {
   const [formState, setFormState] = useState<FormState>({ state: "input" });
-  const [selectedPlaylistType, setSelectedPlaylistType] = useState<1 | 3>(1);
   const [playlistName, setPlaylistName] = useState("");
 
   const submitHandler: FormEventHandler<HTMLFormElement> = async (e) => {
@@ -24,25 +23,11 @@ export default function CreatePlaylist({ onFinish }: CreatePlaylistProps) {
         setFormState({ state: "error", message: "Invalid Name" });
         return;
       }
-      if (selectedPlaylistType === 1) {
-        await createPlaylist(playlistName, 1);
-      } else if (selectedPlaylistType === 3) {
-        await createPlaylist(playlistName, 3);
-      }
+      await createPlaylist(playlistName);
       setFormState({ state: "submitted", message: "Playlist created" });
       onFinish();
-    } catch (err) {
-      console.log(err);
-    }
+    } catch (err) {}
   };
-  function getPlaylistClassName(playlistType: 1 | 3) {
-    if (selectedPlaylistType === playlistType) {
-      return "create-playlist-type-selected-option";
-    } else {
-      return "create-playlist-type-option";
-    }
-  }
-
   return (
     <form
       className="create-playlist-form"
@@ -66,20 +51,6 @@ export default function CreatePlaylist({ onFinish }: CreatePlaylistProps) {
         onChange={(e) => setPlaylistName(e.target.value)}
         type="text"
       />
-      <div className="create-playlist-type-div">
-        <span
-          onClick={() => setSelectedPlaylistType(1)}
-          className={getPlaylistClassName(1)}
-        >
-          Playlist
-        </span>
-        <span
-          onClick={() => setSelectedPlaylistType(3)}
-          className={getPlaylistClassName(3)}
-        >
-          Shared Playlist
-        </span>
-      </div>
       <button
         type="submit"
         disabled={formState.state === "loading"}

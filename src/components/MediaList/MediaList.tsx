@@ -5,10 +5,10 @@ import {
 } from "../../assets/default-icons";
 import { uploadIcon } from "../../assets/default-icons/MediaList";
 import "./MediaList.css";
-import { useContext } from "react";
+import { useContext, useRef, useState } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
 import { formatDistanceToNow } from "date-fns";
-import { FileInput } from "../";
+import { FileInput, Modal } from "../";
 import {
   getSongIcon,
   getPlaylistIcon,
@@ -21,10 +21,13 @@ import {
   uploadAudioFile,
 } from "../../api/requests/media";
 import { useNavigate } from "react-router-dom";
-import { Task, tasksContext } from "../../contexts/TasksContext";
+import { MediaTask, TaskType, tasksContext } from "../../contexts/TasksContext";
+import { AudioFile, MediaType, Playlist } from "../../types/media";
+import { AxiosError } from "axios";
+import { ResponseError } from "../../types/errors";
 interface MediaListOptions {}
 interface MediaListProps {
-  items: (Playlist | AudioFile | PlaylistAudioFile)[];
+  items: (Playlist | AudioFile)[];
   searchValue?: string;
   refreshMedia?: () => any;
   title?: string;
@@ -35,23 +38,11 @@ interface MediaListProps {
 
 export default function MediaList({
   items,
-  searchValue,
   refreshMedia,
   title,
   songClickHandler,
   playlistClickHandler,
 }: MediaListProps) {
-  // used when an object containing other media is clicked to be able to return
-  // to previous lists
-  //const [debouncedSearchValue, setDebouncedSearchValue] = useState(searchValue);
-  // useEffect(() => {
-  //   return debounced(() => {
-  //     setDebouncedSearchValue(searchValue);
-  //   }, 0);
-  // }, [searchValue]);
-
-  // filteredItems will only change if the mediaStack or the debouncedSearch value
-  // is changed to prevent unnecessary recalculations and filters
   /**
    * @param {Array} mediaList - the original list of media to be modified
    * @param {string} searchFilter - search value used to filter the media
@@ -67,26 +58,26 @@ export default function MediaList({
           <h2 className="media-list-title">{title}</h2>
         </div>
       )}
-      {items.length > 0 ? (
+      {items && items.length > 0 ? (
         <ol className="media-list">
           {items.map((media, index) => {
             // return all the objects inside the category
-            if (media.type === 0 || media.type === 2 || media.type === 4) {
+            if (media.type === MediaType.AudioFile) {
               return (
                 <AudioFileTille
-                  key={media._id}
-                  audioFile={media as AudioFile | PlaylistAudioFile}
+                  key={media.storageId}
+                  audioFile={media}
                   index={index}
                   songClickHandler={songClickHandler}
                   allMedia={items}
                   refreshMedia={refreshMedia}
                 />
               );
-            } else if (media.type === 1 || media.type === 3) {
+            } else if (media.type === MediaType.Playlist) {
               return (
                 <PlaylistTile
-                  key={media._id}
-                  playlist={media as Playlist}
+                  key={media.id}
+                  playlist={media}
                   playlistClickHandler={playlistClickHandler}
                   refreshMedia={refreshMedia}
                 />
@@ -102,7 +93,7 @@ export default function MediaList({
 }
 interface MediaListSong
   extends Pick<MediaListProps, "songClickHandler" | "refreshMedia"> {
-  audioFile: AudioFile | PlaylistAudioFile;
+  audioFile: AudioFile;
   allMedia: MediaListProps["items"];
   index: number;
 }
@@ -114,21 +105,19 @@ function AudioFileTille({
   refreshMedia,
 }: MediaListSong) {
   const { updateMedia, currentMedia } = useContext(mediaContext)!;
+  const [showModal, setShowModal] = useState(false);
+  const errMessageRef = useRef<string | undefined>();
   // the media list from mapping all over again
   async function deleteAudioFileHandler() {
-    if (audioFile.type === 0) {
-      await deleteAudioFile(audioFile.type, audioFile._id);
-    } else {
-      await deleteAudioFile(
-        audioFile.type,
-        audioFile._id,
-        (audioFile as PlaylistAudioFile).playlistID
-      );
-    }
+    try {
+      await deleteAudioFile(audioFile.id, audioFile.storageId);
 
-    // if a function to refresh media was passed,
-    // call it to get updated media list
-    refreshMedia && (await refreshMedia());
+      refreshMedia && (await refreshMedia());
+    } catch (error) {
+      console.log("error");
+      errMessageRef.current = "Error deleting audiofile";
+      setShowModal(true);
+    }
   }
   return (
     <li
@@ -137,6 +126,11 @@ function AudioFileTille({
         songClickHandler ? songClickHandler : () => updateMedia(allMedia, index)
       }
     >
+      <Modal
+        show={showModal}
+        onClose={() => setShowModal(false)}
+        children={<span>{errMessageRef.current}</span>}
+      />
       <img src={getSongIcon(audioFile)} alt="icon" />
       <div className="media-item-info">
         <span className="media-item-name">{audioFile.filename}</span>
@@ -147,11 +141,11 @@ function AudioFileTille({
           {audioFile.album ? audioFile.album : "Unknown Album"}
         </span>
         <span className="media-item-date-created">
-          Uploaded {formatDistanceToNow(new Date(audioFile.createdAt))} ago
+          Uploaded {formatDistanceToNow(new Date(audioFile.uploadedAt))} ago
         </span>
       </div>
       <span className="media-item-type">
-        {currentMedia?._id === audioFile._id ? "Now Playing" : "Song"}
+        {currentMedia?.id === audioFile.id ? "Now Playing" : "Song"}
       </span>
 
       <div className="media-item-options">
@@ -183,84 +177,75 @@ function PlaylistTile({
 }: MediaListPlaylistProps) {
   const navigator = useNavigate();
   const { addTask, updateTask, removeTask } = useContext(tasksContext)!;
+  const [showModal, setShowModal] = useState(false);
+  const errMessageRef = useRef<string | undefined>();
   async function addSongToPlaylistHandler(
     formData: FormData | undefined,
     error: FileInputError | undefined
   ) {
     if (error || !formData) {
-      console.log(error);
       return;
     }
-    let audioFileType: 2 | 4;
-    switch (playlist.type) {
-      case 1:
-        audioFileType = 2;
-        break;
-      case 3:
-        audioFileType = 4;
-        break;
-      default:
-        return;
-    }
-    const taskID = Date.now().toString + (Math.random() * 100).toString();
-    const task: Task = {
-      mode: "progress",
-      progress: 0,
-      name: "Uploading audio files",
-      originID: playlist._id,
-    };
     try {
-      await uploadAudioFile(formData, audioFileType, playlist._id, {
-        task,
-        taskID,
+      await uploadAudioFile(formData, playlist.id, {
         addTask,
         removeTask,
         updateTask,
       });
-    } catch (e) {
-      removeTask(taskID);
-    }
-
-    refreshMedia && (await refreshMedia());
+      refreshMedia && (await refreshMedia());
+    } catch (e) {}
   }
-
   function handlePlaylistClick() {
     if (playlistClickHandler) {
       playlistClickHandler();
     } else {
-      navigator(`/library/media/${playlist.type}/${playlist._id}`, {
+      navigator(`/library/media/${playlist.type}/${playlist.id}`, {
         state: playlist,
       });
     }
   }
-  async function deletePlaylistHandler() {
+
+  async function deletePlaylistHandler(e: React.MouseEvent) {
     /**
      * Function for deleting any type of media.
      * FUnction is shared so it is on the parent list.
      */
-    await deletePlaylist(playlist.type, playlist._id);
-    // if a function to refresh media was passed,
-    // call it to get updated media list
-    refreshMedia && (await refreshMedia());
+    try {
+      await deletePlaylist(playlist.id);
+      refreshMedia && (await refreshMedia());
+    } catch (error: any) {
+      switch (error.response?.data.code) {
+        case "INV01":
+          errMessageRef.current = "You are not the owner of this playlist";
+          break;
+
+        default:
+          errMessageRef.current = "Could not delete playlist";
+          break;
+      }
+      setShowModal(true);
+    }
   }
   return (
     <li className="media-list-playlist-item" onClick={handlePlaylistClick}>
+      <Modal
+        show={showModal}
+        onClose={() => setShowModal(false)}
+        children={<span>{errMessageRef.current}</span>}
+      />
       <img loading="lazy" src={getPlaylistIcon(playlist)} alt="icon" />
       <div className="media-item-info">
         <span className="media-item-name">{playlist.name}</span>
-        <span className="playlist-files-count">
+        {/* <span className="playlist-files-count">
           Songs: {playlist.audioFiles.length}
-        </span>
+        </span> */}
         <span className="media-item-date-created">
           Created {formatDistanceToNow(new Date(playlist.createdAt))} ago
         </span>
       </div>
-      <span className="media-item-type">
-        {playlist.type === 1 && "Playlist"}
-        {playlist.type === 3 && "Shared Playlist"}
-      </span>
-      <div className="media-item-options">
-        <label className="action-icon" onClick={(e) => e.stopPropagation()}>
+      <span className="media-item-type">Playlist</span>
+      <div className="media-item-options" onClick={(e) => e.stopPropagation()}>
+        <label className="action-icon">
           <img src={uploadIcon} alt="" />
           <FileInput
             onInput={addSongToPlaylistHandler}
@@ -268,19 +253,11 @@ function PlaylistTile({
             multiple={true}
           />
         </label>
-        {playlist.name !== "Favorites" && (
-          <button
-            className="action-icon"
-            onClick={(e) => {
-              deletePlaylistHandler();
-              e.stopPropagation();
-            }}
-          >
-            <img src={delete_icon} alt="" />
-          </button>
-        )}
+        <button className="action-icon" onClick={deletePlaylistHandler}>
+          <img src={delete_icon} alt="" />
+        </button>
 
-        <button className="action-icon" onClick={(e) => e.stopPropagation()}>
+        <button className="action-icon">
           <img src={options_icon} alt="" />
         </button>
       </div>
@@ -291,7 +268,7 @@ function PlaylistTile({
 function NoMediaItem() {
   return (
     <div className="media-list-song-item">
-      <span>No Media</span>
+      <div>No Media</div>
     </div>
   );
 }

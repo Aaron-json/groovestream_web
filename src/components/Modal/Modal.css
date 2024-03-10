@@ -1,5 +1,6 @@
 .modal{
-    background-color: rgba(1, 1, 1, 0.98);
+    min-width: 100px;
+    background-color: rgba(1, 1, 1, 0.8);
     overflow: auto;
     display: flex;
     flex-direction: column;
@@ -13,6 +14,7 @@
     border-radius: 7px;
     padding: 15px;
     gap: 12px;
+    align-items: center;
 }
 
 .close-modal-btn{
@@ -29,10 +31,4 @@
 .modal::backdrop{
     background-color: rgba(1, 1, 1, 0.91);
     scroll-behavior: unset;
-}
-
-.dialog{
-    display: flex;
-    min-width: 100px;
-    background-color: rgba(1, 1, 1, 0.8);
 }

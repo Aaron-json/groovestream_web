@@ -1,158 +1,71 @@
 import "./RegistrationForm.css";
-import { useReducer, useState } from "react";
+import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
-  convertToTimeStamp,
-  userInfoInputValidator,
-} from "../../api/validation/FormInput";
+  validateDateString,
+  validateFirstName,
+  validateLastName,
+  validatePassword,
+  validateUsername,
+} from "../../validation/FormInput";
 import { userSignUp } from "../../api/requests/user";
-import { AxiosError } from "axios";
+import { Axios, AxiosError } from "axios";
+import { FieldValues, useForm } from "react-hook-form";
+import { ResponseError } from "../../types/errors";
 
 const RegistrationForm = () => {
   const navigator = useNavigate();
-  const [registrationFields, registrationFieldsDispatch] = useReducer(
-    registrationFieldsReducer,
-    {
-      firstName: { value: "", errMessage: undefined },
-      lastName: { value: "", errMessage: undefined },
-      email: { value: "", errMessage: undefined },
-      dateOfBirth: { value: "", errMessage: undefined },
-      password: { value: "", show: false, errMessage: undefined },
-    }
-  );
-  const [formState, setFormState] = useState<FormState>({ state: "input" });
-
-  function registrationFieldsReducer(
-    prevState: UserInfo,
-    action: UserInfoUpdate
-  ): UserInfo {
-    switch (action.type) {
-      case "error":
-        const field = action.payload.field;
-        const errMessage = action.payload.errMessage;
-        return {
-          ...prevState,
-          // add all the previous values in registration fields
-          [field]: {
-            // add all the previous values in this field's object and update its error message
-            ...prevState[field],
-            errMessage: errMessage,
-          },
-        };
-
-      case "firstName":
-      case "lastName":
-      case "email":
-      case "dateOfBirth":
-        return {
-          ...prevState,
-          [action.type]: {
-            ...prevState[action.type],
-            value: action.payload,
-          },
-        };
-      case "password":
-        return {
-          ...prevState,
-          password: {
-            ...prevState.password,
-            value: action.payload,
-            show: false,
-          },
-        };
-      default:
-        return prevState;
-    }
-  }
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setFormState({ state: "loading" });
-    // validate input
-    const registrationQuery: any = {};
-    let invalidCount = 0;
-    let key: keyof UserInfo;
-    for (key in registrationFields) {
-      //check if any field is invalid
-      // set the error message for an invalid field
-      const validation = userInfoInputValidator(
-        key,
-        registrationFields[key].value
-      );
-      if (!validation.valid) {
-        invalidCount++;
-        registrationFieldsDispatch({
-          type: "error",
-          payload: {
-            field: key,
-            errMessage: validation.message,
-          },
-        });
-      } else if (validation.valid && registrationFields[key].errMessage) {
-        registrationFieldsDispatch({
-          type: "error",
-          payload: {
-            field: key,
-            errMessage: undefined,
-          },
-        });
-      }
-    }
-
-    // if any field was invalid stop the action
-    if (invalidCount > 0) {
-      setFormState({
-        state: "error",
-        message: "Invalid",
-      });
-      return;
-    }
-    registrationQuery.firstName = registrationFields.firstName.value;
-    registrationQuery.lastName = registrationFields.lastName.value;
-    registrationQuery.dateOfBirth = convertToTimeStamp(
-      registrationFields.dateOfBirth.value
-    );
-    registrationQuery.email = registrationFields.email.value;
-    registrationQuery.password = registrationFields.password.value;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    mode: "onSubmit",
+    reValidateMode: "onSubmit",
+  });
+  const [submitError, setSubmitError] = useState<string | undefined>(undefined);
+  async function submitHandler(formValues: FieldValues) {
+    console.log();
     try {
-      const response = await userSignUp(registrationQuery);
-      if (response.status == 201) {
-        navigator("/login");
-      }
-    } catch (error) {
-      if ((error as AxiosError).code === "ERR_NETWORK") {
-        setFormState({ state: "error", message: "Network Error" });
+      await userSignUp({
+        firstName: formValues.firstName,
+        lastName: formValues.lastName,
+        username: formValues.username,
+        password: formValues.password,
+        dateOfBirth: formValues.dateOfBirth,
+      });
+      navigator("/login");
+    } catch (error: any) {
+      if (
+        ((error as AxiosError).response?.data as ResponseError).errCode ===
+        "INV01"
+      ) {
+        setSubmitError("Username is already in use");
       } else {
-        setFormState({
-          state: "error",
-          message: "Could not sign up. Please try again later!",
-        });
+        setSubmitError("Error occured. Please try again later");
       }
     }
   }
+
   return (
-    <form className="register-form" onSubmit={handleSubmit}>
+    <form className="register-form" onSubmit={handleSubmit(submitHandler)}>
       <h2 className="register-form-header">Sign up</h2>
-      <span className="form-err-message">
-        {formState.state === "error" ? formState.message : undefined}
-      </span>
+      {submitError && <span className="form-err-message">{submitError}</span>}
       <label htmlFor="register-firstname-input">
         First Name
         <br />
-        {
+        {errors.firstName && (
           <span className="form-err-message">
-            {registrationFields.firstName.errMessage}
+            {errors.firstName.message?.toString()}
           </span>
-        }
+        )}
         <input
-          id="register-firstname-input"
+          id="register-firstName-input"
           className="form-input"
-          value={registrationFields.firstName.value}
-          onChange={(e) =>
-            registrationFieldsDispatch({
-              type: "firstName",
-              payload: e.target.value,
-            })
-          }
+          {...register("firstName", {
+            required: true,
+            validate: validateFirstName,
+          })}
           type="text"
           placeholder="first name"
         />
@@ -163,19 +76,18 @@ const RegistrationForm = () => {
       >
         Last Name
         <br />
-        <span className="form-err-message">
-          {registrationFields.lastName.errMessage}
-        </span>
+        {errors.lastName && (
+          <span className="form-err-message">
+            {errors.lastName.message?.toString()}
+          </span>
+        )}
         <input
           id="register-lastname-input"
           className="form-input"
-          value={registrationFields.lastName.value}
-          onChange={(e) =>
-            registrationFieldsDispatch({
-              type: "lastName",
-              payload: e.target.value,
-            })
-          }
+          {...register("lastName", {
+            required: true,
+            validate: validateLastName,
+          })}
           type="text"
           placeholder="last name"
         />
@@ -187,21 +99,20 @@ const RegistrationForm = () => {
       >
         Username
         <br />
-        <span className="form-err-message">
-          {registrationFields.email.errMessage}
-        </span>
+        {errors.username && (
+          <span className="form-err-message">
+            {errors.username.message?.toString()}
+          </span>
+        )}
         <input
           id="register-username-input"
           className="form-input"
-          type="email"
-          value={registrationFields.email.value}
-          onChange={(e) =>
-            registrationFieldsDispatch({
-              type: "email",
-              payload: e.target.value,
-            })
-          }
-          placeholder="email"
+          type="text"
+          {...register("username", {
+            required: true,
+            validate: validateUsername,
+          })}
+          placeholder="username"
         />
       </label>
       <label
@@ -210,48 +121,42 @@ const RegistrationForm = () => {
       >
         Password
         <br />
-        <span className="form-err-message">
-          {registrationFields.password.errMessage}
-        </span>
+        {errors.password && (
+          <span className="form-err-message">
+            {errors.password.message?.toString()}
+          </span>
+        )}
         <input
           id="register-password-input"
           className="form-input"
-          type={registrationFields.password.show ? "text" : "password"}
-          value={registrationFields.password.value}
-          onChange={(e) =>
-            registrationFieldsDispatch({
-              type: "password",
-              payload: e.target.value,
-            })
-          }
+          type={"password"}
+          {...register("password", {
+            required: true,
+            validate: validatePassword,
+          })}
           placeholder="password"
         />
       </label>
 
       <label htmlFor="">
-        Date of Birth <small>(DD-MM-YYYY)</small>
+        Date of Birth <small>(YYYY-MM-DD)</small>
         <br />
-        <span className="form-err-message">
-          {registrationFields.dateOfBirth.errMessage}
-        </span>
+        {errors.dateOfBirth && (
+          <span className="form-err-message">
+            {errors.dateOfBirth.message?.toString()}
+          </span>
+        )}
         <input
           id="register-date-of-birth"
           className="form-input"
-          type="text"
-          value={registrationFields.dateOfBirth.value}
-          onChange={(e) =>
-            registrationFieldsDispatch({
-              type: "dateOfBirth",
-              payload: e.target.value,
-            })
-          }
+          type="date"
+          {...register("dateOfBirth", {
+            required: true,
+            // browser will validate the date
+          })}
         />
       </label>
-      <button
-        disabled={formState.state === "loading"}
-        type="submit"
-        className="form-button"
-      >
+      <button disabled={isSubmitting} type="submit" className="form-button">
         Submit
       </button>
       <p>

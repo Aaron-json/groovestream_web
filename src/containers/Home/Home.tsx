@@ -9,19 +9,40 @@ import { useState } from "react";
 import { profile_icon } from "../../assets/default-icons";
 import { UserProfilePage } from "..";
 import { useQuery } from "@tanstack/react-query";
-import { getHomePageData } from "../../api/requests/page";
+import {
+  getAudioFileHistory,
+  getMostPlayedAudioFiles,
+} from "../../api/requests/media";
+import { getUser } from "../../api/requests/user";
 
 export default function Home() {
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const {
     data: userData,
-    isLoading,
-    error,
-  } = useQuery({ queryKey: ["homePage"], queryFn: getHomePageData });
-  if (isLoading) {
+    isLoading: userDataLoading,
+    error: userDataErr,
+  } = useQuery({ queryKey: ["user"], queryFn: getUser });
+  const {
+    data: mostPlayed,
+    isLoading: loadingMostPlayed,
+    error: mostPlayedErr,
+  } = useQuery({
+    queryKey: ["audiofiles-most-played"],
+    queryFn: () => getMostPlayedAudioFiles(10),
+  });
+  const {
+    data: audioFileHistory,
+    isLoading: loadingAudioFileHistory,
+    error: audioFileHistoryErr,
+  } = useQuery({
+    queryKey: ["audiofile-listening-history"],
+    queryFn: () => getAudioFileHistory(6),
+  });
+
+  if (userDataLoading) {
     return <LoadingSpinnerDiv />;
   }
-  if (error) {
+  if (userDataErr) {
     return <div>Error Occcured</div>;
   }
   return (
@@ -47,50 +68,13 @@ export default function Home() {
         <UserProfilePage />
       </Modal>
       <hr className="home-header-bottom-line" />
-      {userData && (
-        <MediaGrid
-          items={getRecentlyPlayed(userData.playlists!, userData.audioFiles!)}
-          title="Recently Played"
-        />
+      {audioFileHistory && (
+        <MediaGrid items={audioFileHistory} title="Recently Played" />
       )}
 
-      {userData && (
-        <HorizontalScroll
-          items={getMostPlayedTracks(userData.audioFiles!)}
-          title="Most Played Tracks"
-        />
-      )}
-
-      {userData && (
-        <HorizontalScroll
-          items={getMostPlayedPlaylists(userData.playlists!)}
-          title="Most Played Playlists"
-        />
+      {mostPlayed && (
+        <HorizontalScroll items={mostPlayed} title="Most Played Tracks" />
       )}
     </section>
   );
-}
-
-function getRecentlyPlayed(
-  playlists: Playlist[],
-  audioFiles: (AudioFile | PlaylistAudioFile)[],
-  limit = 6
-) {
-  const totalMedia = [...playlists, ...audioFiles];
-  totalMedia.filter((media) => Boolean(media.lastPlayed));
-  totalMedia.sort((a, b) => a.lastPlayed - b.lastPlayed);
-  return totalMedia.slice(-limit);
-}
-function getMostPlayedTracks(audioFiles: AudioFile[], limit = 10) {
-  const totalMedia = [...audioFiles];
-  totalMedia.filter((media) => media.playbackCount !== 0);
-  totalMedia.sort((a, b) => a.playbackCount - b.playbackCount);
-  return totalMedia.slice(-limit);
-}
-
-function getMostPlayedPlaylists(playlists: Playlist[], limit = 10) {
-  const totalMedia = [...playlists];
-  totalMedia.filter((media) => media.playbackCount !== 0);
-  totalMedia.sort((a, b) => a.playbackCount - b.playbackCount);
-  return totalMedia.slice(-limit);
 }

@@ -1,40 +1,55 @@
 import { createContext, useState } from "react";
+import { ContextProviderProps } from "./types";
 export const tasksContext = createContext<TasksContextValue | undefined>(
   undefined
 );
 interface BaseTask {
   name?: string;
+  type: TaskType; // supported task types
   // id of the resource this task was created in. Eg. playlistID If the task was created in a playlist
   // useful to show task progress on the playlist page
-  originID?: string;
+  progress?: number;
 }
-export interface ProgressTask extends BaseTask {
-  mode: "progress";
-  progress: number; // decimal between 0 and 1
+export enum TaskType {
+  Media = "media",
 }
-export interface LoadingTask extends BaseTask {
-  mode: "loading";
+export interface MediaTask extends BaseTask {
+  type: TaskType.Media;
+  playlistID: number;
+  playlistName?: string;
+  audiofileID?: number;
+  audiofileName?: string;
 }
-export type Task = ProgressTask | LoadingTask;
-type Tasks = {
+export type Task = MediaTask; // union of all supported task types
+type TaskStore = {
   // id of a task. timestamp concantenated with another resource (eg. id of the playlist being modified) should be enough
   [id: string]: Task;
 };
-type TasksContextValue = {
+export type TasksContextValue = {
   addTask: (id: string, newTask: Task) => void;
-  getTasks: () => Task[];
+  getTasks: (type?: TaskType) => Task[];
   removeTask: (taskId: string) => void;
   updateTask: (taskId: string, updatedTask: Task) => void;
   getTasksCount: () => number;
+  getPlaylistTasks: (playlistID: number) => MediaTask[];
 };
 export function TasksContextProvider({ children }: ContextProviderProps) {
-  const [tasks, setTasks] = useState<Tasks>({});
-  function getTasks() {
+  const [tasks, setTasks] = useState<TaskStore>({});
+  function getTasks(type?: TaskType) {
+    if (type) {
+      return Object.values(tasks).filter((task) => task.type === type);
+    }
     return Object.values(tasks);
+  }
+  function getPlaylistTasks(playlistID: number) {
+    return Object.values(tasks).filter(
+      (task) => task.type === TaskType.Media && task.playlistID === playlistID
+    );
   }
   function addTask(id: string, newTask: Task) {
     setTasks({ ...tasks, [id]: newTask });
   }
+
   function removeTask(id: string) {
     delete tasks[id];
     setTasks({ ...tasks });
@@ -43,12 +58,10 @@ export function TasksContextProvider({ children }: ContextProviderProps) {
   function updateTask(id: string, updatedTask: Task) {
     setTasks({ ...tasks, [id]: updatedTask });
   }
-  function getTasksCount() {
-    return Object.keys(tasks).length;
+  function getTasksCount(type?: TaskType) {
+    return getTasks(type).length;
   }
-  function getOriginTasks(originID: string) {
-    return Object.values(tasks).filter((value) => value.originID === originID);
-  }
+
   return (
     <tasksContext.Provider
       value={{
@@ -57,6 +70,7 @@ export function TasksContextProvider({ children }: ContextProviderProps) {
         removeTask,
         updateTask,
         getTasksCount,
+        getPlaylistTasks,
       }}
     >
       {children}

@@ -2,6 +2,7 @@ import "./MainView.css";
 import { PlaylistPage, SideBar, SocialPage } from "..";
 import { Home, Search, Library } from "..";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { MediaType } from "../../types/media";
 
 const MainView = () => {
   return (
@@ -13,8 +14,10 @@ const MainView = () => {
         <Route path="/search" element={<Search />} />
         <Route path="/library">
           <Route index element={<Library />} />
-          {/* Should only pass playlist (1) or shared playlist (3) to this path */}
-          <Route path="media/:mediaType/:mediaID" element={<PlaylistPage />} />
+          <Route
+            path={`media/${MediaType.Playlist}/:mediaID`}
+            element={<PlaylistPage />}
+          />
           <Route path="*" element={<Navigate to="/library" />} />
         </Route>
         <Route path="/social" element={<SocialPage />} />

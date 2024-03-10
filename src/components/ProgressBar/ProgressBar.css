@@ -21,6 +21,7 @@
 
 @keyframes slide {
     0% {
+        /* matches the width of the loading bar so it starts outside the bar */
         margin-left: -18%;
     }
     100%{

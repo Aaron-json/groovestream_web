@@ -1,6 +1,6 @@
 import axiosClient from "../axiosClient";
 type LoginCredentials = {
-  email: string;
+  username: string;
   password: String;
 };
 export async function login(loginCreds: LoginCredentials) {

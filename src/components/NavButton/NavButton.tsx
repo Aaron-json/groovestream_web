@@ -4,34 +4,51 @@ import { NavLink } from "react-router-dom";
 interface SideButtonProps {
   text: string;
   icon: string;
+  // rotue to navigate to.
+  // if not provided then use text as the route
+  path?: string;
+  navigate?: boolean;
+  onClick?: () => any;
 }
-const SideButton = (props: SideButtonProps) => {
-  return <NavButton text={props.text} icon={props.icon} />;
-};
-
+export default function SideButton(props: SideButtonProps) {
+  if (props.navigate === true) {
+    return <NavButton {...props} />;
+  } else {
+    return <ActionButton {...props} />;
+  }
+}
 function NavButton(props: SideButtonProps) {
+  let navRoute = props.path ? props.path : props.text;
+  if (!props.navigate) return null;
   return (
     <NavLink
-      to={`/${props.text}`}
+      to={`/${navRoute}`}
       className={({ isActive }) =>
         isActive ? "current-nav-entry" : "nav-entry"
       }
+      onClick={props.onClick}
     >
-      <img className="nav-icon" src={props.icon} alt={props.text} />
-      <label className="nav-label">
-        {props.text.charAt(0).toUpperCase() + props.text.slice(1)}
-      </label>
+      <SideButtonContent {...props} />
     </NavLink>
   );
 }
-function InfoButton(props: SideButtonProps) {
+
+function ActionButton(props: SideButtonProps) {
   return (
-    <a className="info-nav-entry" onClick={() => {}}>
+    // use anchor tag to have style parity with the navigation button
+    // navlink uses an underlying anchor tag
+    <a className="nav-entry" onClick={props.onClick}>
+      <SideButtonContent {...props} />
+    </a>
+  );
+}
+function SideButtonContent(props: Pick<SideButtonProps, "text" | "icon">) {
+  return (
+    <>
       <img className="nav-icon" src={props.icon} alt={props.text} />
       <label className="nav-label">
         {props.text.charAt(0).toUpperCase() + props.text.slice(1)}
       </label>
-    </a>
+    </>
   );
 }
-export default SideButton;

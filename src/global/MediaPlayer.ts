@@ -26,12 +26,12 @@ export default class MediaPlayer {
     if (!this.#HowlInstance) {
       // new Howl created
       await this.#loadSourceHelper(source);
-      this.currentSourceID = source._id;
+      this.currentSourceID = source.id;
     } else {
       // A different song is selected
       this.unloadSource();
       await this.#loadSourceHelper(source);
-      this.currentSourceID = source._id;
+      this.currentSourceID = source.id;
     }
   }
 
@@ -110,7 +110,7 @@ export default class MediaPlayer {
 
 interface MediaSourceConfig {
   data: string;
-  _id: string;
+  id: string;
   format: string;
   onSongEnd: () => any;
 }

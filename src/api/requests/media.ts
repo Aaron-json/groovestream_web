@@ -1,187 +1,190 @@
 import { AxiosRequestConfig } from "axios";
 import axiosClient from "../axiosClient";
-import { Task } from "../../contexts/TasksContext";
+import { MediaTask, TaskType } from "../../contexts/TasksContext";
+import { AudioFile, Playlist } from "../../types/media";
+import { PlaylistInvite } from "../../types/invites";
+import { TaskConfig } from "./types";
 
-export async function deleteAudioFile(
-  mediaType: string | number,
-  audioFileID: string,
-  playlistID?: string
-) {
-  let requestURL: string;
-  if (mediaType === 0) {
-    requestURL = `/media/0/${audioFileID}`;
-  } else if (mediaType === 2 || mediaType === 4) {
-    // audioFile in a playlist
-    requestURL = `/media/${mediaType}/${audioFileID}/${playlistID}`;
-  } else {
-    return;
-  }
-  return await axiosClient.delete(requestURL);
-}
-
-export async function deletePlaylist(
-  playlistType: string | number,
-  playlistID: string
-) {
-  return await axiosClient.delete(`/media/${playlistType}/${playlistID}`);
-}
-
-/**
- * Uploads audiofiles to all types of playlists
- * @param formData FormData object
- * @param playlistID
- * @param audioFileType - Type of the playlist audiofile
- * @param onUploadProgress Function to update the upload's progress
- * @returns null
- */
+///////////////////////////////////////////////////////////////////////////
+// AUDIOFILE
+///////////////////////////////////////////////////////////////////////////
 export async function uploadAudioFile(
   formData: FormData,
-  audioFileType: 0 | 2 | 4,
-  playlistID?: string,
-  taskConfig?: {
-    task: Task,
-    taskID: string,
-    addTask: (taskId: string, task: Task) => any
-    updateTask: (id: string, updatedTask: Task) => any,
-    removeTask: (id: string) => any
-  }
+  playlistID: number,
+  taskConfig?: TaskConfig
 ) {
-
+  const taskID = Date.now().toString + (Math.random() * 100).toString();
+  const task: MediaTask = {
+    type: TaskType.Media,
+    name: "Uploading audio files",
+    playlistID,
+  }
   // set up the request config including the onUploadProgress event handler
   let config: AxiosRequestConfig = {
     headers: {
       "Content-Type": "multipart/form-data",
     },
+    // set a custom timeout since the default may be too short for downloads
+    timeout: 1000 * 60 * 5,
     onUploadProgress: (progressEvent) => {
       // add the mode manually to TS knowns its a progressing task
-      taskConfig?.updateTask(taskConfig.taskID, { ...taskConfig.task, mode: "progress", progress: progressEvent.progress! })
+      taskConfig?.updateTask(taskID, { ...task, progress: progressEvent.progress! })
     },
   };
 
-  let url;
-  if (audioFileType === 0) {
-    url = `/media/audioFile/0`;
-  } else if (audioFileType === 2 || audioFileType === 4) {
-    url = `/media/audioFile/${audioFileType}/${playlistID}`;
-  } else {
-    // unexpected media type
-    return;
+  taskConfig?.addTask(taskID, task)
+  try {
+    const url = `/media/0/${playlistID}`;
+
+    const response = await axiosClient.post(
+      url,
+      formData,
+      config
+    );
+    taskConfig?.removeTask(taskID)
+    return response
+  } catch (error) {
+    taskConfig?.removeTask(taskID)
+    throw error
   }
-  console.log("we got here")
-  taskConfig?.addTask(taskConfig.taskID, taskConfig.task)
-  const response = await axiosClient.post(
-    url,
-    formData,
-    config
-  );
-  taskConfig?.removeTask(taskConfig.taskID)
-  return response
 }
 
-export async function uploadProfilePicture(formData: FormData) {
-  return await axiosClient.put("/user/profilePicture", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+export async function deleteAudioFile(
+  audioFileID: number,
+  storageID: string,
+) {
+  return await axiosClient.delete(`/media/0/${audioFileID}/${storageID}`);
+}
+export async function streamAudioFile(
+  storageID: string
+) {
+  let url = `/media/stream/${storageID}`;
+
+  // set a custom timeout since the default may be too short for downloads
+  const response = await axiosClient.get(url, { timeout: 1000 * 60 * 2 });
+  return response.data;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+// PLAYLIST
+/////////////////////////////////////////////////////////////////////////////////////
+export async function deletePlaylist(
+  playlistID: number
+) {
+  return await axiosClient.delete(`/media/1/${playlistID}`);
 }
 
 export async function createPlaylist(
   playlistName: string,
-  playlistType: number | string
 ) {
-  const response = await axiosClient.post(`/media/${playlistType}`, {
+  const response = await axiosClient.post(`/media/1`, {
     name: playlistName,
   });
   return response.data;
 }
 
-export async function getPlaylistData(
-  playlistType: number | string,
-  playlistID: string
+export async function getPlaylistAudioFiles(
+  playlistID: number
 ) {
-  // can be used to get non nested media like audiofiles outside playlists,
-  // playlists and shared playlists
-  const respose = await axiosClient.get(`/media/${playlistType}/${playlistID}`);
-  return respose.data;
+  const respose = await axiosClient.get(`/media/1/${playlistID}`);
+  return respose.data as AudioFile[];
 }
+export async function getPlaylistInfo(playlistID: number) {
+  const respose = await axiosClient.get(`/media/info/1/${playlistID}`);
+  return respose.data as Playlist;
 
+}
+/////////////////////////////////////////////////////////////////////////////////////////////
+// ALL MEDIA
+/////////////////////////////////////////////////////////////////////////////////////////////
 export async function getAllUserMedia() {
   const response = await axiosClient.get("/media");
-  return response.data;
+  return response.data as (Playlist | AudioFile)[];
 }
-
-export async function getPlaylistAudioFileInfo(
-  mediaType: number | string,
-  playlistID: string,
-  audioFileID: string
-) {
-  // get nested media like playlist audiofiles
-  const response = await axiosClient.get(
-    `/media/info/${mediaType}/${playlistID}/${audioFileID}`
-  );
-  return response.data;
-}
+/////////////////////////////////////////////////////////////////////////////////////////////
+// SHARED PLAYLIST SPECIFIC
+/////////////////////////////////////////////////////////////////////////////////////////////
 export async function getPlaylistInvites() {
-  const response = await axiosClient.get(`/media/3/invites`);
-  return response.data;
+  const response = await axiosClient.get(`/social/playlist-invites`);
+  return response.data as Omit<PlaylistInvite, "to">[];
 }
 export async function sendPlaylistInvite(
-  playlistID: string,
-  memberEmail: string
+  playlistID: number,
+  username: string
 ) {
-  const response = await axiosClient.post(`/media/3/invite/${playlistID}`, {
-    memberEmail,
+  const response = await axiosClient.post(`/social/playlist-invite/${playlistID}`, {
+    username,
   });
   return response.data;
 }
 
 export async function acceptPlaylistInvite(
-  senderID: string,
-  playlistID: string
+  senderID: number,
+  playlistID: number,
+  inviteID: number
 ) {
   const response = await axiosClient.post(
-    `/media/3/member/${senderID}/${playlistID}`
+    `/social/playlist-member/${inviteID}/${playlistID}`
   );
   return response.data;
 }
 
 export async function rejectPlaylistInvite(
-  senderID: string,
-  playlistID: string
+  senderID: number,
+  playlistID: number,
+  inviteID: number
 ) {
   const response = await axiosClient.delete(
-    `/media/3/invite/${senderID}/${playlistID}`
+    `/social/playlist-invite/${inviteID}/${playlistID}`
   );
   return response.data;
 }
 
-export async function leavePlaylist(playlistID: string) {
-  const response = await axiosClient.delete(`/media/3/member/${playlistID}`);
+export async function leavePlaylist(playlistID: number) {
+  const response = await axiosClient.delete(`/social/playlist-member/${playlistID}`);
   return response.data;
 }
 export async function removePlaylistMember(
-  playlistID: string,
-  memberID: string
+  playlistID: number,
+  memberID: number
 ) {
   const response = await axiosClient.delete(
-    `/media/3/member/${playlistID}/${memberID}`
+    `/social/playlist-member/${playlistID}/${memberID}`
   );
   return response.data;
 }
-export async function streamAudioFile(
-  mediaType: number | string,
-  audioFileID: string,
-  playlistID?: string
-) {
-  let url;
-  if (mediaType === 0 || mediaType === 2) {
-    url = `media/${mediaType}/${audioFileID}`;
-  } else if (mediaType === 4) {
-    url = `media/${mediaType}/${audioFileID}/${playlistID}`;
-  } else {
-    throw new Error("Invalid media type");
+
+////////////////////////////////////////////////////////////////////////////////////
+// ANALYTICS
+////////////////////////////////////////////////////////////////////////////////////
+
+export async function getMostPlayedAudioFiles(limit: number) {
+  const response = await axiosClient.get(
+    "/media/audiofile/most-played",
+    { params: { limit } }
+  );
+  return response.data as AudioFile[];
+}
+
+export async function getAudioFileHistory(limit: number, skip?: number) {
+  const queryParams: {
+    limit: number,
+    skip?: number
+  } = {
+    limit
   }
-  const response = await axiosClient.get(url);
-  return response.data;
+  if (skip) {
+    queryParams.skip = skip
+  }
+  const response = await axiosClient.get(
+    `/media/audiofile/history`, {
+    params: queryParams
+  }
+  );
+  return response.data as AudioFile[];
+}
+
+export async function addListeningHistory(audioFileID: number) {
+  const response = await axiosClient.post(`/media/audiofile/history/${audioFileID}`)
+  return response.data
 }

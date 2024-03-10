@@ -1,17 +1,19 @@
-type NullorUndefined = null | undefined;
+import { AudioFile, Playlist } from "../types/media";
 
-type ContextProviderProps = {
+export type NullorUndefined = null | undefined;
+
+export type ContextProviderProps = {
   children: React.ReactNode;
 };
 
-type CurrentMedia =
+export type CurrentMedia =
   | {
     index: number;
-    queue: Media[];
+    queue: (AudioFile | Playlist)[];
   }
   | NullorUndefined;
 
-type mediaStateAction = {
+export type mediaStateAction = {
   type: "next" | "previous" | "newMedia" | "unload";
   payload?: any | NullorUndefined;
 };

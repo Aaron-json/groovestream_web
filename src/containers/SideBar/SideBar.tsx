@@ -6,25 +6,29 @@ import {
   search_icon,
   library_icon,
   about_icon,
-  settings_icon,
+  logout_icon,
 } from "../../assets/default-icons/SideBar";
 import { social_icon } from "../../assets/default-icons/SideBar";
+import { useContext } from "react";
+import { authenticationContext } from "../../contexts/AuthenticationContext";
 
 // side navigation buttons and their icons
 export default function SideBar() {
+  const { logout } = useContext(authenticationContext)!;
+
   return (
     <section className="SideBar">
       <NavButton text="menu" icon={menu_icon} />
       <hr className="menu-nav-separator" />
       <div className="nav-buttons">
-        <NavButton text="home" icon={home_icon} />
-        <NavButton text="search" icon={search_icon} />
-        <NavButton text="library" icon={library_icon} />
-        <NavButton text="social" icon={social_icon} />
+        <NavButton text="home" navigate icon={home_icon} />
+        <NavButton text="search" navigate icon={search_icon} />
+        <NavButton text="library" navigate icon={library_icon} />
+        <NavButton text="social" navigate icon={social_icon} />
       </div>
       <div className="info-sideButtons">
         <NavButton text="about" icon={about_icon} />
-        <NavButton text="settings" icon={settings_icon} />
+        <NavButton text="logout" icon={logout_icon} onClick={logout} />
       </div>
     </section>
   );

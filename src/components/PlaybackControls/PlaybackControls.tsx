@@ -56,11 +56,7 @@ const PlaybackControls = () => {
         </button>
         <button className={`playback-control-btn`} onClick={playPauseToggle}>
           <img
-            className={
-              playbackState === "loading" && getPlaybackIcon() === loadingIcon
-                ? "loading"
-                : undefined
-            }
+            className={playbackState === "loading" ? "loading" : undefined}
             src={getPlaybackIcon()}
             alt="play"
           />

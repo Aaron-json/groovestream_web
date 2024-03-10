@@ -1,15 +1,12 @@
 import axios from "axios";
 
-export const DEV_HOST_NAME = "http://localhost:5001";
-export const NETWORK_DEV_HOST_NAME = "http://192.168.1.72:5001";
-export const PROD_HOST_NAME = "https://fine-craft-385619.nn.r.appspot.com";
 const axiosClient = axios.create({
-  baseURL: PROD_HOST_NAME,
-  withCredentials: true,
+  baseURL: import.meta.env.PROD ? import.meta.env.VITE_API_URL : import.meta.env.VITE_DEV_API_URL,
   // override the content type header if you are not sending json data in your request
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
+// timeout for all requests. Independent requests can set their own timeouts but it has to be less than this
+axiosClient.defaults.timeout = 1000 * 20
+axiosClient.defaults.withCredentials = true
+axiosClient.defaults.headers["Content-Type"] = "application/json"
 
 export default axiosClient;

@@ -6,17 +6,26 @@ import { AuthenticationContextProvider } from "./contexts/AuthenticationContext"
 import { ColorContextProvider } from "./contexts/ColorContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchIntervalInBackground: false,
+    },
+  },
+});
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthenticationContextProvider>
+    <BrowserRouter>
+      <AuthenticationContextProvider>
+        <QueryClientProvider client={queryClient}>
           <ColorContextProvider>
             <App />
           </ColorContextProvider>
-        </AuthenticationContextProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+        </QueryClientProvider>
+      </AuthenticationContextProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );

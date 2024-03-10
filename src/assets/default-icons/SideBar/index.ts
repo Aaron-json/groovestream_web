@@ -6,3 +6,4 @@ export { default as about_icon } from "./about.png";
 export { default as settings_icon } from "./settings.png";
 export { default as profile_icon } from "./profile.png";
 export { default as social_icon } from "./social-icon.png";
+export { default as logout_icon } from "./logout.png"
