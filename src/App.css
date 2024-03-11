@@ -42,19 +42,12 @@ div#root {
   flex-direction: column;
   height: 100%;
   min-width: 1000px;
-}
-
-.login-register{
-  /* background is fixed so set it manually */
   background: var(--default-background);
 }
 
 #App{
-  /* background-color: hsl(0deg, 0.0%, 7.5%); */
-    /* For image background */
-    /* background: var(--default-background); */
-    /* background-size: cover; */
-  transition: background 7s;
+
+  transition: background 4s;
 }
 
 #App > section {

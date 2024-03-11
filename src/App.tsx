@@ -7,21 +7,14 @@ import { TasksContextProvider } from "./contexts/TasksContext";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { authenticationContext } from "./contexts/AuthenticationContext";
 import { AppHeader, LoadingSpinnerDiv } from "./components";
-import { colorContext } from "./contexts/ColorContext";
 
 export default function App() {
   const { authenticated } = useContext(authenticationContext)!;
-  const { color } = useContext(colorContext)!;
 
   return (
     <>
       {authenticated === true && (
-        <div
-          id="App"
-          style={{
-            background: color,
-          }}
-        >
+        <div id="App">
           <TasksContextProvider>
             <MediaContextProvider>
               <MainView />
