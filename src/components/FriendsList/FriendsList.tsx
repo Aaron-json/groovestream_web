@@ -15,6 +15,7 @@ import { Friend } from "../../types/relations";
 import { getProfilePicture } from "../../api/requests/user";
 import { AxiosError } from "axios";
 import { ResponseError } from "../../types/errors";
+import { FormState } from "../../types/formstate";
 
 export default function FriendsList() {
   const [showAddFriendsModal, setShowAddFriendsModal] = useState(false);

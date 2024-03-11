@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import { FormEvent, useContext, useState } from "react";
 import { authenticationContext } from "../../contexts/AuthenticationContext";
 import { AxiosError } from "axios";
+import { FormState } from "../../types/formstate";
 
 const LoginForm = () => {
   const { login } = useContext(authenticationContext)!;

@@ -3,6 +3,7 @@ import { useState } from "react";
 import "./CreatePlaylist.css";
 import { createPlaylist } from "../../api/requests/media";
 import { validatePlaylistName } from "../../validation/media";
+import { FormState } from "../../types/formstate";
 
 interface CreatePlaylistProps {
   // function to execute after playlist has been created

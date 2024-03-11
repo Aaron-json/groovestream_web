@@ -13,7 +13,7 @@ import {
   getSongIcon,
   getPlaylistIcon,
   supportedAudioFormats,
-} from "../../global/media/media";
+} from "../../util/media/media";
 import { FileInputError } from "../FileInput/FileInput";
 import {
   deleteAudioFile,

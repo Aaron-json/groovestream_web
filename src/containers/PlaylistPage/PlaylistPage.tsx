@@ -9,10 +9,7 @@ import {
 } from "../../api/requests/media";
 import { useQuery } from "@tanstack/react-query";
 import LoadingSpinner from "../../components/Spinner/Spinner";
-import {
-  getPlaylistIcon,
-  supportedAudioFormats,
-} from "../../global/media/media";
+import { getPlaylistIcon, supportedAudioFormats } from "../../util/media/media";
 import { FileInputError } from "../../components/FileInput/FileInput";
 import { social_icon } from "../../assets/default-icons/SideBar";
 import { FormEvent, useContext, useState } from "react";
@@ -21,6 +18,7 @@ import { Playlist } from "../../types/media";
 import { AxiosError } from "axios";
 import { ResponseError } from "../../types/errors";
 import { validateUsername } from "../../validation/FormInput";
+import { FormState } from "../../types/formstate";
 
 export default function PlaylistPage() {
   // playlistID will always be ine url to navigate to this page

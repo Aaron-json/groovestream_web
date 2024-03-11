@@ -4,7 +4,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import MediaPlayer from "../global/MediaPlayer";
+import MediaPlayer from "../util/MediaPlayer";
 import { addListeningHistory, streamAudioFile } from "../api/requests/media";
 import { AudioFile, MediaType, Playlist } from "../types/media";
 import { ContextProviderProps, CurrentMedia } from "./types";

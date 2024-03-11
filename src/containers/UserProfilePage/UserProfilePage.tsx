@@ -18,7 +18,7 @@ import {
 } from "../../validation/FormInput";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
-import { supportedProfilePictureFormats } from "../../global/media/media";
+import { supportedProfilePictureFormats } from "../../util/media/media";
 import { useForm } from "react-hook-form";
 import { User } from "../../types/user";
 type EditField = "firstName" | "lastName" | "username" | "dateOfBirth";

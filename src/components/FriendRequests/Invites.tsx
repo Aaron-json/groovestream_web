@@ -11,6 +11,7 @@ import {
 } from "../../api/requests/media";
 import { formatDistanceToNow } from "date-fns";
 import { FriendRequest, PlaylistInvite } from "../../types/invites";
+import { FormState } from "../../types/formstate";
 type InvitesProps = {
   data: (Omit<FriendRequest, "to"> | Omit<PlaylistInvite, "to">)[] | undefined;
   type: "friend-requests" | "playlist-invites";

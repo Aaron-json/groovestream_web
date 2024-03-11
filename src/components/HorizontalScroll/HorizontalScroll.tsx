@@ -2,7 +2,7 @@ import "./HorizontalScroll.css";
 import { useContext } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
 import { useNavigate } from "react-router-dom";
-import { getSongIcon, getPlaylistIcon } from "../../global/media/media";
+import { getSongIcon, getPlaylistIcon } from "../../util/media/media";
 import { AudioFile, MediaType, Playlist } from "../../types/media";
 interface HorizontalScrollProps {
   items: (AudioFile | Playlist)[];
