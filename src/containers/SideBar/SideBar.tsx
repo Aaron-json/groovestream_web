@@ -27,7 +27,6 @@ export default function SideBar() {
         <NavButton text="social" navigate icon={social_icon} />
       </div>
       <div className="info-sideButtons">
-        <NavButton text="about" icon={about_icon} />
         <NavButton text="logout" icon={logout_icon} onClick={logout} />
       </div>
     </section>

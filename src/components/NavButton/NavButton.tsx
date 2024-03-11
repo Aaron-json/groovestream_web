@@ -36,7 +36,7 @@ function NavButton(props: SideButtonProps) {
 function ActionButton(props: SideButtonProps) {
   return (
     // use anchor tag to have style parity with the navigation button
-    // navlink uses an underlying anchor tag
+    // since navlink uses an underlying anchor tag
     <a className="nav-entry" onClick={props.onClick}>
       <SideButtonContent {...props} />
     </a>

@@ -65,10 +65,10 @@ const SongTile = ({ audioFile, allMedia, index }: SongTileProps) => {
   );
 };
 
-interface PlaylistTileInterface {
+interface PlaylistTileProps {
   playlist: Playlist;
 }
-const PlaylistTile = ({ playlist }: PlaylistTileInterface) => {
+const PlaylistTile = ({ playlist }: PlaylistTileProps) => {
   const navigate = useNavigate();
   return (
     <div
