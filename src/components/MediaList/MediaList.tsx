@@ -7,7 +7,7 @@ import { uploadIcon } from "../../assets/default-icons/MediaList";
 import "./MediaList.css";
 import { useContext, useRef, useState } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, set } from "date-fns";
 import { FileInput, Modal } from "../";
 import {
   getSongIcon,
@@ -177,13 +177,17 @@ function PlaylistTile({
 }: MediaListPlaylistProps) {
   const navigator = useNavigate();
   const { addTask, updateTask, removeTask } = useContext(tasksContext)!;
-  const [showModal, setShowModal] = useState(false);
+  const [showErr, setShowErr] = useState(false);
   const errMessageRef = useRef<string | undefined>();
   async function addSongToPlaylistHandler(
     formData: FormData | undefined,
     error: FileInputError | undefined
   ) {
     if (error || !formData) {
+      errMessageRef.current = `Unsupported file selected. Supported file types include: ${supportedAudioFormats.join(
+        ", "
+      )}`;
+      setShowErr(true);
       return;
     }
     try {
@@ -223,15 +227,15 @@ function PlaylistTile({
           errMessageRef.current = "Could not delete playlist";
           break;
       }
-      setShowModal(true);
+      setShowErr(true);
     }
   }
   return (
     <li className="media-list-playlist-item" onClick={handlePlaylistClick}>
       <Modal
-        show={showModal}
-        onClose={() => setShowModal(false)}
-        children={<span>{errMessageRef.current}</span>}
+        show={showErr}
+        onClose={() => setShowErr(false)}
+        children={<p>{errMessageRef.current}</p>}
       />
       <img loading="lazy" src={getPlaylistIcon(playlist)} alt="icon" />
       <div className="media-item-info">

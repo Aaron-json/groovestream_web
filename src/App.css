@@ -81,10 +81,15 @@ div, section {
   user-select: none;
 }
 
-span, p{
+span {
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+}
+
+p {
+  word-wrap: normal;
+  overflow-wrap: normal;
 }
 
 hr {

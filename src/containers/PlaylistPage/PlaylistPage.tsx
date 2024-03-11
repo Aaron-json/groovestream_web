@@ -12,11 +12,9 @@ import LoadingSpinner from "../../components/Spinner/Spinner";
 import { getPlaylistIcon, supportedAudioFormats } from "../../util/media/media";
 import { FileInputError } from "../../components/FileInput/FileInput";
 import { social_icon } from "../../assets/default-icons/SideBar";
-import { FormEvent, useContext, useState } from "react";
-import { MediaTask, TaskType, tasksContext } from "../../contexts/TasksContext";
+import { FormEvent, useContext, useRef, useState } from "react";
+import { tasksContext } from "../../contexts/TasksContext";
 import { Playlist } from "../../types/media";
-import { AxiosError } from "axios";
-import { ResponseError } from "../../types/errors";
 import { validateUsername } from "../../validation/FormInput";
 import { FormState } from "../../types/formstate";
 
@@ -28,6 +26,8 @@ export default function PlaylistPage() {
   const { getPlaylistTasks } = useContext(tasksContext)!;
   const tasks = getPlaylistTasks(+playlistID!);
   const [addingMember, setAddingMember] = useState(false);
+  const [showErr, setShowErr] = useState<boolean>(false);
+  const errMsgRef = useRef<string | undefined>(undefined);
   const {
     data: audiofiles,
     error: audiofilesErr,
@@ -72,6 +72,10 @@ export default function PlaylistPage() {
     error: FileInputError | undefined
   ) {
     if (!formData || error) {
+      errMsgRef.current = `Unsupported file selected. Supported file types include: ${supportedAudioFormats.join(
+        ", "
+      )}`;
+      setShowErr(true);
       return;
     }
     try {
@@ -98,6 +102,11 @@ export default function PlaylistPage() {
             playlistID={playlistID!}
           />
         }
+      />
+      <Modal
+        show={showErr}
+        onClose={() => setShowErr(false)}
+        children={<p>{errMsgRef.current}</p>}
       />
       <div className="playlist-page-header">
         <div className="playlist-page-header-left">
