@@ -2,8 +2,6 @@
     color: white;
     display: grid;
     grid-template-rows: 5em 5.4em 1fr;
-    height: 100%;
-    width: 100%;
     flex: 1;
 }
 

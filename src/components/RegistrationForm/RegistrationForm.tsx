@@ -49,7 +49,7 @@ const RegistrationForm = () => {
 
   return (
     <form className="register-form" onSubmit={handleSubmit(submitHandler)}>
-      <h2 className="register-form-header">Sign up</h2>
+      <h2>Sign up</h2>
       {submitError && <span className="form-err-message">{submitError}</span>}
       <label htmlFor="register-firstname-input">
         First Name
@@ -159,7 +159,7 @@ const RegistrationForm = () => {
       <button disabled={isSubmitting} type="submit" className="form-button">
         Submit
       </button>
-      <p>
+      <p className="register-login-option">
         Already have an account?{" "}
         <NavLink className="register-login-toggle" to="/login">
           Login

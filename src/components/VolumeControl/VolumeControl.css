@@ -1,14 +1,14 @@
 .volume-and-devices {
     display: flex;
-    flex-direction: column;
     flex: 1;
-    min-width: 260px;
-    max-width: 300px;
+    min-width: max(12%, 13rem);
+    max-width: 25%;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
 }
 
-#volume-slider {
+.volume-slider {
     height: 5px;
     margin-left: 12px;
     vertical-align: middle;

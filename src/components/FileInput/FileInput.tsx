@@ -14,29 +14,44 @@ interface FileInputProps {
   ) => any;
   multiple?: boolean;
   formats: string[];
+  // size in bytes
+  sizeLimit: number; // bytes
 }
 export default function FileInput({
   onInput,
   multiple,
   formats,
+  sizeLimit,
 }: FileInputProps) {
   const handleFileInput: React.FormEventHandler<HTMLInputElement> = (e) => {
     const files = e.currentTarget.files;
     if (!files) return;
     const formData = new FormData();
     let error: FileInputError | undefined;
+    let totalSize: number = 0;
     for (let i = 0; i < files.length; i++) {
       // check if each file is a valid file type
-      if (formats.includes(files[i].type)) {
-        formData.append("files", files[i]);
-      } else {
+      if (!formats.includes(files[i].type)) {
         error = {
-          message: "Invalid file type",
-          code: "INVALID_TYPE",
+          message: `Invalid file type. Supported file types are include ${formats.join(
+            ", "
+          )}.`,
+          code: "INVALID_FILE_TYPE",
           filename: files[i].name,
         };
         break;
       }
+      totalSize += files[i].size;
+      if (totalSize > sizeLimit) {
+        error = {
+          message: `File size exceeds the limit of ${sizeLimit} MB.`,
+          code: "SIZE_LIMIT_EXCEEDED",
+          filename: files[i].name,
+        };
+        break;
+      }
+
+      formData.append("files", files[i]);
     }
 
     e.currentTarget.value = "";

@@ -19,9 +19,6 @@
     flex-direction: column;
     justify-content: space-between;
     height: 5rem;
-    background-color: var(--primary-hue);
-    border: 1px solid gray;
-    border-radius: var(--border-radius);
     overflow: hidden;
 }
 
@@ -31,8 +28,6 @@
     align-items: center;
     justify-content: center;
 }
-
-
 
 .invite-action-btns{
     border-top: 1px solid grey;

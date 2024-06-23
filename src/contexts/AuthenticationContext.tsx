@@ -106,7 +106,7 @@ export const AuthenticationContextProvider = ({
       accessTokenRef.current = "";
       // set authenticated to false to update the ui
       setAuthenticated(false);
-    } catch (err) {}
+    } catch (err) { }
   }
 
   return (

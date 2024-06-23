@@ -1,17 +1,22 @@
 import "./PlaylistPage.css";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { FileInput, MediaList, Modal, ProgressBar } from "../../components";
 import {
   getPlaylistAudioFiles,
   uploadAudioFile,
   sendPlaylistInvite,
   getPlaylistInfo,
+  leavePlaylist,
 } from "../../api/requests/media";
 import { useQuery } from "@tanstack/react-query";
 import LoadingSpinner from "../../components/Spinner/Spinner";
-import { getPlaylistIcon, supportedAudioFormats } from "../../util/media/media";
+import { getPlaylistIcon } from "../../util/media";
+import {
+  MAX_AUDIOFILE_UPLOAD_SIZE,
+  supportedAudioFormats,
+} from "../../util/constants";
 import { FileInputError } from "../../components/FileInput/FileInput";
-import { social_icon } from "../../assets/default-icons/SideBar";
+import { exit_icon, social_icon } from "../../assets/default-icons/SideBar";
 import { FormEvent, useContext, useRef, useState } from "react";
 import { tasksContext } from "../../contexts/TasksContext";
 import { Playlist } from "../../types/media";
@@ -25,9 +30,8 @@ export default function PlaylistPage() {
   const { mediaID: playlistID } = useParams();
   const { getPlaylistTasks } = useContext(tasksContext)!;
   const tasks = getPlaylistTasks(+playlistID!);
-  const [addingMember, setAddingMember] = useState(false);
-  const [showErr, setShowErr] = useState<boolean>(false);
-  const errMsgRef = useRef<string | undefined>(undefined);
+  const [showModal, setShowModal] = useState(false);
+  const popupContent = useRef<JSX.Element | undefined>(undefined);
   const {
     data: audiofiles,
     error: audiofilesErr,
@@ -72,10 +76,8 @@ export default function PlaylistPage() {
     error: FileInputError | undefined
   ) {
     if (!formData || error) {
-      errMsgRef.current = `Unsupported file selected. Supported file types include: ${supportedAudioFormats.join(
-        ", "
-      )}`;
-      setShowErr(true);
+      popupContent.current = <p>{`${error?.message}`}</p>;
+      setShowModal(true);
       return;
     }
     try {
@@ -94,20 +96,11 @@ export default function PlaylistPage() {
         <img src={getPlaylistIcon(playlist!)} alt="" />
       </div>
       <Modal
-        show={addingMember}
-        onClose={() => setAddingMember(false)}
-        children={
-          <AddSharedPlaylistMember
-            onFinish={() => setAddingMember(false)}
-            playlistID={playlistID!}
-          />
-        }
+        show={showModal}
+        onClose={() => setShowModal(false)}
+        children={popupContent.current}
       />
-      <Modal
-        show={showErr}
-        onClose={() => setShowErr(false)}
-        children={<p>{errMsgRef.current}</p>}
-      />
+
       <div className="playlist-page-header">
         <div className="playlist-page-header-left">
           <h1>{playlist!.name}</h1>
@@ -116,10 +109,32 @@ export default function PlaylistPage() {
         <div className="playlist-page-header-right">
           <div className="playlist-page-header-options">
             <img
-              onClick={() => setAddingMember(true)}
+              onClick={() => {
+                popupContent.current = (
+                  <AddSharedPlaylistMember
+                    onFinish={() => setShowModal(false)}
+                    playlistID={playlistID!}
+                  />
+                );
+                setShowModal(true);
+              }}
               className="action-icon"
               src={social_icon}
               alt=""
+            />
+            <img
+              className="action-icon"
+              src={exit_icon}
+              alt=""
+              onClick={() => {
+                popupContent.current = (
+                  <LeavePlaylist
+                    onFinish={() => setShowModal(false)}
+                    playlistID={+playlistID!}
+                  />
+                );
+                setShowModal(true);
+              }}
             />
           </div>
         </div>
@@ -131,6 +146,7 @@ export default function PlaylistPage() {
           formats={supportedAudioFormats}
           multiple
           onInput={handleUploadSongToPlaylist}
+          sizeLimit={MAX_AUDIOFILE_UPLOAD_SIZE}
         />
       </label>
       <div className="playlist-page-content">
@@ -204,6 +220,57 @@ function AddSharedPlaylistMember({
       </label>
       <button className="form-button">
         {formState.state === "loading" ? "Loading..." : "Invite Member"}
+      </button>
+    </form>
+  );
+}
+
+interface LeavePlaylistProps {
+  playlistID: number;
+  onFinish: () => any;
+}
+function LeavePlaylist({ playlistID, onFinish }: LeavePlaylistProps) {
+  const [formState, setFormState] = useState<FormState>({ state: "input" });
+  const navigator = useNavigate();
+
+  async function handleSubmit(e: FormEvent) {
+    setFormState({ state: "loading" });
+    e.preventDefault();
+    try {
+      await leavePlaylist(playlistID);
+      navigator("/library");
+      onFinish();
+    } catch (error: any) {
+      let message;
+      switch (error.response?.data.code) {
+        case "INV01":
+          message = "The owner cannot leave the playlist";
+          break;
+
+        default:
+          message = "Request failed";
+          break;
+      }
+      setFormState({ state: "error", message });
+    }
+  }
+  return (
+    <form className="leave-playlist-form" onSubmit={handleSubmit}>
+      <h2>Leave Playlist</h2>
+      <hr />
+      {formState.state === "error" && (
+        <p className="form-err-message">{formState.message}</p>
+      )}
+      <p>
+        Are you sure you want to leave this playlist? Your listening history
+        from this playlist will be deleted.
+      </p>
+      <button
+        disabled={formState.state === "loading"}
+        type="submit"
+        className="form-button"
+      >
+        {formState.state === "loading" ? "Loading..." : "Leave"}
       </button>
     </form>
   );

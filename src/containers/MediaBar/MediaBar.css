@@ -1,8 +1,6 @@
 .MediaBar{
     display: flex;
-    flex-direction: row;
     background-color: transparent;
-    height: 105px;
+    height: 6.95rem;
     width: 100%;
-  }
-
+}

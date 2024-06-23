@@ -14,6 +14,7 @@ const Search = () => {
           value={searchValue}
           valueChangeHandler={setSearchValue}
           placeholder={"Search songs, artists, albums"}
+          debounce={true}
         />
       </div>
       <hr />

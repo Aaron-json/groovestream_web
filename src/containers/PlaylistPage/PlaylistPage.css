@@ -63,7 +63,8 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    height: 1.3rem;
+    height: 1.5rem;
+    gap: 10px;
 }
 .playlist-page-header-options > img{
     height: 100%;
@@ -103,4 +104,10 @@
 .add-playlist-member-form > h2{
     font-weight: 400;
     font-size: 1.35rem;
+}
+
+.leave-playlist-form{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }

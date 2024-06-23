@@ -4,6 +4,7 @@ import { NavLink } from "react-router-dom";
 interface SideButtonProps {
   text: string;
   icon: string;
+  minimize?: boolean;
   // rotue to navigate to.
   // if not provided then use text as the route
   path?: string;
@@ -42,13 +43,16 @@ function ActionButton(props: SideButtonProps) {
     </a>
   );
 }
-function SideButtonContent(props: Pick<SideButtonProps, "text" | "icon">) {
+function SideButtonContent(props: Pick<SideButtonProps, "text" | "icon" | "minimize">) {
   return (
     <>
       <img className="nav-icon" src={props.icon} alt={props.text} />
-      <label className="nav-label">
-        {props.text.charAt(0).toUpperCase() + props.text.slice(1)}
-      </label>
+      {!props.minimize && (
+        <label className="nav-label">
+          {props.text.charAt(0).toUpperCase() + props.text.slice(1)}
+        </label>
+
+      )}
     </>
   );
 }

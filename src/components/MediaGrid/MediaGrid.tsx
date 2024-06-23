@@ -2,26 +2,25 @@ import { useContext } from "react";
 import "./MediaGrid.css";
 import { mediaContext } from "../../contexts/MediaContext";
 import { useNavigate } from "react-router-dom";
-import { getSongIcon, getPlaylistIcon } from "../../util/media/media";
+import { getSongIcon, getPlaylistIcon } from "../../util/media";
 import { AudioFile, MediaType, Playlist } from "../../types/media";
+import { getNextAudio } from "../../util/media";
 
 interface MediaGridProps {
   items: (AudioFile | Playlist)[];
   title: string;
 }
 export default function MediaGrid({ items, title }: MediaGridProps) {
-  // remember to only get the last 6 or 9 items
   return (
     <div className="media-grid">
       <h2 className="media-grid-title">{title}</h2>
-      {items.map((media, index) => {
+      {items.map((media) => {
         if (media.type === MediaType.AudioFile) {
           return (
             <SongTile
               key={media.storageId}
               audioFile={media}
               allMedia={items}
-              index={index}
             />
           );
         } else if (media.type === MediaType.Playlist) {
@@ -35,15 +34,20 @@ export default function MediaGrid({ items, title }: MediaGridProps) {
 interface SongTileProps {
   audioFile: AudioFile;
   allMedia: MediaGridProps["items"];
-  index: number;
 }
-const SongTile = ({ audioFile, allMedia, index }: SongTileProps) => {
-  const { updateMedia } = useContext(mediaContext)!;
+const SongTile = ({ audioFile, allMedia }: SongTileProps) => {
+  const { currentMedia, setMedia } = useContext(mediaContext)!;
 
   return (
     <div
-      className="media-grid-song-tile home-media-tile"
-      onClick={() => updateMedia(allMedia, index)}
+      className="media-grid-song-tile tile"
+      onClick={() => setMedia(audioFile, (action) => {
+        if (currentMedia) {
+          return getNextAudio((allMedia as AudioFile[]), currentMedia.id, action)
+        } else {
+          return undefined
+        }
+      })}
     >
       <img
         className="media-grid-tile-icon"
@@ -72,7 +76,7 @@ const PlaylistTile = ({ playlist }: PlaylistTileProps) => {
   const navigate = useNavigate();
   return (
     <div
-      className="media-grid-playlist-tile home-media-tile"
+      className="media-grid-playlist-tile tile"
       onClick={() =>
         navigate(`/library/media/1/${playlist.id}`, { state: playlist })
       }

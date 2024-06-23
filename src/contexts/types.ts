@@ -1,19 +1,17 @@
 import { NullOrUndefined } from "../types/global";
 import { AudioFile, Playlist } from "../types/media";
 
-
 export type ContextProviderProps = {
   children: React.ReactNode;
 };
 
+// Used to update/get media from the same source.
+export type MediaUpdater = (update: "next" | "prev") => AudioFile | undefined;
+
 export type CurrentMedia =
   | {
-    index: number;
-    queue: (AudioFile | Playlist)[];
+    updaterFunc: MediaUpdater
+    audiofile: AudioFile;
   }
   | NullOrUndefined;
 
-export type mediaStateAction = {
-  type: "next" | "previous" | "newMedia" | "unload";
-  payload?: any | NullOrUndefined;
-};

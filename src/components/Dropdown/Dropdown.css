@@ -6,7 +6,7 @@
 .dropdown-toggle{
     color: white;
     font-size: 0.96em;
-    background-color: rgba(255, 255, 255, 0.18);
+    background-color: var(--hue-primary);
     width: 100%;
     padding: 0;
     transition: all 0.1s;
@@ -25,7 +25,7 @@
 }
 .dropdown-toggle:hover,
 .dropdown-item:hover{
-    background-color: rgba(255, 255, 255, 0.23);
+    background-color: var(--hue-bright);
 }
 .dropdown-toggle:active,
 .dropdown-item:active{
@@ -42,10 +42,7 @@
     gap: 0.2em;
 }
 .dropdown-item{
-    background-color: rgb(79,
-        79,
-        79);
-    /* background-color: rgba(255, 255, 255, 0.18); */
+    background-color: rgb(79,79,79);
     transition: all 0.2s;
     font-size: 1em;
     padding-inline: 5px;

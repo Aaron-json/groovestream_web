@@ -7,32 +7,23 @@
   color: white;
   height: 2em;
   width: 100%;
-  border-radius: 7px;
-  user-select: none;
+  border-radius: var(--default-border-radius);
   text-decoration: none;
 }
 .nav-entry,
 .info-nav-entry {
-  background-color: rgba(255, 255, 255, 0.13);
+  background-color: transparent;
   transition: background-color 0.15s, opacity 0.15s;
 }
 
 .nav-entry:hover,
 .info-nav-entry:hover {
-  background-color: transparent;
+  background-color: var(--hue-primary);
 }
 .nav-icon {
   height: 80%;
   transition: filter 0.15s;
 }
-/*
-Icon not bright when not current, inverts when current
-.nav-entry:hover > .nav-icon,
-.current-nav-entry > .nav-icon,
-.info-nav-entry:hover > .nav-icon{
-    filter: invert(100%);
-}*/
-
 .nav-entry:active,
 .current-nav-entry:active,
 .info-nav-entry:active {
@@ -53,4 +44,13 @@ Icon not bright when not current, inverts when current
   font-size: 1.1rem;
   flex: 1;
   padding-left: 7px;
+}
+@media (max-width: 770px) {
+  .nav-label {
+    display: none;
+  }
+  .nav-icon {
+    height: 85%;
+    margin: auto;
+  }
 }

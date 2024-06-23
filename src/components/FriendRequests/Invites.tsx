@@ -105,7 +105,7 @@ function InviteTile({ invite, onChange, type }: InviteTileProps) {
     }
   }
   return (
-    <div className="invite-tile">
+    <div className="invite-tile tile">
       <span className="invite-sender">From: {invite.from.username}</span>
       <span className="invite-date">
         Sent {formatDistanceToNow(new Date(invite.sentAt), { addSuffix: true })}
@@ -137,7 +137,7 @@ function InviteTile({ invite, onChange, type }: InviteTileProps) {
 
 function LoadingTile() {
   return (
-    <div className="empty-invite-tile">
+    <div className="empty-invite-tile tile">
       <LoadingSpinnerDiv spinnerSize={40} />
     </div>
   );
@@ -147,7 +147,7 @@ type NoInviteTileProps = {
 };
 function NoInviteTile({ type }: NoInviteTileProps) {
   return (
-    <div className="empty-invite-tile">
+    <div className="empty-invite-tile tile">
       {type === "friend-requests" && "You have no friend requests!"}
       {type === "playlist-invites" && "You have no playlist invites!"}
     </div>

@@ -1,5 +1,5 @@
-import { AxiosRequestConfig } from "axios";
-import axiosClient from "../axiosClient";
+import { AxiosRequestConfig, ResponseType } from "axios";
+import axiosClient, { STREAMING_API_URL } from "../axiosClient";
 import { MediaTask, TaskType } from "../../contexts/TasksContext";
 import { AudioFile, Playlist } from "../../types/media";
 import { PlaylistInvite } from "../../types/invites";
@@ -11,16 +11,18 @@ import { TaskConfig } from "./types";
 export async function uploadAudioFile(
   formData: FormData,
   playlistID: number,
-  taskConfig?: TaskConfig
+  taskConfig: TaskConfig
 ) {
   const taskID = Date.now().toString + (Math.random() * 100).toString();
   const task: MediaTask = {
     type: TaskType.Media,
     name: "Uploading audio files",
+    progress: 0,
     playlistID,
   }
   // set up the request config including the onUploadProgress event handler
   let config: AxiosRequestConfig = {
+    baseURL: STREAMING_API_URL,
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -28,11 +30,11 @@ export async function uploadAudioFile(
     timeout: 1000 * 60 * 5,
     onUploadProgress: (progressEvent) => {
       // add the mode manually to TS knowns its a progressing task
-      taskConfig?.updateTask(taskID, { ...task, progress: progressEvent.progress! })
+      taskConfig.updateTask(taskID, { ...task, progress: progressEvent.progress! })
     },
   };
 
-  taskConfig?.addTask(taskID, task)
+  taskConfig.addTask(taskID, task)
   try {
     const url = `/media/0/${playlistID}`;
 
@@ -41,11 +43,11 @@ export async function uploadAudioFile(
       formData,
       config
     );
-    taskConfig?.removeTask(taskID)
     return response
   } catch (error) {
-    taskConfig?.removeTask(taskID)
     throw error
+  } finally {
+    taskConfig.removeTask(taskID)
   }
 }
 
@@ -56,12 +58,13 @@ export async function deleteAudioFile(
   return await axiosClient.delete(`/media/0/${audioFileID}/${storageID}`);
 }
 export async function streamAudioFile(
-  storageID: string
+  storageID: string,
+  responseType: ResponseType
 ) {
   let url = `/media/stream/${storageID}`;
-
   // set a custom timeout since the default may be too short for downloads
-  const response = await axiosClient.get(url, { timeout: 1000 * 60 * 2 });
+  // uses a different server than the standad
+  const response = await axiosClient.get(url, { timeout: 1000 * 60 * 2, baseURL: STREAMING_API_URL, responseType })
   return response.data;
 }
 
@@ -69,9 +72,24 @@ export async function streamAudioFile(
 // PLAYLIST
 /////////////////////////////////////////////////////////////////////////////////////
 export async function deletePlaylist(
-  playlistID: number
+  playlistID: number,
+  taskConfig?: TaskConfig
 ) {
-  return await axiosClient.delete(`/media/1/${playlistID}`);
+  const taskID = Date.now().toString + (Math.random() * 100).toString();
+  const task: MediaTask = {
+    type: TaskType.Media,
+    name: "Deleting playlist",
+    playlistID,
+  }
+  try {
+    taskConfig?.addTask(taskID, task)
+    return await axiosClient.delete(`/media/1/${playlistID}`);
+
+  } catch (error) {
+    throw error
+  } finally {
+    taskConfig?.removeTask(taskID)
+  }
 }
 
 export async function createPlaylist(
@@ -97,8 +115,10 @@ export async function getPlaylistInfo(playlistID: number) {
 /////////////////////////////////////////////////////////////////////////////////////////////
 // ALL MEDIA
 /////////////////////////////////////////////////////////////////////////////////////////////
-export async function getAllUserMedia() {
-  const response = await axiosClient.get("/media");
+export async function getUserPlaylists(searchText?: string) {
+  const response = await axiosClient.get("/media", {
+    params: { searchText }
+  });
   return response.data as (Playlist | AudioFile)[];
 }
 /////////////////////////////////////////////////////////////////////////////////////////////

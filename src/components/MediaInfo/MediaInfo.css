@@ -1,15 +1,9 @@
 .mediabar-media-info {
-
     display: flex;
     flex: 1;
+    min-width: 17.5rem;
+    max-width: 25rem;
     border-right: 1px solid grey;
-    min-width: 280px;
-    max-width: 340px;
-
-}
-
-.mediabar-media-image {
-    height: 100%;
 }
 
 .mediabar-name-artist-album {
@@ -43,7 +37,5 @@
 .artist,
 .album {
     flex: 1;
-    font-size: 17px;
-
 }
 

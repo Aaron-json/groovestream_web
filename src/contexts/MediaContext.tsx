@@ -2,16 +2,18 @@ import React, {
   SetStateAction,
   createContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
-import MediaPlayer from "../util/MediaPlayer";
-import { addListeningHistory, streamAudioFile } from "../api/requests/media";
-import { AudioFile, MediaType, Playlist } from "../types/media";
-import { ContextProviderProps, CurrentMedia } from "./types";
+import MediaPlayer from "../MediaPlayer/MediaPlayer";
+import { addListeningHistory } from "../api/requests/media";
+import { AudioFile } from "../types/media";
+import { ContextProviderProps, MediaUpdater } from "./types";
+import { MediaPlaybackState } from "../MediaPlayer/MediaPlayer";
 
 type MediaContextValue = {
-  currentMedia: AudioFile | undefined; // exposed media value. just the current media's object
-  updateMedia: (mediaList: any[], index: number) => void;
+  currentMedia: AudioFile | undefined;
+  setMedia: (audiofile: AudioFile, updater: MediaUpdater) => void;
   unload: () => any;
   player: MediaPlayer;
   playbackState: MediaPlaybackState;
@@ -27,17 +29,8 @@ type MediaContextValue = {
   updateSeek: (seekPosition: number) => void;
   playNext: () => void;
   playPrev: () => void;
+  setMediaUpdater: (func: MediaUpdater) => void;
 };
-
-type MediaPlaybackState =
-  | "unloaded"
-  | "loaded"
-  | "playing"
-  | "loading"
-  | "playing"
-  | "stopped"
-  | "paused";
-
 export const mediaContext = createContext<MediaContextValue | undefined>(
   undefined
 );
@@ -52,14 +45,15 @@ export const MediaContextProvider: React.FC<ContextProviderProps> = ({
   const [mute, setMute] = useState(false);
   const [playbackState, setPlaybackState] =
     useState<MediaPlaybackState>("unloaded");
+  const [_currentMedia, _setCurrentMedia] = useState<AudioFile | undefined>(undefined);
 
-  // internal media. includes list of media and index of the current media.
-  const [_currentMedia, _setCurrentMedia] = useState<CurrentMedia>(undefined);
+  const mediaUpdater = useRef<MediaUpdater>(() => undefined)
   useEffect(() => {
     // unload all media when this component unmounts
     return () => unloadMedia();
   }, []);
   useEffect(() => {
+    // updating seeker value
     let timeout: number | undefined;
     if (playbackState === "playing" && !ifSeeking) {
       timeout = setInterval(() => {
@@ -70,34 +64,31 @@ export const MediaContextProvider: React.FC<ContextProviderProps> = ({
     return () => clearInterval(timeout);
   }, [playbackState, ifSeeking]);
 
-  // change volume when state changes
+  // volume
   useEffect(() => {
     player.setVolume(volume);
   }, [volume]);
-  // update mute when state changes
+
+  // mute
   useEffect(() => {
     player.mute(mute);
   }, [mute]);
 
   function playPauseToggle() {
-    /**
-     * Function to toggle between play and pause
-     */
     if (!_currentMedia) {
       return;
     } else if (player.isPlaying()) {
       player.pause();
       setPlaybackState("paused");
     } else if (
-      !player.isPlaying() &&
-      playbackState !== "unloaded" &&
-      playbackState !== "loading"
-    ) {
+      !player.isPlaying() && (
+        playbackState === "stopped" ||
+        playbackState === "paused"
+      )) {
       player.play();
       setPlaybackState("playing");
     }
   }
-
   function onSongEnd() {
     playNext();
   }
@@ -106,7 +97,7 @@ export const MediaContextProvider: React.FC<ContextProviderProps> = ({
    * @param newMedia
    * @returns
    */
-  async function loadMedia(newMedia?: CurrentMedia) {
+  async function loadMedia(newMedia: AudioFile | undefined) {
     /**
      * Downloads the current media and loads it to the Music player
      */
@@ -114,37 +105,31 @@ export const MediaContextProvider: React.FC<ContextProviderProps> = ({
       unloadMedia();
       return;
     }
-
     setPlaybackState(() => "loading");
-    const audiofile = newMedia.queue[newMedia.index] as AudioFile;
 
     // use type any since the playlistID is on some playables but not all
-    const { id, format, storageId } = audiofile;
+    const { id, format, storageId, duration } = newMedia;
 
     try {
-      const audioData = await streamAudioFile(storageId);
       await player.loadSource({
-        data: `data:${format.mimeType};base64,${audioData}`,
         id: storageId,
         format: format.mimeType,
         onSongEnd,
       });
-      if (!audiofile.duration) {
+      if (duration === undefined) {
         // sometimes the server did not successfully get a value for duration
-        // add it here
-        audiofile.duration = player.getDuration();
+        newMedia.duration = player.getDuration();
       }
       _setCurrentMedia(newMedia);
-      setPlaybackState((prevState) => "loaded");
       player.play();
-      setPlaybackState((prevState) => "playing");
+      setPlaybackState(() => "playing");
     } catch (error) {
       unloadMedia();
       return;
     }
     try {
       addListeningHistory(id);
-    } catch (error) {}
+    } catch (error) { }
   }
   function unloadMedia() {
     player.unloadSource();
@@ -152,79 +137,68 @@ export const MediaContextProvider: React.FC<ContextProviderProps> = ({
     setPlaybackState("unloaded");
     _setCurrentMedia(undefined);
   }
-  function updateMedia(mediaList: (AudioFile | Playlist)[], index = 0) {
-    /**
-     * Updates media given a list of media and its index in the list.
-     * Restarts the same song if the given media is already the current media
-     */
-    if (
-      _currentMedia &&
-      mediaList[index].id === _currentMedia.queue[_currentMedia.index]?.id &&
-      mediaList === _currentMedia.queue &&
-      index === _currentMedia.index
-    ) {
-      // same song from the same current list is clicked.
-      if (playbackState === "playing") {
-        player.stop();
-        player.play();
-      } else {
-        player.stop();
-        player.play();
-        setPlaybackState(() => "playing");
-      }
-    } else {
-      player.pause();
-      loadMedia({ queue: mediaList, index });
+
+  /**
+   * Sets the current audiofile and starts loading. optionally you can register an updater
+   * function that will be called when the media needs to change. You can also register an updater manuall.
+   * Source is helpful to identify the current source of the media inorder to re-register an updater when
+   * a rerender happens.
+   */
+  function setMedia(audiofile: AudioFile, updater?: MediaUpdater) {
+
+    if (audiofile.id == _currentMedia?.id) {
+      player.stop()
+      player.setSeek(0)
+      player.play()
+      setPlaybackState("playing")
+    } else (
+      loadMedia(audiofile)
+    )
+    if (updater) {
+      setMediaUpdater(updater)
     }
+  }
+  function setMediaUpdater(updater: MediaUpdater) {
+    mediaUpdater.current = updater
   }
   function updateSeek(seekPosition: number) {
     player.setSeek(seekPosition);
   }
   function playNext() {
+    if (!_currentMedia) {
+      unloadMedia()
+      return
+    }
     player.stop();
     setSeek(0);
-    setPlaybackState("stopped");
-    loadMedia(_findNextPrev("next"));
+    console.log(_currentMedia)
+    const nextAudiofile = mediaUpdater.current("next")
+    if (!nextAudiofile) {
+      unloadMedia()
+      return
+    }
+    loadMedia(nextAudiofile);
   }
   function playPrev() {
+    if (!_currentMedia) {
+      unloadMedia()
+      return
+    }
     player.stop();
     setSeek(0);
     setPlaybackState("stopped");
-    loadMedia(_findNextPrev("prev"));
+    const nextAudiofile = mediaUpdater.current("prev")
+    if (!nextAudiofile) {
+      unloadMedia()
+      return
+    }
+    loadMedia(nextAudiofile);
   }
-
-  function _findNextPrev(action: "next" | "prev"): CurrentMedia {
-    if (!_currentMedia) {
-      return undefined;
-    }
-    function _getnextIdx() {
-      if (action === "next") {
-        return (_currentMedia!.index + 1) % _currentMedia!.queue.length;
-      } else {
-        return (_currentMedia!.index - 1) % _currentMedia!.queue.length;
-      }
-    }
-    let nextIndex = _getnextIdx();
-
-    while (_currentMedia.queue[nextIndex].type !== MediaType.AudioFile) {
-      // loop to the next audioFile i.e type = 0
-      // there will be at least 1 audioFile since only audioFiles clicks
-      // can set the currentMedia
-      nextIndex = _getnextIdx();
-    }
-    if (nextIndex === _currentMedia.index) {
-      return undefined;
-    }
-    return { ..._currentMedia, index: nextIndex };
-  }
-
   return (
     <mediaContext.Provider
       value={{
-        currentMedia: _currentMedia
-          ? (_currentMedia.queue[_currentMedia.index] as AudioFile) //expose the actual current media's object which will always be a playable object
-          : undefined,
-        updateMedia,
+        currentMedia: _currentMedia,
+        setMedia,
         unload: () => _setCurrentMedia(undefined),
         player,
         playbackState,
@@ -240,6 +214,7 @@ export const MediaContextProvider: React.FC<ContextProviderProps> = ({
         setIfSeeking,
         playNext,
         playPrev,
+        setMediaUpdater,
       }}
     >
       {children}
@@ -247,12 +222,3 @@ export const MediaContextProvider: React.FC<ContextProviderProps> = ({
   );
 };
 
-/**
- *
- * @param {Number} n
- * @param {Numebr} m - The Modulo
- * @returns {Number} The result of the mathematical n mod m. (Returns only positive numbers)
- */
-function mod(n: number, m: number) {
-  return ((n % m) + m) % m;
-}

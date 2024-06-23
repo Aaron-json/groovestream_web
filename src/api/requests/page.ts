@@ -1,5 +1,5 @@
-import { getAllUserMedia } from "./media";
+import { getUserPlaylists } from "./media";
 
 export async function getLibraryPageData() {
-  return getAllUserMedia();
+  return getUserPlaylists();
 }

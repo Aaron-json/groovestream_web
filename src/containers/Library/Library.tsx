@@ -8,12 +8,19 @@ import {
   LoadingSpinnerDiv,
   ProgressBar,
 } from "../../components";
-import { useContext, useMemo, useReducer, useState } from "react";
+import {
+  useContext,
+  useDebugValue,
+  useEffect,
+  useReducer,
+  useState,
+} from "react";
 
-import { getAllUserMedia } from "../../api/requests/media";
+import { getUserPlaylists } from "../../api/requests/media";
 import { MediaFilters } from "../../components/MediaList/types";
 import { useQuery } from "@tanstack/react-query";
 import { TaskType, tasksContext } from "../../contexts/TasksContext";
+import { getUser } from "../../api/requests/user";
 interface MediaFiltersActions {
   filter: keyof MediaFilters;
   value: any;
@@ -29,6 +36,7 @@ const mediaTypesOptions = [
 ];
 const sortByOptions = ["Name", "Date Created"];
 const orderOptions = ["Ascending", "Descending"];
+
 function mediaFiltersReducer(
   mediaFilters: MediaFilters,
   action: MediaFiltersActions
@@ -55,14 +63,20 @@ export default function Library() {
   const { getTasks } = useContext(tasksContext)!;
   const mediaTasks = getTasks(TaskType.Media);
   const [searchValue, setSearchValue] = useState("");
+
   const {
     data: allMedia,
     error,
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["library"],
-    queryFn: getAllUserMedia,
+    queryKey: ["playlists", searchValue],
+    queryFn: () => {
+      if (!searchValue) {
+        return getUserPlaylists();
+      }
+      return getUserPlaylists(searchValue);
+    },
   });
 
   async function createdPlaylistHandler() {
@@ -91,7 +105,8 @@ export default function Library() {
         <SearchBar
           value={searchValue}
           valueChangeHandler={setSearchValue}
-          placeholder="Search your library"
+          placeholder="Search your playlists"
+          debounce={true}
         />
       </div>
       <hr />
@@ -128,14 +143,12 @@ export default function Library() {
         />
       </div>
 
-      <div className="file-upload-div">
-        <button
-          className="add-resource-button"
-          onClick={() => setCreatingPlaylist(true)}
-        >
-          Create New Playlist
-        </button>
-      </div>
+      <button
+        className="add-resource-button"
+        onClick={() => setCreatingPlaylist(true)}
+      >
+        Create New Playlist
+      </button>
       {mediaTasks.length > 0 && <ProgressBar tasks={mediaTasks} />}
       <Modal show={creatingPlaylist} onClose={() => setCreatingPlaylist(false)}>
         <CreatePlaylist onFinish={createdPlaylistHandler} />

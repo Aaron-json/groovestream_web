@@ -27,7 +27,7 @@ export default function CreatePlaylist({ onFinish }: CreatePlaylistProps) {
       await createPlaylist(playlistName);
       setFormState({ state: "submitted", message: "Playlist created" });
       onFinish();
-    } catch (err) {}
+    } catch (err) { }
   };
   return (
     <form

@@ -1,14 +1,16 @@
 .login-form{
-    background-color:rgba(255, 255, 255, 0.21);
+    background-color:var(--hue-primary);
     color: white;
     display: flex;
     flex-direction: column;
-    width: 20em;
-    height: 23em;
+    width: 18em;
     align-items: center;
     border-radius: 10px;
     justify-self: center;
     gap: 16px;
+    padding-top: 15px;
+    padding-bottom: 38px;
+    height: fit-content;
 }
 
 
@@ -22,9 +24,6 @@
     height: 2.3em;
 }
 
-.login-submit{
-    margin-bottom: 2em;
-}
 .login-form > p{
     font-size: 0.8em;
 }

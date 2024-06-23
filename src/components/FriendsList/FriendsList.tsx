@@ -112,7 +112,7 @@ function FriendTile({ friendObj, refetch }: FriendTileProps) {
     } catch (error) {}
   }
   return (
-    <div className="friend-tile">
+    <div className="friend-tile tile">
       <div className="friend-tile-pfp-div">{getDisplayPhoto()}</div>
 
       <div className="friend-tile-info-div">
@@ -137,7 +137,7 @@ function FriendTile({ friendObj, refetch }: FriendTileProps) {
 }
 function NoFriendsTile() {
   return (
-    <div className="empty-friend-tile">
+    <div className="empty-friend-tile tile">
       <span>Looks like you haven't added any friends yet!</span>
     </div>
   );
@@ -145,13 +145,13 @@ function NoFriendsTile() {
 
 function LoadingTile() {
   return (
-    <div className="empty-friend-tile">
+    <div className="empty-friend-tile tile">
       <LoadingSpinner size={45} />
     </div>
   );
 }
 function ErrorTile() {
-  return <div className="empty-friend-tile">Error Occured</div>;
+  return <div className="empty-friend-tile tile">Error Occured</div>;
 }
 function AddFriendsComponent() {
   const [formState, setFormState] = useState<FormState>({ state: "input" });

@@ -18,7 +18,10 @@ import {
 } from "../../validation/FormInput";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
-import { supportedProfilePictureFormats } from "../../util/media/media";
+import {
+  MAX_PROFILE_PICTURE_SIZE,
+  supportedProfilePictureFormats,
+} from "../../util/constants";
 import { useForm } from "react-hook-form";
 import { User } from "../../types/user";
 type EditField = "firstName" | "lastName" | "username" | "dateOfBirth";
@@ -127,6 +130,7 @@ export default function UserProfilePage() {
           <FileInput
             onInput={handleProfilePictureUpload}
             formats={supportedProfilePictureFormats}
+            sizeLimit={MAX_PROFILE_PICTURE_SIZE}
           />
         </label>
       </div>

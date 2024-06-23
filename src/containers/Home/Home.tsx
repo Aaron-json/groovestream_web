@@ -14,9 +14,11 @@ import {
   getMostPlayedAudioFiles,
 } from "../../api/requests/media";
 import { getUser } from "../../api/requests/user";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const navigator = useNavigate();
   const {
     data: userData,
     isLoading: userDataLoading,
@@ -38,13 +40,39 @@ export default function Home() {
     queryKey: ["audiofile-listening-history"],
     queryFn: () => getAudioFileHistory(6),
   });
+  function getDisplay() {
+    if (userDataErr || mostPlayedErr || audioFileHistoryErr) {
+      return <div>Error occured</div>;
+    } else if (
+      userDataLoading ||
+      loadingAudioFileHistory ||
+      loadingMostPlayed
+    ) {
+      return <LoadingSpinnerDiv />;
+    } else if (!audioFileHistory?.length) {
+      return (
+        <div
+          className="tile home-no-media-message"
+          onClick={() => navigator("/library")}
+        >
+          Click here to add music and start listening.
+        </div>
+      );
+    } else {
+      return (
+        <>
+          {audioFileHistory && (
+            <MediaGrid items={audioFileHistory} title="Recently Played" />
+          )}
 
-  if (userDataLoading) {
-    return <LoadingSpinnerDiv />;
+          {mostPlayed && (
+            <HorizontalScroll items={mostPlayed} title="Most Played Tracks" />
+          )}
+        </>
+      );
+    }
   }
-  if (userDataErr) {
-    return <div>Error Occcured</div>;
-  }
+
   return (
     <section className="home-page">
       <div className="home-header">
@@ -68,13 +96,7 @@ export default function Home() {
         <UserProfilePage />
       </Modal>
       <hr className="home-header-bottom-line" />
-      {audioFileHistory && (
-        <MediaGrid items={audioFileHistory} title="Recently Played" />
-      )}
-
-      {mostPlayed && (
-        <HorizontalScroll items={mostPlayed} title="Most Played Tracks" />
-      )}
+      {getDisplay()}
     </section>
   );
 }

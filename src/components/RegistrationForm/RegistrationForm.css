@@ -1,5 +1,5 @@
 .register-form {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--hue-primary);
     color: white;
     display: flex;
     flex-direction: column;
@@ -7,11 +7,9 @@
     align-items: center;
     justify-self: flex-start;
     border-radius: 10px;
-    padding-block: 0.8em;
-    overflow: auto;
-    flex: 1 0 auto;
+    padding-top: 15px;
+    padding-bottom: 35px;
     gap: 10px;
-    height: fit-content;
 }
 
 .register-form > label{
@@ -19,22 +17,20 @@
 }
 
 .register-form>h2 {
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .register-form>* {
     width: 90%;
 }
 
-.register-form>input {
-    border-radius: 3px;
-    height: 1.9em;
-}
-
-.register-form>p {
+.register-login-option {
     font-size: 0.8em;
 }
 
-.register-login-toggle:visited {
+.register-login-toggle {
     color: white;
+    & :visited {
+        color: white;
+    }
 }

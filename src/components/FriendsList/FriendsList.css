@@ -23,9 +23,6 @@
     max-width: 380px;
     flex: 1 1 auto;
     height: 4.5rem;
-    background-color: var(--primary-hue);
-    border-radius: var(--border-radius);
-    border: var(--tile-border);
     gap: 2px;
 }
 .empty-friend-tile{

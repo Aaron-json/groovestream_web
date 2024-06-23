@@ -1,5 +1,5 @@
 .modal{
-    min-width: 100px;
+    min-width: 2rem;
     background-color: rgba(1, 1, 1, 0.8);
     overflow: auto;
     display: flex;

@@ -1,28 +1,41 @@
 import { Howl, Howler } from "howler";
+import { streamAudioFile } from "../api/requests/media";
+import { BlobToDataUrl } from "./encoding";
 export default class MediaPlayer {
   #HowlInstance: Howl | undefined;
   currentSourceID: string | undefined;
   #DefaultConfiguration = {
     html5: false,
-    volume: 1,
     loop: false,
   };
   // #GlobalHowler = Howler.init()
 
-  async #loadSourceHelper(source: MediaSourceConfig) {
-    return new Promise((resolve, reject) => {
-      this.#HowlInstance = new Howl({
-        ...this.#DefaultConfiguration,
-        src: [source.data],
-        // format: source.format,
-        onend: source.onSongEnd,
-        onload: resolve,
-        onloaderror: reject,
-      });
+  async #loadSourceHelper(source: SourceConfig) {
+    return new Promise(async (resolve, reject) => {
+      let audioStr: string;
+      try {
+
+        const buf = await streamAudioFile(source.id, "arraybuffer") as ArrayBuffer
+        const dataBlob = new Blob([buf], { "type": source.format })
+        audioStr = await BlobToDataUrl(dataBlob)
+
+        this.#HowlInstance = new Howl({
+          onend: source.onSongEnd,
+          onload: resolve,
+          onloaderror: reject,
+          onplayerror: reject,
+
+          ...this.#DefaultConfiguration,
+          src: [audioStr],
+
+        });
+      } catch (error) {
+        reject(error)
+      }
     });
   }
 
-  async loadSource(source: MediaSourceConfig) {
+  async loadSource(source: SourceConfig) {
     if (!this.#HowlInstance) {
       // new Howl created
       await this.#loadSourceHelper(source);
@@ -90,9 +103,7 @@ export default class MediaPlayer {
     }
     return this.#HowlInstance.seek();
   }
-  isLoaded() {
-    return this.#HowlInstance !== undefined;
-  }
+
   isPlaying() {
     if (!this.#HowlInstance) return false;
     return this.#HowlInstance.playing();
@@ -108,9 +119,17 @@ export default class MediaPlayer {
   }
 }
 
-interface MediaSourceConfig {
-  data: string;
+interface SourceConfig {
   id: string;
   format: string;
   onSongEnd: () => any;
 }
+
+export type MediaPlaybackState =
+  | "unloaded"
+  | "playing"
+  | "loading"
+  | "playing"
+  | "stopped"
+  | "paused";
+

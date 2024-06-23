@@ -20,24 +20,7 @@
    width: 100%;
    height: 1.8em;
 }
-.media-list-back-btn{
-   height: 100%;
-   width: 40px;
-   display: flex;
-   align-items: center;
-   justify-content: center;
-   border-radius: 5px;
-   transition: background-color 0.1s, opacity 0.1s
-}
-.media-list-back-btn:hover{
-   background-color: rgba(255, 255, 255, 0.21);
-}
-.media-list-back-btn:active{
-   opacity: 0.7;
-}
-.media-list-back-btn > img{
-   height: 89%;
-}
+
 .media-list-title{
    color: white;
    font-weight: 300;
@@ -48,7 +31,7 @@
 .media-list-playlist-item{
    color: var(--text-color);
    width: 100%;
-    background-color: rgba(255, 255, 255, 0.13);
+    background-color: var(--hue-primary);
     height: 5.7em;
     display: flex;
     flex-direction: row;
@@ -63,7 +46,7 @@
 }
 .media-list-song-item:hover,
 .media-list-playlist-item:hover{
-   background-color: rgba(255, 255, 255, 0.21);
+   background-color: var(--hue-bright);
 }
 
 .media-list-song-item:active,

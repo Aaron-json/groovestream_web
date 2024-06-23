@@ -52,15 +52,10 @@
 .home-header-bottom-line {
   align-self: center;
 }
-
-
-.home-media-tile {
-  background-color: rgba(255, 255, 255, 0.17);
-  transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
-  transition-duration: 0.3s;
-  transition-delay: 0s;
-  transition-property: all;
-}
-.home-media-tile:hover {
-  background-color: rgba(255, 255, 255, 0.25);
+.home-no-media-message {
+  display: grid;
+  place-content: center;
+  height: 5rem;
+  width: 70%;
+  margin-inline:auto
 }

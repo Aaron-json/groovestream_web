@@ -19,7 +19,7 @@ const VolumeControl = () => {
         />
         <input
           type="range"
-          id="volume-slider"
+          className="volume-slider"
           min={0}
           max={1}
           step={0.01}
