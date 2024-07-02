@@ -92,7 +92,7 @@ export function MediaContextProvider({
         format: format.mimeType,
         onSongEnd,
       });
-      if (duration === undefined) {
+      if (duration === undefined || duration === null) {
         // sometimes the server did not successfully get a value for duration
         newMedia.audiofile.duration = player.getDuration();
       }

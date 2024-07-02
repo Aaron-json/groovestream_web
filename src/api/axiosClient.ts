@@ -1,8 +1,9 @@
 import axios from "axios";
 
-export const PRIMARY_API_URL = import.meta.env.PROD ? import.meta.env.VITE_API_URL : import.meta.env.VITE_DEV_API_URL
 
-export const STREAMING_API_URL = import.meta.env.PROD ? import.meta.env.VITE_STREAMING_API_URL : import.meta.env.VITE_DEV_STREAMING_API_URL
+export const PRIMARY_API_URL = import.meta.env.PROD ? "https://groovestream-backend-node-hcnffebfhq-pd.a.run.app" : "http://localhost:5001"
+
+export const STREAMING_API_URL = import.meta.env.PROD ? "https://groovestream-backend-go-hcnffebfhq-pd.a.run.app" : "http://localhost:8080"
 
 // The client is created with the primary URL, for request to another url, override the baseUrl in
 // your request config
