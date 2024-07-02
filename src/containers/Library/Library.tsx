@@ -10,26 +10,20 @@ import {
 } from "../../components";
 import {
   useContext,
-  useDebugValue,
-  useEffect,
   useReducer,
   useState,
 } from "react";
-
 import { getUserPlaylists } from "../../api/requests/media";
 import { MediaFilters } from "../../components/MediaList/types";
 import { useQuery } from "@tanstack/react-query";
 import { TaskType, tasksContext } from "../../contexts/TasksContext";
-import { getUser } from "../../api/requests/user";
+import { PLAYLISTS_CACHE_KEY } from "../../util/constants";
+
 interface MediaFiltersActions {
   filter: keyof MediaFilters;
   value: any;
 }
 const mediaTypesOptions = [
-  /**
-   * 0 : audioFiles
-   * 1 : playlists
-   */
   "All",
   "Songs",
   "Playlists",
@@ -63,20 +57,14 @@ export default function Library() {
   const { getTasks } = useContext(tasksContext)!;
   const mediaTasks = getTasks(TaskType.Media);
   const [searchValue, setSearchValue] = useState("");
-
   const {
     data: allMedia,
     error,
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["playlists", searchValue],
-    queryFn: () => {
-      if (!searchValue) {
-        return getUserPlaylists();
-      }
-      return getUserPlaylists(searchValue);
-    },
+    queryKey: [PLAYLISTS_CACHE_KEY, "search", searchValue],
+    queryFn: () => getUserPlaylists(searchValue ? searchValue : undefined)
   });
 
   async function createdPlaylistHandler() {
@@ -92,7 +80,6 @@ export default function Library() {
       return (
         <MediaList
           items={allMedia!}
-          searchValue={searchValue}
           refreshMedia={refetch}
         />
       );

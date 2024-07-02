@@ -2,7 +2,6 @@ import "./PlaylistPage.css";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { FileInput, MediaList, Modal, ProgressBar } from "../../components";
 import {
-  getPlaylistAudioFiles,
   uploadAudioFile,
   sendPlaylistInvite,
   getPlaylistInfo,
@@ -13,6 +12,8 @@ import LoadingSpinner from "../../components/Spinner/Spinner";
 import { getPlaylistIcon } from "../../util/media";
 import {
   MAX_AUDIOFILE_UPLOAD_SIZE,
+  PLAYLIST_AUDIOFILES_CACHE_KEY,
+  PLAYLIST_INFO_CACHE_KEY,
   supportedAudioFormats,
 } from "../../util/constants";
 import { FileInputError } from "../../components/FileInput/FileInput";
@@ -22,32 +23,35 @@ import { tasksContext } from "../../contexts/TasksContext";
 import { Playlist } from "../../types/media";
 import { validateUsername } from "../../validation/FormInput";
 import { FormState } from "../../types/formstate";
+import { usePlaylistAudioFiles } from "../../hooks/media";
 
 export default function PlaylistPage() {
   // playlistID will always be ine url to navigate to this page
-  // so it will not be undefined. it is safe to use non-null assertion on it
+  // so it will not be undefined. it is safe to use non-null assertion
   const _playlist: Playlist = useLocation().state;
   const { mediaID: playlistID } = useParams();
   const { getPlaylistTasks } = useContext(tasksContext)!;
   const tasks = getPlaylistTasks(+playlistID!);
   const [showModal, setShowModal] = useState(false);
   const popupContent = useRef<JSX.Element | undefined>(undefined);
+
+  // audiofiles for the playlist
+  const MEDIA_STORE_KEY = PLAYLIST_AUDIOFILES_CACHE_KEY + playlistID
   const {
     data: audiofiles,
     error: audiofilesErr,
     isLoading: audiofilesLoading,
     refetch: refetchAudioFiles,
-  } = useQuery({
-    queryKey: ["playlist-audiofiles", playlistID],
-    queryFn: async () => getPlaylistAudioFiles(+playlistID!),
-  });
+  } = usePlaylistAudioFiles(
+    MEDIA_STORE_KEY,
+    +playlistID!,
+  );
   const {
     data: playlist,
     error: playlistErr,
     isLoading: playlistLoading,
-    refetch: refetchPlaylist,
   } = useQuery({
-    queryKey: ["playlist", playlistID],
+    queryKey: [PLAYLIST_INFO_CACHE_KEY, playlistID],
     queryFn: async () => {
       //check if playlist is in current location state.
       // some endpoints will have the full playlist before navigating
@@ -87,7 +91,7 @@ export default function PlaylistPage() {
         updateTask,
       });
       await refetchAudioFiles();
-    } catch (error) {}
+    } catch (error) { }
   }
 
   return (
@@ -151,7 +155,7 @@ export default function PlaylistPage() {
       </label>
       <div className="playlist-page-content">
         {tasks.length > 0 && <ProgressBar tasks={tasks} />}
-        <MediaList items={audiofiles!} refreshMedia={refetchAudioFiles} />
+        <MediaList mediaStoreKey={MEDIA_STORE_KEY} items={audiofiles!} refreshMedia={refetchAudioFiles} />
       </div>
     </section>
   );

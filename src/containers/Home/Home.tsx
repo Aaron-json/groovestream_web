@@ -15,6 +15,7 @@ import {
 } from "../../api/requests/media";
 import { getUser } from "../../api/requests/user";
 import { useNavigate } from "react-router-dom";
+import { useListeningHistory, useMostPlayed } from "../../hooks/media";
 
 export default function Home() {
   const [showProfileDialog, setShowProfileDialog] = useState(false);
@@ -24,22 +25,24 @@ export default function Home() {
     isLoading: userDataLoading,
     error: userDataErr,
   } = useQuery({ queryKey: ["user"], queryFn: getUser });
+
+  // MOST PLAYED
+  const MOST_PLAYED_AUDIOFILES_STORE_KEY = "audiofiles-most-played";
   const {
     data: mostPlayed,
     isLoading: loadingMostPlayed,
     error: mostPlayedErr,
-  } = useQuery({
-    queryKey: ["audiofiles-most-played"],
-    queryFn: () => getMostPlayedAudioFiles(10),
-  });
+  } = useMostPlayed(
+    MOST_PLAYED_AUDIOFILES_STORE_KEY, 10
+  );
+
+  // LISTENING HISTORY
+  const LISTENING_HISTORY_STORE_KEY = "audiofile-listening-history";
   const {
     data: audioFileHistory,
     isLoading: loadingAudioFileHistory,
     error: audioFileHistoryErr,
-  } = useQuery({
-    queryKey: ["audiofile-listening-history"],
-    queryFn: () => getAudioFileHistory(6),
-  });
+  } = useListeningHistory(LISTENING_HISTORY_STORE_KEY, 6);
   function getDisplay() {
     if (userDataErr || mostPlayedErr || audioFileHistoryErr) {
       return <div>Error occured</div>;
@@ -62,11 +65,11 @@ export default function Home() {
       return (
         <>
           {audioFileHistory && (
-            <MediaGrid items={audioFileHistory} title="Recently Played" />
+            <MediaGrid mediaStoreKey={LISTENING_HISTORY_STORE_KEY} items={audioFileHistory} title="Recently Played" />
           )}
 
           {mostPlayed && (
-            <HorizontalScroll items={mostPlayed} title="Most Played Tracks" />
+            <HorizontalScroll mediaStoreKey={MOST_PLAYED_AUDIOFILES_STORE_KEY} items={mostPlayed} title="Most Played Tracks" />
           )}
         </>
       );

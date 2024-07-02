@@ -21,7 +21,6 @@ const Search = () => {
       {displayMedia ? (
         <MediaList
           items={displayMedia}
-          searchValue={searchValue}
           title="Search History"
         />
       ) : (

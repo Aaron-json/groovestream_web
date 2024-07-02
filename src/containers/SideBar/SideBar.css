@@ -23,7 +23,6 @@
   }
   
   .menu-icon{
-    user-select: none;
     height: 100%;
     display: block;
     opacity: 0.7;

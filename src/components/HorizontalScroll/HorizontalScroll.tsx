@@ -8,6 +8,7 @@ import { getNextAudio } from "../../util/media";
 interface HorizontalScrollProps {
   items: (AudioFile | Playlist)[];
   title: string;
+  mediaStoreKey?: string;
 }
 export default function HorizontalScroll({
   items,
@@ -18,13 +19,14 @@ export default function HorizontalScroll({
     <div className="horizontal-scroll">
       <h2 className="horizontal-scroll-title">{title}</h2>
       <div className="scroll-area">
-        {items.map((media) => {
+        {items.map((media, index) => {
           if (media.type === MediaType.AudioFile) {
             return (
               <SongTile
                 key={media.storageId}
                 audioFile={media}
                 allMedia={items}
+                index={index}
               />
             );
           } else if (media.type === MediaType.Playlist) {
@@ -35,23 +37,22 @@ export default function HorizontalScroll({
     </div>
   );
 }
-interface SongTileProps {
+interface SongTileProps extends Pick<HorizontalScrollProps, "mediaStoreKey"> {
   audioFile: AudioFile;
   allMedia: HorizontalScrollProps["items"];
+  index: number;
 }
-const SongTile = ({ audioFile, allMedia }: SongTileProps) => {
+const SongTile = ({ audioFile, allMedia, mediaStoreKey, index }: SongTileProps) => {
   const { setMedia, currentMedia } = useContext(mediaContext)!;
+  function onClick() {
+    if (mediaStoreKey) {
+      setMedia(audioFile, mediaStoreKey, index)
+    }
+  }
   return (
     <div
       className="horizontal-scroll-song-tile tile"
-      onClick={() => setMedia(audioFile, (action) => {
-        if (currentMedia) {
-          return getNextAudio((allMedia as AudioFile[]), currentMedia.id, action)
-        } else {
-          return undefined
-        }
-      }
-      )}
+      onClick={onClick}
     >
       <img
         className="horizontal-scroll-media-icon"

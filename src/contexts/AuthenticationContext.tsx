@@ -11,7 +11,7 @@ type AuthenticationContextValue = {
 };
 type LoginCredentials = {
   username: string;
-  password: String;
+  password: string;
 };
 const NO_RETRY_URLS = new Set(["auth/login", "auth/refresh", "auth/logout"]);
 export const authenticationContext = createContext<

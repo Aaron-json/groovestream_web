@@ -1,6 +1,6 @@
 import { library_icon, music_icon } from "../assets/default-icons";
 import { sound_waves } from "../assets/default-icons/MediaBar";
-import { MediaUpdater } from "../contexts/types";
+import { MediaUpdaterFunc } from "../contexts/types";
 import { AudioFile, Playlist } from "../types/media";
 import { MediaType } from "../types/media";
 export function getSongIcon(
@@ -30,40 +30,32 @@ If the next song is the same as the old song, undefined is returned.
 if the current audiofile does not exist on the song, the first audiofile will be played.
 Playlists are ignored.
 */
-export function getNextAudio(media: (AudioFile | Playlist)[], currentID: number, action: "next" | "prev"): AudioFile | undefined {
-  console.log("getting next audio")
+export function getNextAudio(medialist: (AudioFile | Playlist)[], audiofile: AudioFile, curIndex: number, action: "next" | "prev"): number {
   /*
    * Hey bro, I am an audiofile*/
-  if (!media) {
-    console.log("media is undefined")
-    return undefined;
+  if (!medialist) {
+    return -1;
   }
-  // find current media's index in the list
-  const index = media.findIndex((m) => m.id === currentID);
-  if (index === -1) {
-    // current audiofile does not exist in the list
-    return undefined
+  const pos = medialist.findIndex((val) => val.id === audiofile.id)
+  let index: number;
+  if (pos === -1) {
+    // if song is no longer in the list, use the previous known location of the song in the list
+    index = curIndex
+  } else {
+    // if song is still in the list, use its current location in the list
+    index = pos
   }
   function _getnextIdx() {
     if (action === "next") {
-      return (index + 1) % media.length;
+      return (index + 1) % medialist.length;
     } else {
-      return (index - 1) % media.length;
+      return (index - 1) % medialist.length;
     }
   }
-  let nextIndex = _getnextIdx();
-
-  while (media[nextIndex].type !== MediaType.AudioFile) {
-    // loop to the next audioFile i.e type = 0
-    // there will be at least 1 audioFile since only audioFiles clicks
-    // can set the currentMedia
+  let nextIndex: number;
+  do {
     nextIndex = _getnextIdx();
-  }
-  if (nextIndex === index) {
-    // could not find another audiofile
-    return undefined
-  }
+  } while (medialist[nextIndex].type !== MediaType.AudioFile)
 
-  // type asserion is fine since we know it's an audiofile
-  return media[nextIndex] as AudioFile
+  return nextIndex
 }

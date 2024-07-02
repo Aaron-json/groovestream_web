@@ -115,7 +115,7 @@ export async function getPlaylistInfo(playlistID: number) {
 /////////////////////////////////////////////////////////////////////////////////////////////
 // ALL MEDIA
 /////////////////////////////////////////////////////////////////////////////////////////////
-export async function getUserPlaylists(searchText?: string) {
+export async function getUserPlaylists(searchText?: string | undefined) {
   const response = await axiosClient.get("/media", {
     params: { searchText }
   });

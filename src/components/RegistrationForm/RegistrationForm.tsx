@@ -25,7 +25,6 @@ const RegistrationForm = () => {
   });
   const [submitError, setSubmitError] = useState<string | undefined>(undefined);
   async function submitHandler(formValues: FieldValues) {
-    console.log();
     try {
       await userSignUp({
         firstName: formValues.firstName,

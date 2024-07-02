@@ -2,18 +2,19 @@ import React, {
   SetStateAction,
   createContext,
   useEffect,
-  useRef,
   useState,
 } from "react";
 import MediaPlayer from "../MediaPlayer/MediaPlayer";
 import { addListeningHistory } from "../api/requests/media";
 import { AudioFile } from "../types/media";
-import { ContextProviderProps, MediaUpdater } from "./types";
+import { ContextProviderProps, CurrentMedia, MediaUpdateAction } from "./types";
 import { MediaPlaybackState } from "../MediaPlayer/MediaPlayer";
+import { useMediaStore } from "../state/store";
+import { getNextAudio } from "../util/media";
 
-type MediaContextValue = {
+export type MediaContextValue = {
   currentMedia: AudioFile | undefined;
-  setMedia: (audiofile: AudioFile, updater: MediaUpdater) => void;
+  setMedia: (audiofile: AudioFile, mediaStoreKey: string, index: number) => void;
   unload: () => any;
   player: MediaPlayer;
   playbackState: MediaPlaybackState;
@@ -22,48 +23,30 @@ type MediaContextValue = {
   mute: boolean;
   volume: number;
   setVolume: React.Dispatch<SetStateAction<number>>;
-  ifSeeking: boolean;
-  setIfSeeking: React.Dispatch<SetStateAction<boolean>>;
-  seek: number;
-  setSeek: React.Dispatch<SetStateAction<number>>;
-  updateSeek: (seekPosition: number) => void;
+  getSeek: () => number;
+  setSeek: (position: number) => void
   playNext: () => void;
   playPrev: () => void;
-  setMediaUpdater: (func: MediaUpdater) => void;
 };
 export const mediaContext = createContext<MediaContextValue | undefined>(
   undefined
 );
 const player = new MediaPlayer();
 
-export const MediaContextProvider: React.FC<ContextProviderProps> = ({
+export function MediaContextProvider({
   children,
-}) => {
-  const [seek, setSeek] = useState(0);
-  const [ifSeeking, setIfSeeking] = useState(false);
+}: ContextProviderProps) {
   const [volume, setVolume] = useState(0.7);
   const [mute, setMute] = useState(false);
   const [playbackState, setPlaybackState] =
     useState<MediaPlaybackState>("unloaded");
-  const [_currentMedia, _setCurrentMedia] = useState<AudioFile | undefined>(undefined);
+  const [_currentMedia, _setCurrentMedia] = useState<CurrentMedia | undefined>(undefined);
+  const mediaStore = useMediaStore((state) => state.mediaLists);
 
-  const mediaUpdater = useRef<MediaUpdater>(() => undefined)
   useEffect(() => {
     // unload all media when this component unmounts
     return () => unloadMedia();
   }, []);
-  useEffect(() => {
-    // updating seeker value
-    let timeout: number | undefined;
-    if (playbackState === "playing" && !ifSeeking) {
-      timeout = setInterval(() => {
-        // seek will not be null since
-        setSeek(() => Math.round(player.getSeek()));
-      }, 1000);
-    }
-    return () => clearInterval(timeout);
-  }, [playbackState, ifSeeking]);
-
   // volume
   useEffect(() => {
     player.setVolume(volume);
@@ -90,17 +73,10 @@ export const MediaContextProvider: React.FC<ContextProviderProps> = ({
     }
   }
   function onSongEnd() {
-    playNext();
+    playNextPrev("next");
   }
-  /**
-   * Loads the provided track and begins playback
-   * @param newMedia
-   * @returns
-   */
-  async function loadMedia(newMedia: AudioFile | undefined) {
-    /**
-     * Downloads the current media and loads it to the Music player
-     */
+
+  async function loadMedia(newMedia: CurrentMedia) {
     if (!newMedia) {
       unloadMedia();
       return;
@@ -108,7 +84,7 @@ export const MediaContextProvider: React.FC<ContextProviderProps> = ({
     setPlaybackState(() => "loading");
 
     // use type any since the playlistID is on some playables but not all
-    const { id, format, storageId, duration } = newMedia;
+    const { id, format, storageId, duration } = newMedia.audiofile;
 
     try {
       await player.loadSource({
@@ -118,7 +94,7 @@ export const MediaContextProvider: React.FC<ContextProviderProps> = ({
       });
       if (duration === undefined) {
         // sometimes the server did not successfully get a value for duration
-        newMedia.duration = player.getDuration();
+        newMedia.audiofile.duration = player.getDuration();
       }
       _setCurrentMedia(newMedia);
       player.play();
@@ -133,71 +109,44 @@ export const MediaContextProvider: React.FC<ContextProviderProps> = ({
   }
   function unloadMedia() {
     player.unloadSource();
-    setSeek(0);
     setPlaybackState("unloaded");
     _setCurrentMedia(undefined);
   }
 
   /**
-   * Sets the current audiofile and starts loading. optionally you can register an updater
-   * function that will be called when the media needs to change. You can also register an updater manuall.
-   * Source is helpful to identify the current source of the media inorder to re-register an updater when
-   * a rerender happens.
+   * Updates the current audiofile and begins loading it.The updater function will be called to get track corresponding
+   * to the action passed to the function. This updater function MUST be specific to the component that passed it to this function.
    */
-  function setMedia(audiofile: AudioFile, updater?: MediaUpdater) {
-
-    if (audiofile.id == _currentMedia?.id) {
+  function setMedia(audiofile: AudioFile, mediaStoreKey: string, index: number) {
+    if (mediaStoreKey === _currentMedia?.mediaStoreKey && audiofile.id === _currentMedia?.audiofile.id) {
       player.stop()
-      player.setSeek(0)
       player.play()
       setPlaybackState("playing")
     } else (
-      loadMedia(audiofile)
+      loadMedia({ index, audiofile, mediaStoreKey })
     )
-    if (updater) {
-      setMediaUpdater(updater)
-    }
   }
-  function setMediaUpdater(updater: MediaUpdater) {
-    mediaUpdater.current = updater
-  }
-  function updateSeek(seekPosition: number) {
-    player.setSeek(seekPosition);
-  }
-  function playNext() {
+
+  function playNextPrev(action: MediaUpdateAction) {
     if (!_currentMedia) {
       unloadMedia()
       return
     }
     player.stop();
-    setSeek(0);
-    console.log(_currentMedia)
-    const nextAudiofile = mediaUpdater.current("next")
-    if (!nextAudiofile) {
+    const nextIndex = getNextAudio(mediaStore[_currentMedia.mediaStoreKey], _currentMedia.audiofile, _currentMedia.index, action)
+    if (nextIndex === -1) {
       unloadMedia()
       return
     }
-    loadMedia(nextAudiofile);
+    const nextAudiofile = mediaStore[_currentMedia.mediaStoreKey][nextIndex] as AudioFile
+
+    loadMedia({ ..._currentMedia, audiofile: nextAudiofile, index: nextIndex });
   }
-  function playPrev() {
-    if (!_currentMedia) {
-      unloadMedia()
-      return
-    }
-    player.stop();
-    setSeek(0);
-    setPlaybackState("stopped");
-    const nextAudiofile = mediaUpdater.current("prev")
-    if (!nextAudiofile) {
-      unloadMedia()
-      return
-    }
-    loadMedia(nextAudiofile);
-  }
+
   return (
     <mediaContext.Provider
       value={{
-        currentMedia: _currentMedia,
+        currentMedia: _currentMedia?.audiofile,
         setMedia,
         unload: () => _setCurrentMedia(undefined),
         player,
@@ -207,14 +156,10 @@ export const MediaContextProvider: React.FC<ContextProviderProps> = ({
         mute,
         volume,
         setVolume,
-        updateSeek,
-        seek,
-        setSeek,
-        ifSeeking,
-        setIfSeeking,
-        playNext,
-        playPrev,
-        setMediaUpdater,
+        getSeek: () => player.getSeek(),
+        setSeek: (pos: number) => player.setSeek(pos),
+        playNext: () => playNextPrev("next"),
+        playPrev: () => playNextPrev("prev"),
       }}
     >
       {children}

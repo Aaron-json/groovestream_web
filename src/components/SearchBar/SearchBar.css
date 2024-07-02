@@ -1,5 +1,4 @@
 .search-bar {
-    user-select: none;
     height: 2.2em;
     width: 25em;
     background-color: var(--hue-primary);

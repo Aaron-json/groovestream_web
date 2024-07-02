@@ -91,7 +91,6 @@ export default function UserProfilePage() {
       setEditFields([]);
       reset();
     } catch (error) {
-      console.log(error);
     }
   }
   async function handleProfilePictureUpload(

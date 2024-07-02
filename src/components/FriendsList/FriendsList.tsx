@@ -109,7 +109,7 @@ function FriendTile({ friendObj, refetch }: FriendTileProps) {
     try {
       await deleteFriend(friendObj.friendshipID);
       await refetch();
-    } catch (error) {}
+    } catch (error) { }
   }
   return (
     <div className="friend-tile tile">

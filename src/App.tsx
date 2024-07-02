@@ -15,12 +15,12 @@ export default function App() {
     <>
       {authenticated === true && (
         <div id="App">
-          <TasksContextProvider>
-            <MediaContextProvider>
-              <MainView />
-              <MediaBar />
-            </MediaContextProvider>
-          </TasksContextProvider>
+            <TasksContextProvider>
+              <MediaContextProvider>
+                <MainView />
+                <MediaBar />
+              </MediaContextProvider>
+            </TasksContextProvider>
         </div>
       )}
 

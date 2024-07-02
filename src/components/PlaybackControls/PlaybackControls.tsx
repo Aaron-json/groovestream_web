@@ -6,7 +6,7 @@ import {
   next as nextIcon,
   loading as loadingIcon,
 } from "../../assets/default-icons/MediaBar";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { mediaContext } from "../../contexts/MediaContext";
 
 const PlaybackControls = () => {
@@ -14,13 +14,27 @@ const PlaybackControls = () => {
     currentMedia,
     playbackState,
     playPauseToggle,
-    seek,
     setSeek,
-    setIfSeeking,
-    updateSeek,
+    getSeek,
     playNext,
     playPrev,
   } = useContext(mediaContext)!;
+  const [displaySeek, setDisplaySeek] = useState(0)
+  const [ifSeeking, setIfSeeking] = useState(false);
+
+  useEffect(() => {
+    let timeout: number | undefined;
+    if (playbackState !== "playing") {
+      setDisplaySeek(0)
+    } else {
+      if (!ifSeeking) {
+        timeout = setInterval(() => {
+          setDisplaySeek(Math.round(getSeek()));
+        }, 1e3);
+      }
+    }
+    return () => clearInterval(timeout);
+  }, [playbackState, ifSeeking]);
 
   function getPlaybackIcon() {
     switch (playbackState) {
@@ -48,6 +62,17 @@ const PlaybackControls = () => {
         .padStart(2, "0")}`;
     }
   }
+  function handlePointerUp(e: React.MouseEvent<HTMLInputElement> | React.TouchEvent<HTMLInputElement>) {
+    setSeek(e.currentTarget.valueAsNumber);
+    setDisplaySeek(e.currentTarget.valueAsNumber)
+    setIfSeeking(false);
+  }
+  function handlePointerDown(_: React.MouseEvent<HTMLInputElement> | React.TouchEvent<HTMLInputElement>) {
+    setIfSeeking(true)
+  }
+  function handlePointerInput(e: React.MouseEvent<HTMLInputElement>) {
+    setDisplaySeek(e.currentTarget.valueAsNumber)
+  }
   return (
     <div className="playback-controls-div">
       <div className="playback-control-buttons">
@@ -66,7 +91,7 @@ const PlaybackControls = () => {
         </button>
       </div>
       <div className="playback-tracking-div">
-        <label className="left-seeker-label">{formatSeconds(seek)}</label>
+        <label className="left-seeker-label">{formatSeconds(displaySeek)}</label>
         <input
           className="seeker"
           type="range"
@@ -77,14 +102,15 @@ const PlaybackControls = () => {
           }
           min={0}
           step={1}
-          value={seek}
-          onMouseDown={() => setIfSeeking(true)}
-          onInput={(e) => setSeek(Number(e.currentTarget.value))}
-          onMouseUp={() => {
-            updateSeek(seek);
-            setIfSeeking(false);
-          }}
-          //onChange={(e) => setSeek(Number(e.target.value))}
+          value={displaySeek}
+
+          onMouseDown={handlePointerDown}
+          onTouchStart={handlePointerDown}
+
+          onInput={handlePointerInput}
+
+          onMouseUp={handlePointerUp}
+          onTouchEnd={handlePointerUp}
         />
         <label className="right-seeker-label">
           {currentMedia && currentMedia.duration

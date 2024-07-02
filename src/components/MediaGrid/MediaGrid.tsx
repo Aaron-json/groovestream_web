@@ -5,22 +5,27 @@ import { useNavigate } from "react-router-dom";
 import { getSongIcon, getPlaylistIcon } from "../../util/media";
 import { AudioFile, MediaType, Playlist } from "../../types/media";
 import { getNextAudio } from "../../util/media";
+import { MediaUpdaterFunc } from "../../contexts/types";
+import { MediaComponentProps } from "../../types/props";
 
-interface MediaGridProps {
-  items: (AudioFile | Playlist)[];
-  title: string;
-}
-export default function MediaGrid({ items, title }: MediaGridProps) {
+interface MediaGridProps extends MediaComponentProps { }
+
+export default function MediaGrid({ items, title, mediaStoreKey }: MediaGridProps) {
   return (
     <div className="media-grid">
-      <h2 className="media-grid-title">{title}</h2>
-      {items.map((media) => {
+      {
+        title &&
+        <h2 className="media-grid-title">{title}</h2>
+      }
+      {items.map((media, index) => {
         if (media.type === MediaType.AudioFile) {
           return (
             <SongTile
               key={media.storageId}
               audioFile={media}
               allMedia={items}
+              index={index}
+              mediaStoreKey={mediaStoreKey}
             />
           );
         } else if (media.type === MediaType.Playlist) {
@@ -31,23 +36,23 @@ export default function MediaGrid({ items, title }: MediaGridProps) {
   );
 }
 
-interface SongTileProps {
+interface SongTileProps extends Pick<MediaComponentProps, "mediaStoreKey"> {
   audioFile: AudioFile;
   allMedia: MediaGridProps["items"];
+  index: number
 }
-const SongTile = ({ audioFile, allMedia }: SongTileProps) => {
-  const { currentMedia, setMedia } = useContext(mediaContext)!;
 
+const SongTile = ({ audioFile, allMedia, index, mediaStoreKey }: SongTileProps) => {
+  const { currentMedia, setMedia } = useContext(mediaContext)!;
+  function onClick() {
+    if (mediaStoreKey) {
+      setMedia(audioFile, mediaStoreKey, index)
+    }
+  }
   return (
     <div
       className="media-grid-song-tile tile"
-      onClick={() => setMedia(audioFile, (action) => {
-        if (currentMedia) {
-          return getNextAudio((allMedia as AudioFile[]), currentMedia.id, action)
-        } else {
-          return undefined
-        }
-      })}
+      onClick={onClick}
     >
       <img
         className="media-grid-tile-icon"

@@ -40,8 +40,6 @@
     width: 60%;
 }
 .playback-control-btn>img.loading{
-    /* selector prevents a bug where spinning starts before icon changes */
-    /* The animaiton will only happen with this specific icon */
     animation: rotate 1.5s linear infinite;
 }
 @keyframes rotate {
