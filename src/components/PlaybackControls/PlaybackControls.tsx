@@ -24,7 +24,7 @@ const PlaybackControls = () => {
 
   useEffect(() => {
     let timeout: number | undefined;
-    if (playbackState !== "playing") {
+    if (playbackState === "unloaded" || playbackState === "loading" || playbackState === "stopped") {
       setDisplaySeek(0)
     } else {
       if (!ifSeeking) {
