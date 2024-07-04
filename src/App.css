@@ -191,7 +191,7 @@
    transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
    transition-duration: 0.3s;
    transition-delay: 0s;
-   transition-property: all;
+   transition-property: background-color;
  }
 
  .tile:hover {
@@ -199,18 +199,12 @@
  }
 
  input[type="range"] {
-   /* TODO: make height configurable */
-   --height: 0.64em;
    background: transparent;
    -webkit-appearance: none;
    appearance: none;
-   border-radius: 5px;
    flex: 1;
-   height: var(--height);
    outline: none;
    cursor: pointer;
-   overflow: hidden;
-
  }
 
  /** Track styles **/
@@ -219,6 +213,7 @@
    appearance: none;
    height: 100%;
    background-color: var(--hue-bright);
+   border-radius: 100em;
  }
 
  input[type="range"]::-moz-range-track {
@@ -226,6 +221,7 @@
    appearance: none;
    height: 100%;
    background-color: var(--hue-bright);
+   border-radius: 100em;
  }
 
  /* Remove Thumb */
@@ -233,8 +229,9 @@
  input[type="range"]::-webkit-slider-thumb {
    -webkit-appearance: none;
    appearance: none;
-   height: var(--height);
-   width: var(--height);
+   width: unset;
+   aspect-ratio: 1/1;
+   height: 100%;
    background-color: white;
    border-radius: 50%;
  }
@@ -243,8 +240,9 @@
  input[type="range"]::-moz-range-thumb {
    -moz-appearance: none;
    appearance: none;
-   height: var(--height);
-   width: var(--height);
+   width: unset;
+   aspect-ratio: 1/1;
+   height: 100%;
    background-color: white;
    border: none;
    border-radius: 50%;

@@ -94,6 +94,7 @@ const PlaybackControls = () => {
         <label className="left-seeker-label">{formatSeconds(displaySeek)}</label>
         <input
           type="range"
+          className="seeker"
           max={
             currentMedia && currentMedia.duration
               ? Math.round(currentMedia.duration)

@@ -70,3 +70,7 @@
 .right-seeker-label {
     text-align: right;
 }
+
+.seeker {
+    height: 0.65em;
+}

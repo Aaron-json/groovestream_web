@@ -9,10 +9,6 @@ import { useState } from "react";
 import { profile_icon } from "../../assets/default-icons";
 import { UserProfilePage } from "..";
 import { useQuery } from "@tanstack/react-query";
-import {
-  getAudioFileHistory,
-  getMostPlayedAudioFiles,
-} from "../../api/requests/media";
 import { getUser } from "../../api/requests/user";
 import { useNavigate } from "react-router-dom";
 import { useListeningHistory, useMostPlayed } from "../../hooks/media";
