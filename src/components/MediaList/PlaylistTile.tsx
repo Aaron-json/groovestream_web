@@ -39,10 +39,15 @@ export function MediaListPlaylistTile({
     formData: FormData | undefined,
     error: FileInputError | undefined
   ) {
-    if (error || !formData) {
-      errMessageRef.current = error?.message;
+    if (error) {
+      errMessageRef.current = error.message;
       setShowErr(true);
       return;
+    }
+    if (!formData) {
+      errMessageRef.current = "Error encountered"
+      setShowErr(true);
+      return
     }
     try {
       await uploadAudioFile(formData, playlist.id, {

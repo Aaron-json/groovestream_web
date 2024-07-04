@@ -4,7 +4,7 @@ import { mediaContext } from "../../contexts/MediaContext";
 import { useNavigate } from "react-router-dom";
 import { getSongIcon, getPlaylistIcon } from "../../util/media";
 import { AudioFile, MediaType, Playlist } from "../../types/media";
-import { getNextAudio } from "../../util/media";
+
 interface HorizontalScrollProps {
   items: (AudioFile | Playlist)[];
   title: string;
@@ -13,6 +13,7 @@ interface HorizontalScrollProps {
 export default function HorizontalScroll({
   items,
   title,
+  mediaStoreKey
 }: HorizontalScrollProps) {
   // remember to get only top 10 for each category
   return (
@@ -25,8 +26,8 @@ export default function HorizontalScroll({
               <SongTile
                 key={media.storageId}
                 audioFile={media}
-                allMedia={items}
                 index={index}
+                mediaStoreKey={mediaStoreKey}
               />
             );
           } else if (media.type === MediaType.Playlist) {
@@ -39,12 +40,12 @@ export default function HorizontalScroll({
 }
 interface SongTileProps extends Pick<HorizontalScrollProps, "mediaStoreKey"> {
   audioFile: AudioFile;
-  allMedia: HorizontalScrollProps["items"];
   index: number;
 }
-const SongTile = ({ audioFile, allMedia, mediaStoreKey, index }: SongTileProps) => {
+const SongTile = ({ audioFile, mediaStoreKey, index }: SongTileProps) => {
   const { setMedia, currentMedia } = useContext(mediaContext)!;
   function onClick() {
+    console.log(mediaStoreKey)
     if (mediaStoreKey) {
       setMedia(audioFile, mediaStoreKey, index)
     }

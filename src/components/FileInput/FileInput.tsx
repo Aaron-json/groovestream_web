@@ -1,10 +1,14 @@
-import React, { useRef, useState } from "react";
+import React from "react";
 import "./FileInput.css";
 
+export enum FileInputErrorCode {
+  INVALID_FILE_TYPE = "INVALID_FILE_TYPE",
+  SIZE_LIMIT_EXCEEDED = "SIZE_LIMIT_EXCEEDED",
+}
 export interface FileInputError {
   message: string;
-  code: string;
-  filename: string;
+  code: FileInputErrorCode;
+  filename: string | undefined;
 }
 
 interface FileInputProps {
@@ -33,10 +37,10 @@ export default function FileInput({
       // check if each file is a valid file type
       if (!formats.includes(files[i].type)) {
         error = {
-          message: `Invalid file type. Supported file types are include ${formats.join(
+          message: `Invalid file type. Supported file types are: ${formats.join(
             ", "
           )}.`,
-          code: "INVALID_FILE_TYPE",
+          code: FileInputErrorCode.INVALID_FILE_TYPE,
           filename: files[i].name,
         };
         break;
@@ -44,9 +48,9 @@ export default function FileInput({
       totalSize += files[i].size;
       if (totalSize > sizeLimit) {
         error = {
-          message: `File size exceeds the limit of ${sizeLimit} MB.`,
-          code: "SIZE_LIMIT_EXCEEDED",
-          filename: files[i].name,
+          message: `File size exceeds the limit of ${Math.round(sizeLimit / 1000)} MB.`,
+          code: FileInputErrorCode.SIZE_LIMIT_EXCEEDED,
+          filename: undefined,
         };
         break;
       }
@@ -54,6 +58,8 @@ export default function FileInput({
       formData.append("files", files[i]);
     }
 
+    // is value is not reset, selecting the same files a second time
+    // will not trigger the onInput event
     e.currentTarget.value = "";
     if (error) {
       onInput(undefined, error);

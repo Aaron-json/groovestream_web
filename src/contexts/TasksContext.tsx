@@ -5,16 +5,14 @@ export const tasksContext = createContext<TasksContextValue | undefined>(
 );
 interface BaseTask {
   name?: string;
-  type: TaskType; // supported task types
-  // id of the resource this task was created in. Eg. playlistID If the task was created in a playlist
-  // useful to show task progress on the playlist page
+  type: TaskType; 
   progress?: number;
 }
 export enum TaskType {
-  Media = "media",
+  MediaTask
 }
 export interface MediaTask extends BaseTask {
-  type: TaskType.Media;
+  type: TaskType.MediaTask;
   playlistID: number;
   playlistName?: string;
   audiofileID?: number;
@@ -43,7 +41,7 @@ export function TasksContextProvider({ children }: ContextProviderProps) {
   }
   function getPlaylistTasks(playlistID: number) {
     return Object.values(tasks).filter(
-      (task) => task.type === TaskType.Media && task.playlistID === playlistID
+      (task) => task.type === TaskType.MediaTask && task.playlistID === playlistID
     );
   }
   function addTask(id: string, newTask: Task) {

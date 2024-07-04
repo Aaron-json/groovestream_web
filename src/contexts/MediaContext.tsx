@@ -12,6 +12,8 @@ import { MediaPlaybackState } from "../MediaPlayer/MediaPlayer";
 import { useMediaStore } from "../state/store";
 import { getNextAudio } from "../util/media";
 
+const DEFAULT_VOLUME = 0.7
+
 export type MediaContextValue = {
   currentMedia: AudioFile | undefined;
   setMedia: (audiofile: AudioFile, mediaStoreKey: string, index: number) => void;
@@ -31,12 +33,13 @@ export type MediaContextValue = {
 export const mediaContext = createContext<MediaContextValue | undefined>(
   undefined
 );
+
 const player = new MediaPlayer();
 
 export function MediaContextProvider({
   children,
 }: ContextProviderProps) {
-  const [volume, setVolume] = useState(0.7);
+  const [volume, setVolume] = useState(DEFAULT_VOLUME);
   const [mute, setMute] = useState(false);
   const [playbackState, setPlaybackState] =
     useState<MediaPlaybackState>("unloaded");

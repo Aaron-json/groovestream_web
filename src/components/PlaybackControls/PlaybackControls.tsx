@@ -74,8 +74,8 @@ const PlaybackControls = () => {
     setDisplaySeek(e.currentTarget.valueAsNumber)
   }
   return (
-    <div className="playback-controls-div">
-      <div className="playback-control-buttons">
+    <div className="playback-controls-comp">
+      <div className="playback-buttons-div">
         <button className="playback-control-btn" onClick={playPrev}>
           <img src={backIcon} alt="back" />
         </button>
@@ -93,7 +93,6 @@ const PlaybackControls = () => {
       <div className="playback-tracking-div">
         <label className="left-seeker-label">{formatSeconds(displaySeek)}</label>
         <input
-          className="seeker"
           type="range"
           max={
             currentMedia && currentMedia.duration

@@ -13,7 +13,7 @@ const VolumeControl = () => {
       <div className="volume-group">
         <img
           onClick={() => setMute(!mute)}
-          className="volume-icon"
+          className="volume-icon action-icon"
           src={mute ? muteIcon : volumeIcon}
           alt=""
         />

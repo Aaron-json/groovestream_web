@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAudioFileHistory, getMostPlayedAudioFiles, getPlaylistAudioFiles } from "../api/requests/media";
 import { useMediaStore } from "../state/store";
 
+// TODO: create store key in hooks and return it
 export function usePlaylistAudioFiles(key: string, playlistId: number) {
 	const setMediaList = useMediaStore((state) => state.setMediaList)
 	const query = useQuery({

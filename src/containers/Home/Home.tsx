@@ -43,6 +43,7 @@ export default function Home() {
     isLoading: loadingAudioFileHistory,
     error: audioFileHistoryErr,
   } = useListeningHistory(LISTENING_HISTORY_STORE_KEY, 6);
+
   function getDisplay() {
     if (userDataErr || mostPlayedErr || audioFileHistoryErr) {
       return <div>Error occured</div>;

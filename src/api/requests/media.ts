@@ -15,7 +15,7 @@ export async function uploadAudioFile(
 ) {
   const taskID = Date.now().toString + (Math.random() * 100).toString();
   const task: MediaTask = {
-    type: TaskType.Media,
+    type: TaskType.MediaTask,
     name: "Uploading audio files",
     progress: 0,
     playlistID,
@@ -77,7 +77,7 @@ export async function deletePlaylist(
 ) {
   const taskID = Date.now().toString + (Math.random() * 100).toString();
   const task: MediaTask = {
-    type: TaskType.Media,
+    type: TaskType.MediaTask,
     name: "Deleting playlist",
     playlistID,
   }

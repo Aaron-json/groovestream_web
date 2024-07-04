@@ -6,7 +6,7 @@ import {
   Modal,
   CreatePlaylist,
   LoadingSpinnerDiv,
-  ProgressBar,
+  TaskProgressBar,
 } from "../../components";
 import {
   useContext,
@@ -55,7 +55,7 @@ export default function Library() {
     sort: orderOptions[0],
   });
   const { getTasks } = useContext(tasksContext)!;
-  const mediaTasks = getTasks(TaskType.Media);
+  const mediaTasks = getTasks(TaskType.MediaTask);
   const [searchValue, setSearchValue] = useState("");
   const {
     data: allMedia,
@@ -136,7 +136,7 @@ export default function Library() {
       >
         Create New Playlist
       </button>
-      {mediaTasks.length > 0 && <ProgressBar tasks={mediaTasks} />}
+      {mediaTasks.length > 0 && <TaskProgressBar tasks={mediaTasks} />}
       <Modal show={creatingPlaylist} onClose={() => setCreatingPlaylist(false)}>
         <CreatePlaylist onFinish={createdPlaylistHandler} />
       </Modal>

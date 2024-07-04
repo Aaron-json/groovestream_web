@@ -1,5 +1,5 @@
 import "./FriendsList.css";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Modal } from "..";
 import {
@@ -40,15 +40,13 @@ export default function FriendsList() {
     } else {
       return (
         <div className="friends-view">
-          {friendsList?.map((friendObj: Friend) => {
-            return (
-              <FriendTile
-                key={friendObj.friendID}
-                refetch={refetch}
-                friendObj={friendObj}
-              />
-            );
-          })}
+          {friendsList?.map((friendObj: Friend) =>
+            <FriendTile
+              key={friendObj.friendID}
+              refetch={refetch}
+              friendObj={friendObj}
+            />
+          )}
         </div>
       );
     }
@@ -80,6 +78,7 @@ interface FriendTileProps {
   refetch: () => any;
 }
 function FriendTile({ friendObj, refetch }: FriendTileProps) {
+  console.log(friendObj.friendID)
   const {
     data: friendPhoto,
     error,

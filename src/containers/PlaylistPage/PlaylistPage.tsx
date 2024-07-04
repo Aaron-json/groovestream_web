@@ -1,6 +1,6 @@
 import "./PlaylistPage.css";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { FileInput, MediaList, Modal, ProgressBar } from "../../components";
+import { FileInput, MediaList, Modal, TaskProgressBar } from "../../components";
 import {
   uploadAudioFile,
   sendPlaylistInvite,
@@ -154,7 +154,7 @@ export default function PlaylistPage() {
         />
       </label>
       <div className="playlist-page-content">
-        {tasks.length > 0 && <ProgressBar tasks={tasks} />}
+        {tasks.length > 0 && <TaskProgressBar tasks={tasks} />}
         <MediaList mediaStoreKey={MEDIA_STORE_KEY} items={audiofiles!} refreshMedia={refetchAudioFiles} />
       </div>
     </section>

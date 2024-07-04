@@ -12,7 +12,7 @@
     background-color: grey;
 }
 .progress-bar{
-    transition: width 0.15s ease-out;
+    transition: width 0.2s ease-out;
 }
 .loading-bar{
     width: 18%;

@@ -1,28 +1,20 @@
 import "./ProgressBar.css";
-import { Task } from "../../contexts/TasksContext";
 
-type ProgressBarProps = {
-  // This task does not have to be from the global TasksContext.
-  // it just follows the same schema for consistency
-  tasks: Task[];
+type ProgressBarProps = ProgressProps | LoadingProps
+
+type ProgressProps = {
+  mode: "progress"
+  total: number
+  current: number
 };
-export default function ProgressBar({ tasks }: ProgressBarProps) {
+type LoadingProps = {
+  mode: "loading"
+}
+export default function ProgressBar(props: ProgressBarProps) {
   // if any of the tasks have progress we need to keep track of their
-  // progress collectively.
-  let total = 0;
-  let current = 0;
-  let noProgress = false;
-  for (const task of tasks) {
-    if (task.progress) {
-      total += 1;
-      current += task.progress;
-    } else {
-      // if there exists tasks that do not have progress
-      noProgress = true;
-    }
-  }
+
   function getDisplay() {
-    if (total === current) {
+    if (props.mode === "loading") {
       // none of the tasks have progress set or
       // all tasks with progress are done but not yet removed
       return <div className="loading-bar"></div>;
@@ -30,7 +22,7 @@ export default function ProgressBar({ tasks }: ProgressBarProps) {
       return (
         <div
           className="progress-bar"
-          style={{ width: `${current * 100}%` }}
+          style={{ width: `${(props.current / props.total) * 100}%` }}
         ></div>
       );
     }

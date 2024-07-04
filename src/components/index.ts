@@ -15,7 +15,8 @@ export { default as FriendsList } from "./FriendsList/FriendsList";
 export { default as Invites } from "./FriendRequests/Invites";
 export { default as LoadingSpinner } from "./Spinner/Spinner";
 export { default as LoadingSpinnerDiv } from "./Spinner/SpinnerDiv";
-export { default as ProgressBar } from "./ProgressBar/ProgressBar";
+export { default as ProgressBar } from "./ProgressBar/ProgressBar"
+export { default as TaskProgressBar } from "./TaskProgressBar/TaskProgressBar";
 // Media Bar section components below
 export { default as MediaInfo } from "./MediaInfo/MediaInfo";
 export { default as PlaybackControls } from "./PlaybackControls/PlaybackControls";
