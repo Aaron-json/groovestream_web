@@ -1,7 +1,7 @@
 import { User } from "./user.js";
 
 export interface Friend
-    extends Pick<User, "firstName" | "lastName" | "username"> {
+    extends Pick<User,  "username"> {
     since: string;
     friendshipID: number;
     friendID: number;

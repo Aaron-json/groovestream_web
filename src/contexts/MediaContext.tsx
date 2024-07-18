@@ -1,4 +1,5 @@
 import React, {
+  PropsWithChildren,
   SetStateAction,
   createContext,
   useEffect,
@@ -7,7 +8,7 @@ import React, {
 import MediaPlayer from "../MediaPlayer/MediaPlayer";
 import { addListeningHistory } from "../api/requests/media";
 import { AudioFile } from "../types/media";
-import { ContextProviderProps, CurrentMedia, MediaUpdateAction } from "./types";
+import { CurrentMedia, MediaUpdateAction } from "./types";
 import { MediaPlaybackState } from "../MediaPlayer/MediaPlayer";
 import { useMediaStore } from "../state/store";
 import { getNextAudio } from "../util/media";
@@ -38,7 +39,7 @@ const player = new MediaPlayer();
 
 export function MediaContextProvider({
   children,
-}: ContextProviderProps) {
+}: PropsWithChildren) {
   const [volume, setVolume] = useState(DEFAULT_VOLUME);
   const [mute, setMute] = useState(false);
   const [playbackState, setPlaybackState] =

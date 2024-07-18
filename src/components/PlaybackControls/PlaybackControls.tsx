@@ -23,7 +23,7 @@ const PlaybackControls = () => {
   const [ifSeeking, setIfSeeking] = useState(false);
 
   useEffect(() => {
-    let timeout: number | undefined;
+    let timeout: ReturnType<typeof setTimeout>| undefined;
     if (playbackState === "unloaded" || playbackState === "loading" || playbackState === "stopped") {
       setDisplaySeek(0)
     } else {

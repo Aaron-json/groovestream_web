@@ -1,4 +1,5 @@
-.spinner-div{
+.spinner-div {
+    background: var(--default-background);
     display: grid;
     place-content: center;
     width: 100%;

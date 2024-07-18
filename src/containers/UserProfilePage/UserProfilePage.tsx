@@ -1,6 +1,5 @@
 import "./UserProfilePage.css";
-import { authenticationContext } from "../../contexts/AuthenticationContext";
-import { useContext, useEffect, useState } from "react";
+import { useState } from "react";
 import { FileInput, LoadingSpinnerDiv } from "../../components";
 import { edit_icon, profile_icon } from "../../assets/default-icons";
 import { FileInputError } from "../../components/FileInput/FileInput";
@@ -11,9 +10,6 @@ import {
   uploadProfilePicture,
 } from "../../api/requests/user";
 import {
-  validateDateString,
-  validateFirstName,
-  validateLastName,
   validateUsername,
 } from "../../validation/FormInput";
 import { format } from "date-fns";
@@ -24,9 +20,9 @@ import {
 } from "../../util/constants";
 import { useForm } from "react-hook-form";
 import { User } from "../../types/user";
+import { supabaseClient } from "../../App";
 type EditField = "firstName" | "lastName" | "username" | "dateOfBirth";
 export default function UserProfilePage() {
-  const { logout } = useContext(authenticationContext)!;
   const [editFields, setEditFields] = useState<EditField[]>([]);
   const {
     register,
@@ -67,7 +63,7 @@ export default function UserProfilePage() {
       setValue(field, "");
     } else {
       setEditFields(newArr);
-      //field is not disabled, reset so current val in the
+      //reset so current val in the
       // placeholder can be displayed.
       setValue(field, "");
       // reset any previous errors on this field
@@ -105,7 +101,7 @@ export default function UserProfilePage() {
       await uploadProfilePicture(formData);
 
       await refetchProfilePicture();
-    } catch (error) {}
+    } catch (error) { }
   }
 
   function getProfileIconDisplay() {
@@ -141,68 +137,6 @@ export default function UserProfilePage() {
     <form className="user-profile-page" onSubmit={handleSubmit(applyChanges)}>
       {getProfileIconDisplay()}
 
-      <div className="user-profile-page-name-div">
-        <div className="user-profile-page-input-group">
-          <label
-            className="user-profile-page-label"
-            htmlFor="user-profile-firstname-input"
-          >
-            First Name
-            <img
-              src={edit_icon}
-              onClick={() => toggleEditMode("firstName")}
-              alt=""
-            />
-          </label>
-          {errors.firstName && (
-            <span className="form-err-message">
-              {errors.firstName.message?.toString()}
-            </span>
-          )}
-          <input
-            id="user-profile-firstname-input"
-            className="form-input"
-            {...register("firstName", {
-              validate: validateFirstName,
-              disabled: !editFields.includes("firstName"),
-            })}
-            placeholder={
-              !editFields.includes("firstName") ? user.firstName : undefined
-            }
-            type="text"
-          />
-        </div>
-        <div className="user-profile-page-input-group">
-          <label
-            className="user-profile-page-label"
-            htmlFor="user-profile-lastname-input"
-          >
-            Last Name
-            <img
-              src={edit_icon}
-              onClick={() => toggleEditMode("lastName")}
-              alt=""
-            />
-          </label>
-          {errors.lastName && (
-            <span className="form-err-message">
-              {errors.lastName.message?.toString()}
-            </span>
-          )}
-          <input
-            className="form-input"
-            id="user-profile-lastname-input"
-            {...register("lastName", {
-              validate: validateLastName,
-              disabled: !editFields.includes("lastName"),
-            })}
-            placeholder={
-              !editFields.includes("lastName") ? user.lastName : undefined
-            }
-            type="text"
-          />
-        </div>
-      </div>
       <div className="user-profile-page-input-group">
         <label
           className="user-profile-page-label"
@@ -233,46 +167,13 @@ export default function UserProfilePage() {
           type="text"
         />
       </div>
-      <div className="user-profile-page-input-group">
-        <label
-          className="user-profile-page-label"
-          htmlFor="user-profile-birthday-input"
-        >
-          Birthday <small> (YYYY-MM-DD)</small>
-          <img
-            src={edit_icon}
-            onClick={() => toggleEditMode("dateOfBirth")}
-            alt=""
-          />
-        </label>
-        {errors.dateOfBirth && (
-          <span className="form-err-message">
-            {errors.dateOfBirth.message?.toString()}
-          </span>
-        )}
-        <input
-          id="user-profile-birthday-input"
-          {...register("dateOfBirth", {
-            // will get validated by the browser
-            disabled: !editFields.includes("dateOfBirth"),
-            validate: validateDateString,
-          })}
-          placeholder={
-            !editFields.includes("dateOfBirth")
-              ? format(new Date(user.dateOfBirth), "yyyy-MM-dd")
-              : undefined
-          }
-          className="form-input"
-          type="text"
-        />
-      </div>
       <label className="user-profile-page-label">
         Date Joined: {format(new Date(user.dateJoined), "do MMMM yyyy")}
       </label>
       <div className="user-profile-page-footer">
         <button
           type="button"
-          onClick={() => logout()}
+          onClick={() => supabaseClient.auth.signOut()}
           className="form-button user-profile-page-logout-btn"
         >
           Logout

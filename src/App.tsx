@@ -1,48 +1,53 @@
-// import logo from './logo.svg';
-import { useContext } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
-import { MainView, MediaBar, LoginPage, RegistrationPage } from "./containers";
+import { AuthPage, MainView, MediaBar } from "./containers";
 import { MediaContextProvider } from "./contexts/MediaContext";
 import { TasksContextProvider } from "./contexts/TasksContext";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { authenticationContext } from "./contexts/AuthenticationContext";
-import { AppHeader, LoadingSpinnerDiv } from "./components";
+import { createClient, Session } from "@supabase/supabase-js";
+import { setRequestInterceptor } from "./util/auth";
+import { LoadingSpinnerDiv } from "./components";
+
+export const supabaseClient = createClient("https://znjqhsmhktpfsbwhzixt.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpuanFoc21oa3RwZnNid2h6aXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjAyMTM5OTQsImV4cCI6MjAzNTc4OTk5NH0.C3Vca0J2OQyo0HSUywP8MeX0esefC4gyfOckrwZEaS0");
 
 export default function App() {
-  const { authenticated } = useContext(authenticationContext)!;
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
 
-  return (
-    <>
-      {authenticated === true && (
-        <div id="App">
-            <TasksContextProvider>
-              <MediaContextProvider>
-                <MainView />
-                <MediaBar />
-              </MediaContextProvider>
-            </TasksContextProvider>
-        </div>
-      )}
+  useEffect(() => {
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
 
-      {authenticated === false && (
-        <div className="login-register">
-          <AppHeader />
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegistrationPage />} />
-            {/* All other paths lead to login page if not authenticated */}
-            <Route path="*" element={<Navigate to="/login" />}></Route>
-          </Routes>
-        </div>
-      )}
+    const { data } = supabaseClient.auth.onAuthStateChange((_, session) => {
+      setSession(session)
+    })
+    setRequestInterceptor(async () => {
+      const curSession = await supabaseClient.auth.getSession()
 
-      {authenticated === undefined && (
-        <LoadingSpinnerDiv
-          style={{
-            backgroundColor: "black",
-          }}
-        />
-      )}
-    </>
-  );
+      if (curSession.error) {
+        throw curSession.error
+      } else if (!curSession.data.session) {
+        throw new Error("No session")
+      } else {
+        return curSession.data.session.access_token
+      }
+    }
+    )
+    return () => data.subscription.unsubscribe()
+  }, [])
+
+  if (session === undefined) {
+    return <LoadingSpinnerDiv />
+  } else if (session === null) {
+    return <AuthPage />
+  } else {
+    return (
+      <div id="App" >
+        <TasksContextProvider>
+          <MediaContextProvider>
+            <MainView />
+            <MediaBar />
+          </MediaContextProvider>
+        </TasksContextProvider>
+      </div >)
+  }
 }

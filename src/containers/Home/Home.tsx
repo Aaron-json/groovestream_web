@@ -77,7 +77,7 @@ export default function Home() {
     <section className="home-page">
       <div className="home-header">
         <h1 className="welcome-message">
-          Hello {userData && userData.firstName}
+          Hello {userData && userData.username}
         </h1>
         <div className="home-profile-div">
           <img src={profile_icon} alt="" className="home-profile-picture" />

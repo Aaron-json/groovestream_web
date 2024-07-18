@@ -1,4 +1,3 @@
-import axios from "axios";
 import { ProfilePicture, User } from "../../types/user";
 import axiosClient from "../axiosClient";
 
@@ -16,13 +15,11 @@ export async function getProfilePicture(userID: number) {
   return response.data as ProfilePicture
 }
 export type SignUpData = {
-  firstName: string;
-  lastName: string;
+  email: string;
   username: string;
-  dateOfBirth: number;
   password: string;
 };
-export async function userSignUp(data: SignUpData) {
+export async function createUser(data: SignUpData) {
   const response = await axiosClient.post("/user", data);
   return response.data;
 }
@@ -45,4 +42,9 @@ type UserUpdateFields = {
 export async function updateUserInfo(userInfo: UserUpdateFields) {
   const res = await axiosClient.patch("/user", userInfo)
   return res.data
+}
+
+export async function usernameExists(username: string) {
+  const response = await axiosClient.get(`/user/exists/${username}`);
+  return response.data as boolean
 }

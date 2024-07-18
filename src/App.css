@@ -10,7 +10,7 @@
  }
 
  :root {
-   font-size: 15px;
+   font-size: 14px;
    /* Base font size*/
    --animation-speed: 0.15s;
    --text-color: white;
@@ -39,7 +39,7 @@
  }
 
  #App,
- .login-register {
+ .auth-page {
    /* background color is set dynamically in javascript since it could change */
    display: flex;
    flex-direction: column;
@@ -48,7 +48,6 @@
  }
 
  #App {
-
    transition: background 3s;
  }
 
@@ -132,7 +131,7 @@
  }
 
  .form-button {
-   border-radius: 5px;
+   border-radius: var(--default-border-radius);
    height: 2.2em;
    color: var(--text-color);
    background-color: transparent;
@@ -140,9 +139,7 @@
  }
 
  .form-err-message {
-   font-size: 1rem;
    color: red;
-   white-space: unset;
  }
 
  .loading-div {

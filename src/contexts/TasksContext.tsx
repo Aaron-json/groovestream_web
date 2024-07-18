@@ -1,11 +1,10 @@
-import { createContext, useState } from "react";
-import { ContextProviderProps } from "./types";
+import { PropsWithChildren, createContext, useState } from "react";
 export const tasksContext = createContext<TasksContextValue | undefined>(
   undefined
 );
 interface BaseTask {
   name?: string;
-  type: TaskType; 
+  type: TaskType;
   progress?: number;
 }
 export enum TaskType {
@@ -31,7 +30,7 @@ export type TasksContextValue = {
   getTasksCount: () => number;
   getPlaylistTasks: (playlistID: number) => MediaTask[];
 };
-export function TasksContextProvider({ children }: ContextProviderProps) {
+export function TasksContextProvider({ children }: PropsWithChildren) {
   const [tasks, setTasks] = useState<TaskStore>({});
   function getTasks(type?: TaskType) {
     if (type) {

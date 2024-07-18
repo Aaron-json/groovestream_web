@@ -115,7 +115,6 @@ function FriendTile({ friendObj, refetch }: FriendTileProps) {
       <div className="friend-tile-pfp-div">{getDisplayPhoto()}</div>
 
       <div className="friend-tile-info-div">
-        <span className="friend-tile-name">{`${friendObj.firstName} ${friendObj.lastName}`}</span>
         <span className="friend-tile-email">{`${friendObj.username}`}</span>
         <span className="friend-tile-friend-since">{`Friends for ${formatDistanceToNow(
           new Date(friendObj.since)
