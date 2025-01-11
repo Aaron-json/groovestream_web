@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -8,8 +8,6 @@ import {
   SkipForward,
   Volume2,
   VolumeX,
-  Repeat,
-  Shuffle,
   Music2,
   ListMusic,
 } from "lucide-react";
@@ -24,6 +22,27 @@ export default function MediaBar() {
   }
   const [_volume, _setVolume] = React.useState([mediaCtx.volume]);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    _setVolume([mediaCtx.volume]);
+  }, [mediaCtx.volume]);
+
+  const displayName = () => {
+    if (mediaCtx.currentMedia) {
+      return mediaCtx.currentMedia.title || mediaCtx.currentMedia.title;
+    } else {
+      return "No media";
+    }
+  };
+  const displayArtist = () => {
+    if (mediaCtx.currentMedia) {
+      return mediaCtx.currentMedia.artists
+        ? mediaCtx.currentMedia.artists.join(", ")
+        : "Unknown artist";
+    } else {
+      return "Unknown artist";
+    }
+  };
 
   const controlButton = (icon: React.ReactNode, onClick = () => {}) => (
     <Button
@@ -42,16 +61,17 @@ export default function MediaBar() {
         <Music2 className="w-full h-full text-muted-foreground" />
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="text-sm font-medium truncate">Track Name</h3>
-        <p className="text-xs text-muted-foreground truncate">Artist Name</p>
+        <h3 className="text-sm font-medium truncate">{displayName()}</h3>
+        <p className="text-xs text-muted-foreground truncate">
+          {displayArtist()}
+        </p>
       </div>
     </div>
   );
 
   const PlayControls = () => (
-    <div className="flex items-center space-x-4">
-      {controlButton(<Shuffle className="h-5 w-5" />)}
-      {controlButton(<SkipBack className="h-5 w-5" />)}
+    <div className="flex gap-2 items-center space-x-4">
+      {controlButton(<SkipBack className="h-5 w-5" />, mediaCtx.playPrev)}
       {controlButton(
         mediaCtx.playbackState === "playing" ? (
           <Pause className="h-5 w-5" />
@@ -60,8 +80,7 @@ export default function MediaBar() {
         ),
         mediaCtx.playPauseToggle,
       )}
-      {controlButton(<SkipForward className="h-5 w-5" />)}
-      {controlButton(<Repeat className="h-5 w-5" />)}
+      {controlButton(<SkipForward className="h-5 w-5" />, mediaCtx.playNext)}
     </div>
   );
 
@@ -140,18 +159,30 @@ function Seeker() {
   }
   const { currentMedia, playbackState, setSeek, getSeek } = mediaCtx;
   const [displaySeek, setDisplaySeek] = useState([0]);
+  const [ifSeeking, setIfSeeking] = useState(false);
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
     if (playbackState === "unloaded" || playbackState === "loading") {
       setDisplaySeek([0]);
     } else {
-      timeout = setInterval(() => {
-        setDisplaySeek([Math.round(getSeek())]);
-      }, 1e3);
+      if (!ifSeeking) {
+        timeout = setInterval(() => {
+          setDisplaySeek([Math.round(getSeek())]);
+        }, 1e3);
+      }
     }
     return () => clearInterval(timeout);
-  }, [playbackState]);
+  }, [playbackState, ifSeeking]);
+
+  function handlePointerUp() {
+    console.log("handlePointerUp");
+    setIfSeeking(false);
+  }
+  function handlePointerDown() {
+    console.log("handlePointerDown");
+    setIfSeeking(true);
+  }
 
   return (
     <div className="flex items-center gap-2 w-full px-2">
@@ -169,6 +200,10 @@ function Seeker() {
         min={0}
         step={1}
         value={displaySeek}
+        onMouseDown={handlePointerDown}
+        onTouchStart={handlePointerDown}
+        onMouseUp={handlePointerUp}
+        onTouchEnd={handlePointerUp}
         onValueChange={(val) => setDisplaySeek([val[0]])}
         onValueCommit={(val) => setSeek(val[0])}
       />
