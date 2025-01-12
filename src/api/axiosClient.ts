@@ -2,11 +2,11 @@ import axios from "axios";
 
 export const PRIMARY_API_URL = import.meta.env.PROD
   ? "https://api.groovestream.app"
-  : "http://localhost:8080";
+  : "http://localhost:8081";
 
 export const STREAMING_API_URL = import.meta.env.PROD
   ? "https://media-api.groovestream.app"
-  : "http://localhost:8081";
+  : "http://localhost:8082";
 
 // The client is created with the primary URL, for request to another url, override the baseUrl in
 // your request config
