@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { createPlaylist } from "@/api/requests/media";
+import InfoCard from "@/components/custom/info-card";
 
 export const Route = createFileRoute("/_authenticated/library/")({
   component: RouteComponent,
@@ -28,25 +29,33 @@ function RouteComponent() {
     data: playlists,
     error: playlistsErr,
     isLoading: playlistsLoading,
+    refetch: refetchPlaylists,
   } = useQuery({
     queryKey: ["playlists"],
     queryFn: () => getUserPlaylists(),
   });
 
-  if (playlistsErr) {
-    return <div>Error encountered: {playlistsErr.message}</div>;
+  function renderPlaylists() {
+    if (playlistsLoading) {
+      return <MediaList media={[]} loading={true} />; //display skeleton
+    } else if (playlistsErr || !playlists) {
+      return <InfoCard text={"Something went wrong"} />;
+    } else if (playlists.length === 0) {
+      return (
+        <InfoCard text="No playlists yet in your library. Create one or ask your friends to invite you to one." />
+      );
+    } else {
+      return <MediaList media={playlists} />;
+    }
   }
+
   return (
     <section>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Library</h1>
-        <CreatePlaylistModal />
+        <CreatePlaylistModal onSuccess={refetchPlaylists} />
       </div>
-      <MediaList
-        title="Playlists"
-        media={playlists!}
-        loading={playlistsLoading}
-      />
+      {renderPlaylists()}
     </section>
   );
 }
@@ -55,7 +64,11 @@ type CreatePlaylistValues = {
   name: string;
 };
 
-function CreatePlaylistModal() {
+type CreatePlaylistProps = {
+  onSuccess?: () => void;
+};
+
+function CreatePlaylistModal(props: CreatePlaylistProps) {
   const { register, handleSubmit, formState, setError } =
     useForm<CreatePlaylistValues>({
       defaultValues: {
@@ -66,7 +79,8 @@ function CreatePlaylistModal() {
   const onSubmit = async (data: CreatePlaylistValues) => {
     try {
       // use await so the error is caught
-      return await createPlaylist(data.name);
+      await createPlaylist(data.name);
+      props.onSuccess?.();
     } catch (err: any) {
       console.log(err);
       const message = err.message ?? "An unexpected error occurred.";

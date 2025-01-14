@@ -1,6 +1,5 @@
 import { deletePlaylist, getPlaylistInfo } from "@/api/requests/media";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import MediaList from "@/components/custom/media-list";
 import { EllipsisVertical, ListMusic, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +24,7 @@ import FileUpload from "@/components/custom/file-upload";
 import AddPlaylistMember from "@/components/custom/add-playlist-member";
 import { usePlaylistAudioFiles } from "@/hooks/media";
 import InfoCard from "@/components/custom/info-card";
+import AudiofileTable from "@/components/custom/audiofile-table";
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId",
@@ -37,19 +37,22 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
-  const params = Route.useParams();
+  const playlist = Route.useLoaderData();
   const {
     data: audiofiles,
     isLoading: audiofilesLoading,
     error: audiofilesErr,
+    refetch: refetchAudiofiles,
     key: storeKey,
-  } = usePlaylistAudioFiles(+params.playlistId);
-  const playlist = Route.useLoaderData();
-  const { history } = useRouter();
+  } = usePlaylistAudioFiles(playlist.id);
+  const { history, navigate } = useRouter();
 
   async function handleDeletePlaylist() {
     await deletePlaylist(playlist.id);
-    history.back();
+    navigate({
+      from: history.location.pathname,
+      to: "/library",
+    });
   }
 
   if (audiofilesLoading) {
@@ -67,7 +70,9 @@ function RouteComponent() {
     if (audiofiles.length === 0) {
       return <InfoCard text="No tracks in this playlist yet" />;
     } else {
-      return <MediaList media={audiofiles} mediaStoreKey={storeKey} />;
+      return (
+        <AudiofileTable audiofiles={audiofiles} mediaStoreKey={storeKey} />
+      );
     }
   }
   return (
@@ -115,7 +120,10 @@ function RouteComponent() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <FileUpload playlistId={playlist.id} />
+            <FileUpload
+              playlistId={playlist.id}
+              onSuccess={refetchAudiofiles}
+            />
             <AddPlaylistMember playlistId={playlist.id} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

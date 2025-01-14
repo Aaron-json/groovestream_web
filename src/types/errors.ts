@@ -1,7 +1,6 @@
 export interface ResponseError {
-  errCode?: string;
-  httpCode: string;
+  error_code?: string;
+  http_code: string;
   message: string;
   data?: any;
 }
-

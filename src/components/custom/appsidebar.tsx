@@ -5,11 +5,11 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import TextLogo from "./textlogo";
+import { Link } from "@tanstack/react-router";
 
 const navItems = [
   {
@@ -41,12 +41,13 @@ export default function AppSidebar() {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
+                  <Link
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-muted transition-colors duration-100 rounded-md"
+                    to={item.url}
+                  >
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </Link>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

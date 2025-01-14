@@ -40,18 +40,21 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
     try {
       // use await so the error is caught
       await sendPlaylistInvite(props.playlistId, data.username);
-    } catch (err: any) {
-      const defaultMessage = "An unexpected error occurred.";
+    } catch (err) {
+      const defaultMessage = "An unexpected error occurred";
+      let message = defaultMessage;
       if (isAxiosError<ResponseError>(err)) {
-        setError("root", {
-          message: err.response?.data.message ?? defaultMessage,
-        });
-      } else {
-        const message = err.message ?? defaultMessage;
-        setError("root", {
-          message,
-        });
+        const errorCode = err.response?.data.error_code;
+        if (errorCode === "USER_NOT_FOUND") {
+          message = "User not found";
+        } else if (errorCode === "USER_ALREADY_IN_PLAYLIST") {
+          message = "User already in playlist";
+        } else if (errorCode === "INVALID_INVITE") {
+        }
       }
+      setError("root", {
+        message,
+      });
     }
   }
   return (
@@ -89,9 +92,7 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
         </form>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="submit" variant="ghost">
-              Close
-            </Button>
+            <Button variant="ghost">Close</Button>
           </DialogClose>
           <Button type="submit" variant="default" form="add-playlist-member">
             Add

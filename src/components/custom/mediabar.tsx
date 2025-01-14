@@ -111,9 +111,7 @@ export default function MediaBar() {
     </div>
   );
   return (
-    <div
-      className={`fixed z-50 bottom-2 left-2 right-2 bg-background border shadow-sm rounded-lg`}
-    >
+    <div className={`bg-background border shadow-sm rounded-lg`}>
       {isMobile ? (
         <div className="w-full px-2 py-1.5">
           <div className="flex flex-col gap-2">

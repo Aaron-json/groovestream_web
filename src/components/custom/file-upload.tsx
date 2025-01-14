@@ -16,6 +16,7 @@ type FileUploadProps = {
   trigger?: React.ReactNode;
   multiple?: boolean;
   playlistId: number;
+  onSuccess?: () => void;
 };
 
 const MAX_FILES = 5;
@@ -67,12 +68,14 @@ export default function FileUpload(props: FileUploadProps) {
       }
       await uploadAudioFile(files, props.playlistId);
       setFormState({ state: "successful" });
+      props.onSuccess?.();
     } catch (err: any) {
       console.log(err);
       const message = err.message ?? "An unexpected error occurred.";
       setFormState({ state: "error", message });
     } finally {
       console.log("finally");
+      console.log(e.currentTarget);
       e.currentTarget.value = "";
     }
   };

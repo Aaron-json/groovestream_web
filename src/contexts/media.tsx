@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { addListeningHistory } from "@/api/requests/media";
 import { Audiofile } from "@/types/media";
+import { useShallow } from "zustand/react/shallow";
 import { useStore } from "@/store/store";
 import { getNextAudio, loadHls } from "./media-loader";
 import Hls from "hls.js";
@@ -58,7 +59,17 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
   const [playbackState, setPlaybackState] =
     useState<MediaPlaybackState>("unloaded");
   const [_currentMedia, _setCurrentMedia] = useState<CurrentMedia>();
-  const store = useStore((state) => state.mediaLists);
+  const currentMediaList = useStore(
+    useShallow((state) => {
+      if (!_currentMedia) {
+        return undefined;
+      } else if (!state.mediaLists[_currentMedia.mediaStoreKey]) {
+        return undefined;
+      } else {
+        return state.mediaLists[_currentMedia.mediaStoreKey];
+      }
+    }),
+  );
 
   useEffect(() => {
     const videoElement = document.createElement("video");
@@ -112,7 +123,7 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
     );
     if (playlist_file === undefined) {
       unloadMedia();
-      return;
+      throw new Error("Playlist file not found");
     }
     try {
       const loadRes = await loadHls(playlist_file, videoRef.current);
@@ -125,13 +136,12 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
       setPlaybackState(() => "playing");
     } catch (error: any) {
       unloadMedia();
+      destroyHls();
       throw error;
     }
     try {
       addListeningHistory(audiofile.id);
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   }
   function unloadMedia() {
     destroyHls();
@@ -173,8 +183,12 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
       return;
     }
     videoRef.current.pause();
+    if (!currentMediaList) {
+      unloadMedia();
+      return;
+    }
     const nextIndex = getNextAudio(
-      store[_currentMedia.mediaStoreKey],
+      currentMediaList,
       _currentMedia.audiofile,
       action,
       _currentMedia.index,
@@ -183,9 +197,7 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
       unloadMedia();
       return;
     }
-    const nextAudiofile = store[_currentMedia.mediaStoreKey][
-      nextIndex
-    ] as Audiofile;
+    const nextAudiofile = currentMediaList[nextIndex] as Audiofile;
 
     loadMedia({ ..._currentMedia, audiofile: nextAudiofile, index: nextIndex });
   }

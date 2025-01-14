@@ -3,14 +3,14 @@ import { useSidebar } from "../ui/sidebar";
 import { Button } from "@/components/ui/button";
 
 export default function SidebarToggle() {
-  function handleClick() {
-    const { toggleSidebar, setOpenMobile, isMobile } = useSidebar();
+  const { toggleSidebar, setOpenMobile, isMobile } = useSidebar();
+  const handleClick = () => {
     if (isMobile) {
       setOpenMobile(true);
     } else {
       toggleSidebar();
     }
-  }
+  };
   return (
     <Button
       onClick={handleClick}

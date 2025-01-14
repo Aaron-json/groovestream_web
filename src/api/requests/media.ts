@@ -63,7 +63,9 @@ export async function createPlaylist(playlistName: string) {
 }
 
 export async function getPlaylistAudiofiles(playlistID: number) {
-  const respose = await axiosClient.get<Audiofile[]>(`/playlists/${playlistID}/audiofiles`);
+  const respose = await axiosClient.get<Audiofile[]>(
+    `/playlists/${playlistID}/audiofiles`,
+  );
   return respose.data;
 }
 export async function getPlaylistInfo(playlistID: number) {
@@ -85,7 +87,10 @@ export async function getPlaylistInvites(limit: number, skip?: number) {
   if (skip) {
     params.skip = skip;
   }
-  const response = await axiosClient.get<PlaylistInvite[]>(`/playlist-invites`, { params });
+  const response = await axiosClient.get<PlaylistInvite[]>(
+    `/playlist-invites`,
+    { params },
+  );
   return response.data;
 }
 export async function sendPlaylistInvite(playlistID: number, username: string) {
@@ -135,9 +140,12 @@ export async function removePlaylistMember(
 ////////////////////////////////////////////////////////////////////////////////////
 
 export async function getMostPlayedAudioFiles(limit: number) {
-  const response = await axiosClient.get<Audiofile[]>("/analytics/audiofiles/most-played", {
-    params: { limit },
-  });
+  const response = await axiosClient.get<Audiofile[]>(
+    "/analytics/audiofiles/most-played",
+    {
+      params: { limit },
+    },
+  );
   return response.data as Audiofile[];
 }
 
