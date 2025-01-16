@@ -9,6 +9,7 @@ import {
   Volume2,
   VolumeX,
   Music2,
+  LoaderCircle,
 } from "lucide-react";
 import { mediaContext } from "@/contexts/media";
 import { formatDuration } from "@/lib/media";
@@ -21,12 +22,15 @@ export default function MediaBar() {
   }
   const isMobile = useIsMobile();
 
-  const playPauseIcon =
-    mediaCtx.playbackState === "playing" ? (
-      <Pause className="h-5 w-5" />
-    ) : (
-      <Play className="h-5 w-5" />
-    );
+  const renderPlaybackIcon = () => {
+    if (mediaCtx.playbackState === "playing") {
+      return <Pause className="h-5 w-5" />;
+    } else if (mediaCtx.playbackState === "loading") {
+      return <LoaderCircle className="h-5 w-5 animate-spin" />;
+    } else {
+      return <Play className="h-5 w-5" />;
+    }
+  };
 
   const displayName = () => {
     if (mediaCtx.currentMedia) {
@@ -67,7 +71,7 @@ export default function MediaBar() {
           onClick={mediaCtx.playPrev}
         />
         <ControlButton
-          icon={playPauseIcon}
+          icon={renderPlaybackIcon()}
           onClick={mediaCtx.playPauseToggle}
         />
         <ControlButton
@@ -94,7 +98,7 @@ export default function MediaBar() {
             <div className="flex items-center justify-between w-full">
               <TrackInfo />
               <ControlButton
-                icon={playPauseIcon}
+                icon={renderPlaybackIcon()}
                 onClick={mediaCtx.playPauseToggle}
               />
             </div>

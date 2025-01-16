@@ -56,7 +56,6 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
   const [playbackState, setPlaybackState] =
     useState<MediaPlaybackState>("unloaded");
   const [_currentMedia, _setCurrentMedia] = useState<CurrentMedia>();
-
   const currentMediaList = useStore(
     useShallow((state) => {
       if (!_currentMedia) {
