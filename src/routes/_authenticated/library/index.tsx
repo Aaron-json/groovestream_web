@@ -82,7 +82,6 @@ function CreatePlaylistModal(props: CreatePlaylistProps) {
       await createPlaylist(data.name);
       props.onSuccess?.();
     } catch (err: any) {
-      console.log(err);
       const message = err.message ?? "An unexpected error occurred.";
       setError("root", {
         message,

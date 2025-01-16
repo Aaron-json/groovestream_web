@@ -165,7 +165,6 @@ function Seeker() {
         value={displaySeek}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
-        onInput={() => console.log("input")}
         onValueChange={(val) => setDisplaySeek([val[0]])}
         onValueCommit={(val) => setSeek(val[0])}
       />
