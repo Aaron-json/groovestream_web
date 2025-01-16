@@ -1,6 +1,5 @@
-import React, {
+import {
   PropsWithChildren,
-  SetStateAction,
   createContext,
   useEffect,
   useRef,
@@ -34,10 +33,10 @@ export type MediaContextValue = {
   unload: () => any;
   playbackState: MediaPlaybackState;
   playPauseToggle: () => void;
-  setMute: React.Dispatch<SetStateAction<boolean>>;
+  setMute: (mute: boolean) => void;
   mute: boolean;
   volume: number;
-  setVolume: React.Dispatch<SetStateAction<number>>;
+  setVolume: (volume: number) => void;
   getSeek: () => number;
   setSeek: (position: number) => void;
   playNext: () => void;
@@ -52,8 +51,8 @@ export const mediaContext = createContext<MediaContextValue | undefined>(
 export function MediaContextProvider({ children }: PropsWithChildren) {
   const videoRef = useRef<HTMLVideoElement>(document.createElement("video"));
   const hlsRef = useRef<Hls>();
-  const [volume, setVolume] = useState(DEFAULT_VOLUME);
-  const [mute, setMute] = useState(false);
+  const [_volume, _setVolume] = useState(DEFAULT_VOLUME);
+  const [_mute, _setMute] = useState(false);
   const [playbackState, setPlaybackState] =
     useState<MediaPlaybackState>("unloaded");
   const [_currentMedia, _setCurrentMedia] = useState<CurrentMedia>();
@@ -72,6 +71,7 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     const videoElement = videoRef.current;
+    videoElement.style.display = "none";
     videoElement.style.width = "0";
     videoElement.style.height = "0";
     videoElement.style.position = "absolute";
@@ -89,16 +89,18 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     videoRef.current.addEventListener("ended", onEnded);
+    videoRef.current.addEventListener("play", onPlay);
+    videoRef.current.addEventListener("pause", onPause);
+    videoRef.current.addEventListener("volumechange", onVolumeChange);
     return () => {
       videoRef.current.removeEventListener("ended", onEnded);
+      videoRef.current.removeEventListener("play", onPlay);
+      videoRef.current.removeEventListener("pause", onPause);
+      videoRef.current.removeEventListener("volumechange", onVolumeChange);
     };
-  }, [onEnded]);
+  }, [onEnded, onPlay, onPause, onVolumeChange]);
 
   // volume and mute
-  useEffect(() => {
-    videoRef.current.volume = volume;
-    videoRef.current.muted = mute;
-  }, [volume, mute]);
 
   function onEnded() {
     if (!_currentMedia || !currentMediaList) {
@@ -107,16 +109,25 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
       playNextPrev("next");
     }
   }
+  function onPlay() {
+    setPlaybackState("playing");
+  }
+  function onPause() {
+    setPlaybackState("paused");
+  }
+  function onVolumeChange(e: Event) {
+    const target = e.target as HTMLVideoElement;
+    _setVolume(target.volume);
+    _setMute(target.muted);
+  }
 
   async function playPauseToggle() {
     if (!_currentMedia) {
       return;
     } else if (playbackState == "playing") {
       videoRef.current.pause();
-      setPlaybackState("paused");
     } else if (playbackState === "paused") {
       await videoRef.current.play();
-      setPlaybackState("playing");
     }
   }
 
@@ -145,7 +156,6 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
       }
       _setCurrentMedia(newMedia);
       await videoRef.current.play();
-      setPlaybackState("playing");
     } catch (error: any) {
       unloadMedia();
       throw error;
@@ -181,10 +191,17 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
       await videoRef.current.play();
-      setPlaybackState("playing");
     } else {
       return loadMedia({ index, audiofile, mediaStoreKey });
     }
+  }
+
+  function setVolume(volume: number) {
+    videoRef.current.volume = volume;
+  }
+
+  function setMute(mute: boolean) {
+    videoRef.current.muted = mute;
   }
 
   async function playNextPrev(action: MediaUpdateAction) {
@@ -247,8 +264,8 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
         playbackState,
         playPauseToggle,
         setMute,
-        mute,
-        volume,
+        mute: _mute,
+        volume: _volume,
         setVolume,
         getSeek,
         setSeek,

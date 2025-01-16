@@ -103,29 +103,31 @@ function CreatePlaylistModal(props: CreatePlaylistProps) {
             Create a playlist to store and share your favorite music.
           </DialogDescription>
         </DialogHeader>
-        {formState.isSubmitSuccessful && (
-          <div className="flex items-center rounded-md border p-2">
-            <Check className="mr-2 h-5 w-5" />
-            <span className="text-sm">Playlist created successfully</span>
+        <form onSubmit={handleSubmit(onSubmit)} id="create-playlist-form">
+          {formState.isSubmitSuccessful && (
+            <div className="flex items-center rounded-md border p-2">
+              <Check className="mr-2 h-5 w-5" />
+              <span className="text-sm">Playlist created successfully</span>
+            </div>
+          )}
+          {formState.errors.root && (
+            <div className="flex items-center rounded-md border-destructive/50 bg-destructive/10 p-2">
+              <AlertCircle className="mr-2 h-5 w-5" />
+              <span className="text-sm">{formState.errors.root.message}</span>
+            </div>
+          )}
+          <div className="flex items-center space-x-2">
+            <div className="grid flex-1 gap-2">
+              <Label htmlFor="playlist-name">Playlist Name</Label>
+              <Input
+                id="playlist-name"
+                {...register("name", {
+                  required: "Playlist name is required",
+                })}
+              />
+            </div>
           </div>
-        )}
-        {formState.errors.root && (
-          <div className="flex items-center rounded-md border-destructive/50 bg-destructive/10 p-2">
-            <AlertCircle className="mr-2 h-5 w-5" />
-            <span className="text-sm">{formState.errors.root.message}</span>
-          </div>
-        )}
-        <div className="flex items-center space-x-2">
-          <div className="grid flex-1 gap-2">
-            <Label htmlFor="playlist-name">Playlist Name</Label>
-            <Input
-              id="playlist-name"
-              {...register("name", {
-                required: "Playlist name is required",
-              })}
-            />
-          </div>
-        </div>
+        </form>
         <DialogFooter className="justify-between">
           <DialogClose asChild>
             <Button type="submit" variant="ghost">
@@ -134,8 +136,8 @@ function CreatePlaylistModal(props: CreatePlaylistProps) {
           </DialogClose>
           <Button
             type="submit"
+            form="create-playlist-form"
             variant="default"
-            onClick={handleSubmit(onSubmit)}
             disabled={formState.isSubmitting}
           >
             {formState.isSubmitting ? "Loading..." : "Create"}

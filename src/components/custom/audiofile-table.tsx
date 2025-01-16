@@ -19,6 +19,7 @@ import {
 } from "../ui/context-menu";
 import { ContextMenuContent } from "@radix-ui/react-context-menu";
 import { Trash2 } from "lucide-react";
+import { deleteAudioFile } from "@/api/requests/media";
 type AudiofileTableProps = {
   audiofiles: Audiofile[];
   mediaStoreKey?: string;
@@ -46,6 +47,20 @@ export default function AudiofileTable(props: AudiofileTableProps) {
       }
     }
   };
+  const onDeleteAudiofile = async (audiofileId: number) => {
+    try {
+      await deleteAudioFile(audiofileId);
+    } catch (error: any) {
+      const message = error.message
+        ? error.message
+        : "Error deleting audio file";
+      toast({
+        variant: "destructive",
+        title: "Error deleting audio file",
+        description: message,
+      });
+    }
+  };
   function getRows() {
     const columnsLength = isMobile ? 4 : 5;
     if (props.audiofiles.length === 0) {
@@ -58,6 +73,12 @@ export default function AudiofileTable(props: AudiofileTableProps) {
       );
     }
     return props.audiofiles.map((audiofile, index) => {
+      let artistsText: string;
+      if (!audiofile.artists || audiofile.artists.length === 0) {
+        artistsText = "Unknown artist";
+      } else {
+        artistsText = audiofile.artists.join(", ");
+      }
       return (
         <ContextMenu key={audiofile.id}>
           <ContextMenuTrigger asChild>
@@ -66,12 +87,8 @@ export default function AudiofileTable(props: AudiofileTableProps) {
               onClick={() => onClick(audiofile, index)}
             >
               <TableCell>{index + 1}</TableCell>
-              <TableCell>{audiofile.title}</TableCell>
-              <TableCell>
-                {audiofile.artists
-                  ? audiofile.artists.join(", ")
-                  : "Unknown artist"}
-              </TableCell>
+              <TableCell>{audiofile.title || audiofile.filename}</TableCell>
+              <TableCell>{artistsText}</TableCell>
               {!isMobile && (
                 <TableCell>
                   {audiofile.album ? audiofile.album : "Unknown album"}
@@ -83,9 +100,9 @@ export default function AudiofileTable(props: AudiofileTableProps) {
             </TableRow>
           </ContextMenuTrigger>
           <ContextMenuContent className="w-52 rounded-md bg-popover border">
-            <ContextMenuItem>
+            <ContextMenuItem onClick={() => onDeleteAudiofile(audiofile.id)}>
               <Trash2 className="h-5 w-5 mr-2" />
-              Delete
+              <span>Delete</span>
             </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>

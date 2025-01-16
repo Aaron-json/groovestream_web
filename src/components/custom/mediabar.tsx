@@ -30,7 +30,7 @@ export default function MediaBar() {
 
   const displayName = () => {
     if (mediaCtx.currentMedia) {
-      return mediaCtx.currentMedia.title || mediaCtx.currentMedia.title;
+      return mediaCtx.currentMedia.title || mediaCtx.currentMedia.filename;
     } else {
       return "No media";
     }
