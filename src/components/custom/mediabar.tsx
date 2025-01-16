@@ -9,7 +9,6 @@ import {
   Volume2,
   VolumeX,
   Music2,
-  ListMusic,
 } from "lucide-react";
 import { mediaContext } from "@/contexts/media";
 import { formatDuration } from "@/lib/media";
@@ -20,12 +19,14 @@ export default function MediaBar() {
   if (!mediaCtx) {
     throw new Error("Media context not found");
   }
-  const [_volume, _setVolume] = React.useState([mediaCtx.volume]);
   const isMobile = useIsMobile();
 
-  useEffect(() => {
-    _setVolume([mediaCtx.volume]);
-  }, [mediaCtx.volume]);
+  const playPauseIcon =
+    mediaCtx.playbackState === "playing" ? (
+      <Pause className="h-5 w-5" />
+    ) : (
+      <Play className="h-5 w-5" />
+    );
 
   const displayName = () => {
     if (mediaCtx.currentMedia) {
@@ -44,17 +45,6 @@ export default function MediaBar() {
     }
   };
 
-  const controlButton = (icon: React.ReactNode, onClick = () => {}) => (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="text-muted-foreground hover:text-primary shrink-0"
-      onClick={onClick}
-    >
-      {icon}
-    </Button>
-  );
-
   const TrackInfo = () => (
     <div className="flex items-center space-x-3 flex-1 min-w-0">
       <div className="w-16 h-16 rounded flex items-center justify-center shrink-0">
@@ -69,20 +59,24 @@ export default function MediaBar() {
     </div>
   );
 
-  const PlayControls = () => (
-    <div className="flex gap-2 items-center space-x-4">
-      {controlButton(<SkipBack className="h-5 w-5" />, mediaCtx.playPrev)}
-      {controlButton(
-        mediaCtx.playbackState === "playing" ? (
-          <Pause className="h-5 w-5" />
-        ) : (
-          <Play className="h-5 w-5" />
-        ),
-        mediaCtx.playPauseToggle,
-      )}
-      {controlButton(<SkipForward className="h-5 w-5" />, mediaCtx.playNext)}
-    </div>
-  );
+  const PlayControls = () => {
+    return (
+      <div className="flex gap-2 items-center space-x-4">
+        <ControlButton
+          icon={<SkipBack className="h-5 w-5" />}
+          onClick={mediaCtx.playPrev}
+        />
+        <ControlButton
+          icon={playPauseIcon}
+          onClick={mediaCtx.playPauseToggle}
+        />
+        <ControlButton
+          icon={<SkipForward className="h-5 w-5" />}
+          onClick={mediaCtx.playNext}
+        />
+      </div>
+    );
+  };
 
   const ProgressSlider = () => (
     <div className="flex items-center space-x-2 text-xs text-muted-foreground w-full">
@@ -90,41 +84,19 @@ export default function MediaBar() {
     </div>
   );
 
-  const VolumeControl = () => (
-    <div className="flex items-center space-x-2">
-      {controlButton(
-        mediaCtx.mute ? (
-          <VolumeX className="h-5 w-5" />
-        ) : (
-          <Volume2 className="h-5 w-5" />
-        ),
-        () => mediaCtx.setMute(!mediaCtx.mute),
-      )}
-      <Slider
-        value={_volume}
-        onValueChange={(val) => mediaCtx.setVolume(val[0])}
-        max={1}
-        min={0}
-        step={0.01}
-        className="w-24"
-      />
-    </div>
-  );
   return (
-    <div className={`bg-background border shadow-sm rounded-lg`}>
+    <div
+      className={`absolute bottom-2 left-2 right-2 bg-background border shadow-sm rounded-lg`}
+    >
       {isMobile ? (
         <div className="w-full px-2 py-1.5">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between w-full">
               <TrackInfo />
-              {controlButton(
-                mediaCtx.playbackState === "playing" ? (
-                  <Pause className="h-5 w-5" />
-                ) : (
-                  <Play className="h-5 w-5" />
-                ),
-                mediaCtx.playPauseToggle,
-              )}
+              <ControlButton
+                icon={playPauseIcon}
+                onClick={mediaCtx.playPauseToggle}
+              />
             </div>
             <ProgressSlider />
           </div>
@@ -140,7 +112,6 @@ export default function MediaBar() {
               <ProgressSlider />
             </div>
             <div className="col-span-3 flex items-center justify-end space-x-4">
-              {controlButton(<ListMusic className="h-5 w-5" />)}
               <VolumeControl />
             </div>
           </div>
@@ -156,29 +127,23 @@ function Seeker() {
     throw new Error("Playback Controls must be used within a media provider");
   }
   const { currentMedia, playbackState, setSeek, getSeek } = mediaCtx;
-  const [displaySeek, setDisplaySeek] = useState([0]);
+  const [displaySeek, setDisplaySeek] = useState([getSeek()]);
   const [ifSeeking, setIfSeeking] = useState(false);
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
-    if (playbackState === "unloaded" || playbackState === "loading") {
-      setDisplaySeek([0]);
-    } else {
-      if (!ifSeeking) {
-        timeout = setInterval(() => {
-          setDisplaySeek([Math.round(getSeek())]);
-        }, 1e3);
-      }
+    if (!ifSeeking && playbackState === "playing") {
+      timeout = setInterval(() => {
+        setDisplaySeek([Math.round(getSeek())]);
+      }, 1e3);
     }
     return () => clearInterval(timeout);
   }, [playbackState, ifSeeking]);
 
   function handlePointerUp() {
-    console.log("handlePointerUp");
     setIfSeeking(false);
   }
   function handlePointerDown() {
-    console.log("handlePointerDown");
     setIfSeeking(true);
   }
 
@@ -198,10 +163,9 @@ function Seeker() {
         min={0}
         step={1}
         value={displaySeek}
-        onMouseDown={handlePointerDown}
-        onTouchStart={handlePointerDown}
-        onMouseUp={handlePointerUp}
-        onTouchEnd={handlePointerUp}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onInput={() => console.log("input")}
         onValueChange={(val) => setDisplaySeek([val[0]])}
         onValueCommit={(val) => setSeek(val[0])}
       />
@@ -211,6 +175,59 @@ function Seeker() {
           ? formatDuration(Math.round(currentMedia.duration))
           : formatDuration(0)}
       </span>
+    </div>
+  );
+}
+
+function ControlButton({
+  icon,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="text-muted-foreground hover:text-primary shrink-0"
+      onClick={onClick}
+    >
+      {icon}
+    </Button>
+  );
+}
+
+function VolumeControl() {
+  const mediaCtx = useContext(mediaContext);
+  if (!mediaCtx) {
+    throw new Error("Media context not found");
+  }
+  const [_volume, _setVolume] = React.useState([mediaCtx.volume]);
+  useEffect(() => {
+    _setVolume([mediaCtx.volume]);
+  }, [mediaCtx.volume]);
+
+  const volumeIcon = mediaCtx.mute ? (
+    <VolumeX className="h-5 w-5" />
+  ) : (
+    <Volume2 className="h-5 w-5" />
+  );
+
+  return (
+    <div className="flex items-center space-x-2">
+      <ControlButton
+        icon={volumeIcon}
+        onClick={() => mediaCtx.setMute(!mediaCtx.mute)}
+      />
+      <Slider
+        value={_volume}
+        onValueChange={(val) => mediaCtx.setVolume(val[0])}
+        max={1}
+        min={0}
+        step={0.01}
+        className="w-24"
+      />
     </div>
   );
 }

@@ -12,19 +12,18 @@ import { formatDuration } from "@/lib/media";
 import { useToast } from "@/hooks/use-toast";
 import { useContext } from "react";
 import { mediaContext } from "@/contexts/media";
+import {
+  ContextMenu,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "../ui/context-menu";
+import { ContextMenuContent } from "@radix-ui/react-context-menu";
+import { Trash2 } from "lucide-react";
 type AudiofileTableProps = {
   audiofiles: Audiofile[];
   mediaStoreKey?: string;
   skeleton?: boolean;
 };
-
-const nonMobileRows: (keyof Audiofile)[] = [
-  "title",
-  "artists",
-  "album",
-  "duration",
-];
-const mobileRows: (keyof Audiofile)[] = ["title", "artists", "album"];
 
 export default function AudiofileTable(props: AudiofileTableProps) {
   const isMobile = useIsMobile();
@@ -48,11 +47,11 @@ export default function AudiofileTable(props: AudiofileTableProps) {
     }
   };
   function getRows() {
-    const columns = isMobile ? mobileRows : nonMobileRows;
+    const columnsLength = isMobile ? 4 : 5;
     if (props.audiofiles.length === 0) {
       return (
         <TableRow>
-          <TableCell colSpan={columns.length}>
+          <TableCell colSpan={columnsLength}>
             <span className="text-muted-foreground">No audio files yet</span>
           </TableCell>
         </TableRow>
@@ -60,22 +59,36 @@ export default function AudiofileTable(props: AudiofileTableProps) {
     }
     return props.audiofiles.map((audiofile, index) => {
       return (
-        <TableRow key={audiofile.id} onClick={() => onClick(audiofile, index)}>
-          <TableCell>{audiofile.title}</TableCell>
-          <TableCell>
-            {audiofile.artists
-              ? audiofile.artists.join(", ")
-              : "Unknown artist"}
-          </TableCell>
-          {!isMobile && (
-            <TableCell>
-              {audiofile.album ? audiofile.album : "Unknown album"}
-            </TableCell>
-          )}
-          <TableCell className="text-right">
-            {formatDuration(audiofile.duration)}
-          </TableCell>
-        </TableRow>
+        <ContextMenu key={audiofile.id}>
+          <ContextMenuTrigger asChild>
+            <TableRow
+              key={audiofile.id}
+              onClick={() => onClick(audiofile, index)}
+            >
+              <TableCell>{index + 1}</TableCell>
+              <TableCell>{audiofile.title}</TableCell>
+              <TableCell>
+                {audiofile.artists
+                  ? audiofile.artists.join(", ")
+                  : "Unknown artist"}
+              </TableCell>
+              {!isMobile && (
+                <TableCell>
+                  {audiofile.album ? audiofile.album : "Unknown album"}
+                </TableCell>
+              )}
+              <TableCell className="text-right">
+                {formatDuration(audiofile.duration)}
+              </TableCell>
+            </TableRow>
+          </ContextMenuTrigger>
+          <ContextMenuContent className="w-52 rounded-md bg-popover border">
+            <ContextMenuItem>
+              <Trash2 className="h-5 w-5 mr-2" />
+              Delete
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
       );
     });
   }
@@ -83,6 +96,7 @@ export default function AudiofileTable(props: AudiofileTableProps) {
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead>#</TableHead>
           <TableHead>Name</TableHead>
           <TableHead>Artist</TableHead>
           {!isMobile && <TableHead>Album</TableHead>}

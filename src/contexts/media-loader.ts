@@ -63,13 +63,15 @@ export function loadHls(manifest: string, video: HTMLVideoElement) {
     let levelLoaded = false;
     let duration = 0;
 
-    const tryResolve = () => {
+    function tryResolve() {
       if (mediaAttached && levelLoaded) {
         resolve({
           duration,
         });
+        // remove error listener to avoid shadowing future hls errors
+        hls.off(Hls.Events.ERROR);
       }
-    };
+    }
 
     hls.once(Hls.Events.MEDIA_ATTACHED, function () {
       mediaAttached = true;
@@ -83,8 +85,8 @@ export function loadHls(manifest: string, video: HTMLVideoElement) {
     });
 
     hls.once(Hls.Events.ERROR, function (_, data) {
-      hls.destroy();
       reject(data);
+      hls.destroy();
     });
 
     hls.loadSource(manifest);

@@ -14,17 +14,17 @@ import { AxiosProgressEvent } from "axios";
 import { Playlist, Audiofile } from "../types/media";
 
 export function usePlaylistAudioFiles(playlistId: number) {
-  const PLAYLIST_AUDIOFILES_KEY = "playlist-audiofiles";
+  const key = "playlist-audiofiles" + "-" + playlistId.toString();
   const setMediaList = useStore((state) => state.setMediaList);
   const query = useQuery({
-    queryKey: [PLAYLIST_AUDIOFILES_KEY, playlistId],
+    queryKey: [key],
     queryFn: async () => {
       const data = await getPlaylistAudiofiles(playlistId);
-      setMediaList(PLAYLIST_AUDIOFILES_KEY + "-" + playlistId, data);
+      setMediaList(key, data);
       return data;
     },
   });
-  return { ...query, key: PLAYLIST_AUDIOFILES_KEY } as const;
+  return { ...query, key } as const;
 }
 
 export function useMostPlayed(limit = 10) {
