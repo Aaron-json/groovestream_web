@@ -70,6 +70,7 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     const videoElement = videoRef.current;
+    videoElement.playsInline = true;
     videoElement.style.display = "none";
     videoElement.style.width = "0";
     videoElement.style.height = "0";

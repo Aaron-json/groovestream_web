@@ -19,7 +19,7 @@ type FileUploadProps = {
   onSuccess?: () => void;
 };
 
-const MAX_FILES = 10;
+const MAX_FILES = 5;
 const MAX_FILE_SIZE = 1024 * 1024 * 20; // 20MB
 const SUPPORTED_FILE_TYPES = ["audio/mpeg", "audio/mp3", "audio/wav"];
 
