@@ -60,7 +60,7 @@ export default function FileUpload(props: FileUploadProps) {
         if (!SUPPORTED_FILE_TYPES.includes(file.type)) {
           setFormState({
             state: "input",
-            message: `File "${file.name}" is not an audio file`,
+            message: `File "${file.name}" is not a supported type`,
           });
           return;
         }
@@ -72,7 +72,9 @@ export default function FileUpload(props: FileUploadProps) {
       const message = err.message ?? "An unexpected error occurred.";
       setFormState({ state: "error", message });
     } finally {
-      e.currentTarget.value = "";
+      if (e.currentTarget) {
+        e.currentTarget.value = "";
+      }
     }
   };
 

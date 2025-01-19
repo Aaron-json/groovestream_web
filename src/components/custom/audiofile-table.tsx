@@ -24,6 +24,7 @@ type AudiofileTableProps = {
   audiofiles: Audiofile[];
   mediaStoreKey?: string;
   skeleton?: boolean;
+  refetch?: () => void;
 };
 
 export default function AudiofileTable(props: AudiofileTableProps) {
@@ -50,6 +51,7 @@ export default function AudiofileTable(props: AudiofileTableProps) {
   const onDeleteAudiofile = async (audiofileId: number) => {
     try {
       await deleteAudioFile(audiofileId);
+      props.refetch?.();
     } catch (error: any) {
       const message = error.message
         ? error.message

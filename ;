@@ -9,7 +9,9 @@ import {
 import MediaList from "@/components/custom/media-list";
 import InfoCard from "@/components/custom/info-card";
 import CreatePlaylistModal from "@/components/custom/create-playlist";
-import InviteList from "@/components/custom/invite-list";
+import InviteList, {
+  InviteListSkeleton,
+} from "@/components/custom/invite-list";
 import { PlaylistInvite } from "@/types/invites";
 import { useToast } from "@/hooks/use-toast";
 import { useCallback } from "react";

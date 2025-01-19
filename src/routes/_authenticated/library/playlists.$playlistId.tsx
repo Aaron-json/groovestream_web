@@ -1,4 +1,8 @@
-import { deletePlaylist, getPlaylistInfo } from "@/api/requests/media";
+import {
+  deletePlaylist,
+  getPlaylistInfo,
+  leavePlaylist,
+} from "@/api/requests/media";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { EllipsisVertical, ListMusic, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +29,9 @@ import AddPlaylistMember from "@/components/custom/add-playlist-member";
 import { usePlaylistAudioFiles } from "@/hooks/media";
 import InfoCard from "@/components/custom/info-card";
 import AudiofileTable from "@/components/custom/audiofile-table";
+import { useToast } from "@/hooks/use-toast";
+import { ResponseError } from "@/types/errors";
+import { isAxiosError } from "axios";
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId",
@@ -38,6 +45,7 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const playlist = Route.useLoaderData();
+  const { toast } = useToast();
   const {
     data: audiofiles,
     isLoading: audiofilesLoading,
@@ -48,19 +56,41 @@ function RouteComponent() {
   const { history, navigate } = useRouter();
 
   async function handleDeletePlaylist() {
-    await deletePlaylist(playlist.id);
-    navigate({
-      from: history.location.pathname,
-      to: "/library",
-    });
+    try {
+      await deletePlaylist(playlist.id);
+      navigate({
+        from: history.location.pathname,
+        to: "/library",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error deleting playlist",
+      });
+    }
   }
 
-  if (audiofilesLoading) {
-    return null;
-  }
-
-  if (audiofilesErr || !audiofiles) {
-    return <InfoCard text={"Something went wrong"} />;
+  async function handleLeavePlaylist() {
+    try {
+      await leavePlaylist(playlist.id);
+      navigate({
+        from: history.location.pathname,
+        to: "/library",
+      });
+    } catch (error: any) {
+      let message = undefined;
+      if (isAxiosError<ResponseError>(error)) {
+        const errorCode = error.response?.data.error_code;
+        if (errorCode === "OWNER_CANNOT_LEAVE") {
+          message = "The owner of a playlist cannot leave";
+        }
+      }
+      toast({
+        variant: "destructive",
+        title: "Error leaving playlist",
+        description: message,
+      });
+    }
   }
 
   function renderAudiofiles() {
@@ -71,10 +101,22 @@ function RouteComponent() {
       return <InfoCard text="No tracks in this playlist yet" />;
     } else {
       return (
-        <AudiofileTable audiofiles={audiofiles} mediaStoreKey={storeKey} />
+        <AudiofileTable
+          audiofiles={audiofiles}
+          mediaStoreKey={storeKey}
+          refetch={refetchAudiofiles}
+        />
       );
     }
   }
+  if (audiofilesLoading) {
+    return null;
+  }
+
+  if (audiofilesErr || !audiofiles) {
+    return <InfoCard text={"Something went wrong"} />;
+  }
+
   return (
     <section>
       <div className="flex gap-4 px-10">
@@ -132,9 +174,9 @@ function RouteComponent() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLeavePlaylist}>
                   <Users className="mr-2 h-4 w-4" />
-                  <span>View Members</span>
+                  <span>Leave Playlist</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -1,51 +1,57 @@
-import { useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { SubmitHandler, useForm } from 'react-hook-form'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { AlertCircle } from 'lucide-react'
-import { createUser } from '@/api/requests/user'
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, Check } from "lucide-react";
+import { createUser } from "@/api/requests/user";
+import { ResponseError } from "@/types/errors";
+import { isAxiosError } from "axios";
 
 type FormValues = {
-  email: string
-  username: string
-  password: string
-}
+  email: string;
+  username: string;
+  password: string;
+};
 
-export const Route = createFileRoute('/_auth/register')({
+export const Route = createFileRoute("/_auth/register")({
   component: RouteComponent,
-})
+});
 
 export function RouteComponent() {
-  const [authError, setAuthError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting, isSubmitSuccessful },
   } = useForm<FormValues>({
     defaultValues: {
-      email: '',
-      username: '',
-      password: '',
+      email: "",
+      username: "",
+      password: "",
     },
-  })
+  });
 
   const handleRegister: SubmitHandler<FormValues> = async (data) => {
-    setAuthError(null)
-    setIsSubmitting(true)
-
+    clearErrors();
     try {
-      await createUser(data)
+      await createUser(data);
     } catch (error) {
-      setAuthError(
-        error instanceof Error ? error.message : 'An unexpected error occurred',
-      )
-      setIsSubmitting(false)
+      let message = "An error occurred";
+      if (isAxiosError<ResponseError>(error)) {
+        const errorCode = error.response?.data.error_code;
+        if (errorCode === "USERNAME_EXISTS") {
+          message = "Username already exists";
+        } else if (errorCode === "INVALID_EMAIL") {
+          message = "This email cannot be used to register";
+        }
+      }
+      setError("root", {
+        message,
+      });
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -58,10 +64,19 @@ export function RouteComponent() {
         </div>
 
         <div className="rounded-lg border p-6 shadow-sm">
-          {authError && (
+          {errors.root && (
             <div className="mb-4 flex items-center rounded-md border border-destructive/50 bg-destructive/10 p-3">
               <AlertCircle className="mr-2 h-5 w-5" />
-              <span className="text-sm">{authError}</span>
+              <span className="text-sm">{errors.root.message}</span>
+            </div>
+          )}
+          {isSubmitSuccessful && (
+            <div className="flex items-center rounded-md border p-2">
+              <Check className="mr-2 h-5 w-5" />
+              <span className="text-sm">
+                Account created successfully. Check your email for a
+                verification link then log in to continue.
+              </span>
             </div>
           )}
 
@@ -77,11 +92,11 @@ export function RouteComponent() {
                 id="reg-email"
                 type="email"
                 placeholder="you@example.com"
-                {...register('email', {
-                  required: 'Email is required',
+                {...register("email", {
+                  required: "Email is required",
                   validate: (email) =>
                     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-                    'Invalid email address',
+                    "Invalid email address",
                 })}
               />
               {errors.email && (
@@ -103,11 +118,11 @@ export function RouteComponent() {
                 id="username"
                 type="text"
                 placeholder="Choose a username"
-                {...register('username', {
-                  required: 'Username is required',
+                {...register("username", {
+                  required: "Username is required",
                   minLength: {
                     value: 2,
-                    message: 'Username must be at least 2 characters',
+                    message: "Username must be at least 2 characters",
                   },
                 })}
               />
@@ -130,11 +145,11 @@ export function RouteComponent() {
                 id="reg-password"
                 type="password"
                 placeholder="Create a password"
-                {...register('password', {
-                  required: 'Password is required',
+                {...register("password", {
+                  required: "Password is required",
                   minLength: {
                     value: 8,
-                    message: 'Password must be at least 8 characters long',
+                    message: "Password must be at least 8 characters long",
                   },
                 })}
               />
@@ -152,14 +167,14 @@ export function RouteComponent() {
               className="w-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Creating Account...' : 'Register'}
+              {isSubmitting ? "Creating Account..." : "Register"}
             </Button>
           </form>
         </div>
 
         <div className="text-center">
           <p className="text-sm">
-            Already have an account?{' '}
+            Already have an account?{" "}
             <Link
               from={Route.fullPath}
               to="/login"
@@ -171,7 +186,7 @@ export function RouteComponent() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default RouteComponent
+export default RouteComponent;

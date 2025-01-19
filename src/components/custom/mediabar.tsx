@@ -40,10 +40,8 @@ export default function MediaBar() {
     }
   };
   const displayArtist = () => {
-    if (mediaCtx.currentMedia) {
-      return mediaCtx.currentMedia.artists
-        ? mediaCtx.currentMedia.artists.join(", ")
-        : "Unknown artist";
+    if (mediaCtx.currentMedia?.artists && mediaCtx.currentMedia.artists.length > 0) {
+      return mediaCtx.currentMedia.artists.join(", ");
     } else {
       return "Unknown artist";
     }

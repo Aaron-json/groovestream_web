@@ -1,3 +1,4 @@
+import { ResponseError } from "@/types/errors";
 import { ProfilePicture, User } from "../../types/user";
 import axiosClient from "../axiosClient";
 
@@ -23,7 +24,7 @@ export type SignUpData = {
   password: string;
 };
 export async function createUser(data: SignUpData) {
-  const response = await axiosClient.post("/users", data);
+  const response = await axiosClient.post<any, ResponseError>("/users", data);
   return response.data;
 }
 export async function uploadProfilePicture(file: File) {
