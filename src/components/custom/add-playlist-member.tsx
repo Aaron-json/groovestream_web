@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "../ui/input";
 import { useForm } from "react-hook-form";
@@ -68,6 +69,9 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
         <DialogHeader>
           <DialogTitle>Add Member to Playlist</DialogTitle>
         </DialogHeader>
+        <DialogDescription>
+          Enter the username of the person you want to add to the playlist.
+        </DialogDescription>
         {formState.isSubmitSuccessful && (
           <div className="flex items-center rounded-md border p-2">
             <Check className="mr-2 h-5 w-5" />

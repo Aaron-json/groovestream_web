@@ -32,7 +32,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
   const _isAudiofile = isAudiofile(media);
   const { toast } = useToast();
 
-  const handleClick = async () => {
+  const handleClick = async (_: React.MouseEvent<HTMLDivElement>) => {
     if (onClick) {
       onClick();
       return;
@@ -58,8 +58,16 @@ const MediaCard: React.FC<MediaCardProps> = ({
     }
   };
 
-  const handlePlayPause = () => {
-    mediaCtx.playPauseToggle();
+  const handlePlayPause = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (!_isAudiofile) {
+      return;
+    }
+    if (mediaCtx.currentMedia?.id === media.id) {
+      mediaCtx.playPauseToggle();
+    } else if (mediaStoreKey) {
+      mediaCtx.setMedia(media, mediaStoreKey, index);
+    }
   };
 
   const renderIcon = () => {
@@ -67,6 +75,33 @@ const MediaCard: React.FC<MediaCardProps> = ({
       <Music3 className="w-10 h-10 text-muted-foreground" />
     ) : (
       <ListMusic className="w-10 h-10 text-muted-foreground" />
+    );
+  };
+
+  const renderPlaybackButton = () => {
+    if (!_isAudiofile) {
+      return null;
+    }
+    let icon: React.ReactNode;
+    if (
+      mediaCtx.playbackState !== "playing" ||
+      (mediaCtx.playbackState === "playing" &&
+        mediaCtx.currentMedia?.id !== media.id)
+    ) {
+      icon = <Play className="h-5 w-5" />;
+    } else {
+      icon = <Pause className="h-5 w-5" />;
+    }
+
+    return (
+      <Button
+        size="icon"
+        variant="secondary"
+        className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-7 w-7"
+        onClick={handlePlayPause}
+      >
+        {icon}
+      </Button>
     );
   };
 
@@ -102,7 +137,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
   return (
     <Card
       onClick={handleClick}
-      className="w-40 hover:bg-muted/15 transition-scale duration-200 rounded-md"
+      className="w-[9.5rem] hover:bg-muted/15 transition-scale duration-200 rounded-md"
     >
       <CardContent className="p-0">
         <div className="flex flex-col gap-1">
@@ -110,20 +145,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
             <div className="absolute inset-0 flex items-center justify-center">
               {renderIcon()}
             </div>
-            {_isAudiofile && (
-              <Button
-                size="icon"
-                variant="secondary"
-                className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-7 w-7"
-                onClick={handlePlayPause}
-              >
-                {mediaCtx.playbackState === "playing" ? (
-                  <Pause className="h-4 w-4" />
-                ) : (
-                  <Play className="h-4 w-4" />
-                )}
-              </Button>
-            )}
+            {renderPlaybackButton()}
           </AspectRatio>
           <div className="flex flex-col px-2 pb-1.5">{renderMetadata()}</div>
         </div>

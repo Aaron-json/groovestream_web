@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,12 @@ type FileUploadProps = {
 
 const MAX_FILES = 5;
 const MAX_FILE_SIZE = 1024 * 1024 * 20; // 20MB
-const SUPPORTED_FILE_TYPES = ["audio/mpeg", "audio/mp3", "audio/wav"];
+const SUPPORTED_FILE_TYPES = [
+  "audio/mpeg",
+  "audio/mp3",
+  "audio/wav",
+  "audio/flac",
+];
 
 export default function FileUpload(props: FileUploadProps) {
   const [formState, setFormState] = React.useState<FormState>({
@@ -85,6 +91,13 @@ export default function FileUpload(props: FileUploadProps) {
         <DialogHeader>
           <DialogTitle>Upload audio files</DialogTitle>
         </DialogHeader>
+        <DialogDescription>
+          <span>Upload audio files to your library.</span>
+          <br />
+          <span>Supported formats: MP3, WAV, FLAC.</span>
+          <br />
+          <span>Limits: Max size per file: 20MB. Max uploads: 5.</span>
+        </DialogDescription>
         {(formState.state === "input" || formState.state === "error") && (
           <span className="text-sm text-destructive">{formState.message}</span>
         )}

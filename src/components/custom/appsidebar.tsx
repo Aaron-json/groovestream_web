@@ -6,7 +6,8 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenuItem,
-  SidebarFooter,
+  useSidebar,
+  SidebarHeader,
 } from "@/components/ui/sidebar";
 import TextLogo from "./textlogo";
 import { Link } from "@tanstack/react-router";
@@ -30,11 +31,18 @@ const navItems = [
 ];
 
 export default function AppSidebar() {
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  function onMobileClick() {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }
   return (
     <Sidebar>
-      <SidebarFooter>
+      <SidebarHeader>
         <TextLogo />
-      </SidebarFooter>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -44,6 +52,7 @@ export default function AppSidebar() {
                   <Link
                     className="flex items-center gap-2 px-4 py-2 hover:bg-muted transition-colors duration-100 rounded-md"
                     to={item.url}
+                    onClick={onMobileClick}
                   >
                     <item.icon />
                     <span>{item.title}</span>
