@@ -54,10 +54,10 @@ export function RouteComponent() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
+    <div className="flex items-center justify-center p-12">
+      <div className="w-full max-w-sm space-y-4">
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight">
+          <h2 className="text-2xl font-bold tracking-tight">
             Create an Account
           </h2>
           <p className="mt-2 text-sm">Sign up to get started</p>
@@ -92,6 +92,7 @@ export function RouteComponent() {
                 id="reg-email"
                 type="email"
                 placeholder="you@example.com"
+                className="text-sm"
                 {...register("email", {
                   required: "Email is required",
                   validate: (email) =>
@@ -118,6 +119,7 @@ export function RouteComponent() {
                 id="username"
                 type="text"
                 placeholder="Choose a username"
+                className="text-sm"
                 {...register("username", {
                   required: "Username is required",
                   minLength: {

@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_auth")({
 function RouteLayout() {
   return (
     <div className="flex flex-col w-full h-full">
-      <div className="border-b-2 h-11 flex items-end">
+      <div className="border-b-2 shrink-0 h-12 flex items-end">
         <TextLogo />
       </div>
       <Outlet />

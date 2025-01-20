@@ -118,7 +118,7 @@ function RouteComponent() {
   }
 
   return (
-    <section>
+    <section className="flex flex-col gap-4">
       <div className="flex gap-4 px-10">
         <div className="w-44 aspect-square border rounded-md overflow-hidden">
           <ListMusic className="w-full h-full text-muted-foreground" />

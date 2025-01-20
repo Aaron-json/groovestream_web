@@ -38,12 +38,14 @@ function AuthenticatedLayout() {
         <ToastProvider>
           <SidebarProvider>
             <AppSidebar />
-            <div className="relative flex flex-col gap-3 w-full px-2">
+            <div className="flex flex-col w-full px-2">
               <TopBar />
-              <div className="w-full px-2">
+              <div className="flex-1 px-2 mb-2">
                 <Outlet />
               </div>
-              <MediaBar />
+              <div className={`sticky bottom-2 left-2 right-2`}>
+                <MediaBar />
+              </div>
             </div>
             <Toaster />
           </SidebarProvider>

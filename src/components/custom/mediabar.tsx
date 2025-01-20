@@ -40,7 +40,10 @@ export default function MediaBar() {
     }
   };
   const displayArtist = () => {
-    if (mediaCtx.currentMedia?.artists && mediaCtx.currentMedia.artists.length > 0) {
+    if (
+      mediaCtx.currentMedia?.artists &&
+      mediaCtx.currentMedia.artists.length > 0
+    ) {
       return mediaCtx.currentMedia.artists.join(", ");
     } else {
       return "Unknown artist";
@@ -87,9 +90,7 @@ export default function MediaBar() {
   );
 
   return (
-    <div
-      className={`absolute bottom-2 left-2 right-2 bg-background border shadow-sm rounded-lg`}
-    >
+    <div className={`bg-background border shadow-sm rounded-lg`}>
       {isMobile ? (
         <div className="w-full px-2 py-1.5">
           <div className="flex flex-col gap-2">

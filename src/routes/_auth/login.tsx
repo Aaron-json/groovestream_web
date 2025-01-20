@@ -52,7 +52,7 @@ function RouteComponent() {
 
   return (
     <div className="flex items-center justify-center p-12">
-      <div className="w-full max-w-sm space-y-8">
+      <div className="w-full max-w-sm space-y-4">
         <div className="text-center">
           <h2 className="text-2xl font-bold tracking-tight">Welcome Back</h2>
           <p className="mt-2 text-sm">Sign in to continue to your account</p>
