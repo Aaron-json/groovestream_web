@@ -156,7 +156,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
 
 export function MediaCardSkeleton() {
   return (
-    <div className="w-40 rounded-md">
+    <div className="w-[9.5rem] rounded-md">
       <Skeleton className="w-full aspect-square" />
       <div className="flex flex-col gap-2 py-2">
         <Skeleton className="h-4 w-full" />
