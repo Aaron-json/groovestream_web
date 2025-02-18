@@ -1,4 +1,4 @@
-# GrooveStream Web
+# GrooveStream
 This is the web frontend for the GrooveStream project.
 
 GrooveStream is a web application that allows users to organize and share their music with friends and family. In simpler use cases, it allows a user to access their local music across multiple devices.

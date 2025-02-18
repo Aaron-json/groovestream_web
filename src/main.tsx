@@ -4,8 +4,8 @@ import "./index.css";
 import { routeTree } from "./routeTree.gen";
 import { useAuth } from "./auth/state";
 
-// Create a new router instance
-const router = createRouter({
+// Create a root router instance
+export const router = createRouter({
   routeTree,
   context: {
     auth: undefined!,

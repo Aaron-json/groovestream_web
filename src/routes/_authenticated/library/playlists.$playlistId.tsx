@@ -3,7 +3,7 @@ import {
   getPlaylistInfo,
   leavePlaylist,
 } from "@/api/requests/media";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { EllipsisVertical, ListMusic, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,8 +38,12 @@ export const Route = createFileRoute(
 )({
   component: RouteComponent,
   loader: async ({ params }) => {
-    const playlistId = +params.playlistId;
-    return getPlaylistInfo(playlistId);
+    return getPlaylistInfo(+params.playlistId);
+  },
+  onError: () => {
+    throw redirect({
+      to: "/library",
+    });
   },
 });
 
