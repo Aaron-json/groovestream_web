@@ -99,7 +99,7 @@ export default function FileUpload(props: FileUploadProps) {
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Upload audio files</DialogTitle>
+          <DialogTitle>Upload</DialogTitle>
         </DialogHeader>
         <DialogDescription>
           <span>Upload audio files to your library.</span>
