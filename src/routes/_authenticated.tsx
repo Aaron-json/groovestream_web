@@ -7,8 +7,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import TopBar from "@/components/custom/topbar";
 import { QueryClient } from "@tanstack/react-query";
 import { MediaContextProvider } from "@/contexts/media";
-import { ToastProvider } from "@/components/ui/toast";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -35,21 +34,19 @@ function AuthenticatedLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <MediaContextProvider>
-        <ToastProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            <div className="flex flex-col w-full px-2">
-              <TopBar />
-              <div className="flex-1 px-2 mb-2">
-                <Outlet />
-              </div>
-              <div className={`sticky bottom-2 left-2 right-2`}>
-                <MediaBar />
-              </div>
+        <SidebarProvider>
+          <AppSidebar />
+          <div className="flex flex-col w-full px-2">
+            <TopBar />
+            <div className="flex-1 px-2 mb-2">
+              <Outlet />
             </div>
-            <Toaster />
-          </SidebarProvider>
-        </ToastProvider>
+            <div className={`sticky bottom-2 left-2 right-2`}>
+              <MediaBar />
+            </div>
+          </div>
+          <Toaster position="top-right" />
+        </SidebarProvider>
       </MediaContextProvider>
     </QueryClientProvider>
   );

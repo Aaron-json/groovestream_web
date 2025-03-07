@@ -23,11 +23,6 @@ const navItems = [
     url: "/library",
     icon: LibraryIcon,
   },
-  // {
-  //   title: "Social",
-  //   url: "/social",
-  //   icon: MessageCircle,
-  // },
 ];
 
 export default function AppSidebar() {

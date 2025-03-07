@@ -9,7 +9,7 @@ import { Skeleton } from "../ui/skeleton";
 import { useNavigate } from "@tanstack/react-router";
 import { mediaContext } from "@/contexts/media";
 import { formatDuration } from "@/lib/media";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export type MediaCardProps = {
   media: Media;
@@ -30,7 +30,6 @@ const MediaCard: React.FC<MediaCardProps> = ({
   }
   const navigate = useNavigate();
   const _isAudiofile = isAudiofile(media);
-  const { toast } = useToast();
 
   const handleClick = async (_: React.MouseEvent<HTMLDivElement>) => {
     if (onClick) {
@@ -43,9 +42,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
           await mediaCtx.setMedia(media, mediaStoreKey, index);
         } catch (error: any) {
           const message = error.message ? error.message : "Error loading media";
-          toast({
-            variant: "destructive",
-            title: "Error loading media",
+          toast("Error loading media", {
             description: message.toString(),
           });
         }

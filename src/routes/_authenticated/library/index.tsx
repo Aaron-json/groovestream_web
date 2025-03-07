@@ -11,8 +11,8 @@ import InfoCard from "@/components/custom/info-card";
 import CreatePlaylistModal from "@/components/custom/create-playlist";
 import InviteList from "@/components/custom/invite-list";
 import { PlaylistInvite } from "@/types/invites";
-import { useToast } from "@/hooks/use-toast";
 import { useCallback } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/library/")({
   component: RouteComponent,
@@ -38,8 +38,6 @@ function RouteComponent() {
     queryFn: () => getPlaylistInvites(10),
   });
 
-  const { toast } = useToast();
-
   const handleAcceptInvite = useCallback(
     async (invite: PlaylistInvite) => {
       try {
@@ -47,10 +45,7 @@ function RouteComponent() {
         refetchPlaylistInvites();
         refetchPlaylists();
       } catch (error) {
-        toast({
-          title: "Error accepting invite",
-          variant: "destructive",
-        });
+        toast("Error accepting invite");
       }
     },
     [refetchPlaylistInvites, toast],
@@ -63,10 +58,7 @@ function RouteComponent() {
         refetchPlaylistInvites();
         refetchPlaylists();
       } catch (error) {
-        toast({
-          title: "Error declining invite",
-          variant: "destructive",
-        });
+        toast("Error declining invite");
       }
     },
     [refetchPlaylistInvites, toast],

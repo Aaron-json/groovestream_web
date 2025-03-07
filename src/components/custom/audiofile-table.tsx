@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Audiofile } from "../../types/media";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDuration } from "@/lib/media";
-import { useToast } from "@/hooks/use-toast";
 import { mediaContext } from "@/contexts/media";
+import { toast } from "sonner";
 import { Trash2, Search } from "lucide-react";
 import { deleteAudioFile } from "@/api/requests/media";
 import {
@@ -44,7 +44,6 @@ type AudiofileTableProps = {
 
 export default function AudiofileTable(props: AudiofileTableProps) {
   const isMobile = useIsMobile();
-  const { toast } = useToast();
   const mediaCtx = useContext(mediaContext);
   const [globalFilter, setGlobalFilter] = useState("");
   const [hoveredRowId, setHoveredRowId] = useState<number | null>(null);
@@ -59,10 +58,8 @@ export default function AudiofileTable(props: AudiofileTableProps) {
         await mediaCtx.setMedia(audiofile, props.mediaStoreKey, index);
       } catch (error: any) {
         const message = error.message ? error.message : "Error loading media";
-        toast({
-          variant: "destructive",
-          title: "Error loading media",
-          description: message.toString(),
+        toast("Error loading media", {
+          description: message,
         });
       }
     }
@@ -71,18 +68,13 @@ export default function AudiofileTable(props: AudiofileTableProps) {
   const onDeleteAudiofile = async (audiofileId: number) => {
     try {
       await deleteAudioFile(audiofileId);
+      toast("The audio file has been successfully removed");
       props.refetch?.();
-      toast({
-        title: "Audio file deleted",
-        description: "The audio file has been successfully removed.",
-      });
     } catch (error: any) {
       const message = error.message
         ? error.message
         : "Error deleting audio file";
-      toast({
-        variant: "destructive",
-        title: "Error deleting audio file",
+      toast("Error deleting audio file", {
         description: message,
       });
     }

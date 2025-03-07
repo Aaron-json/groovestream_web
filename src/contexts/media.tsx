@@ -11,7 +11,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useStore } from "@/store/store";
 import { getNextAudio, loadHls } from "./media-loader";
 import Hls from "hls.js";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export type MediaUpdateAction = "next" | "prev";
 // Used to update/get media from the same source.
@@ -230,10 +230,7 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
         await videoRef.current.play();
       } catch (error) {
         unloadMedia();
-        toast({
-          variant: "destructive",
-          title: "Error playing next track",
-        });
+        toast("Error playing next track");
       }
     } else {
       loadMedia({

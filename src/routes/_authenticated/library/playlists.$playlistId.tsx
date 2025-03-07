@@ -29,9 +29,9 @@ import AddPlaylistMember from "@/components/custom/add-playlist-member";
 import { usePlaylistAudioFiles } from "@/hooks/media";
 import InfoCard from "@/components/custom/info-card";
 import AudiofileTable from "@/components/custom/audiofile-table";
-import { useToast } from "@/hooks/use-toast";
 import { ResponseError } from "@/types/errors";
 import { isAxiosError } from "axios";
+import { toast } from "sonner";
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId",
@@ -49,7 +49,6 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const playlist = Route.useLoaderData();
-  const { toast } = useToast();
   const {
     data: audiofiles,
     isLoading: audiofilesLoading,
@@ -67,10 +66,7 @@ function RouteComponent() {
         to: "/library",
       });
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error deleting playlist",
-      });
+      toast("Error deleting playlist");
     }
   }
 
@@ -89,9 +85,7 @@ function RouteComponent() {
           message = "The owner of a playlist cannot leave";
         }
       }
-      toast({
-        variant: "destructive",
-        title: "Error leaving playlist",
+      toast("Error leaving playlist", {
         description: message,
       });
     }

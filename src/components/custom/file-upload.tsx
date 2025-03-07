@@ -12,11 +12,10 @@ import { Input } from "../ui/input";
 import React from "react";
 import { uploadAudioFile } from "@/api/requests/media";
 import { FormState } from "@/types/formstate";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 type FileUploadProps = {
   trigger?: React.ReactNode;
-  multiple?: boolean;
   playlistId: number;
   onSuccess?: () => void;
 };
@@ -31,7 +30,6 @@ const SUPPORTED_FILE_TYPES = [
 ];
 
 export default function FileUpload(props: FileUploadProps) {
-  const { toast } = useToast();
   const [formState, setFormState] = React.useState<FormState>({
     state: "input",
   });
@@ -73,16 +71,12 @@ export default function FileUpload(props: FileUploadProps) {
           return;
         }
       }
-      toast({
-        title: "Uploading files...",
+      toast("Uploading files", {
         description: "This may take a while...",
       });
       await uploadAudioFile(files, props.playlistId);
       setFormState({ state: "successful" });
-      toast({
-        title: "Upload successful",
-        description: "Your files have been uploaded successfully.",
-      });
+      toast("Upload successful");
       props.onSuccess?.();
     } catch (err: any) {
       const message = err.message ?? "An unexpected error occurred.";
