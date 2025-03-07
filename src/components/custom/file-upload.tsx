@@ -100,7 +100,7 @@ export default function FileUpload(props: FileUploadProps) {
           <br />
           <span>Supported formats: MP3, WAV, FLAC.</span>
           <br />
-          <span>Limits: Max size per file: 20MB. Max uploads: 5.</span>
+          <span>Limits: 20MB per file size, 5 files</span>
         </DialogDescription>
         {(formState.state === "input" || formState.state === "error") && (
           <span className="text-sm text-destructive">{formState.message}</span>
