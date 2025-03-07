@@ -56,13 +56,13 @@ function RouteComponent() {
     refetch: refetchAudiofiles,
     key: storeKey,
   } = usePlaylistAudioFiles(playlist.id);
-  const { history, navigate } = useRouter();
+  const { navigate } = useRouter();
 
   async function handleDeletePlaylist() {
     try {
       await deletePlaylist(playlist.id);
       navigate({
-        from: history.location.pathname,
+        from: Route.fullPath,
         to: "/library",
       });
     } catch (error: any) {
@@ -74,7 +74,7 @@ function RouteComponent() {
     try {
       await leavePlaylist(playlist.id);
       navigate({
-        from: history.location.pathname,
+        from: Route.fullPath,
         to: "/library",
       });
     } catch (error: any) {
