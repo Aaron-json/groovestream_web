@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Audiofile } from "../../types/media";
+import { Audiofile } from "@/api/types/media";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDuration } from "@/lib/media";
 import { mediaContext } from "@/contexts/media";

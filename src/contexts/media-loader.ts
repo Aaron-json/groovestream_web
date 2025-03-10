@@ -5,7 +5,7 @@ import Hls, {
   LoaderConfiguration,
   LoaderContext,
 } from "hls.js";
-import { Audiofile } from "@/types/media";
+import { Audiofile } from "@/api/types/media";
 import { MediaUpdateAction } from "./media";
 
 export class CustomLoader extends Hls.DefaultConfig.loader {

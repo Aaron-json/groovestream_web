@@ -1,36 +1,109 @@
-import { AxiosProgressEvent, AxiosRequestConfig } from "axios";
 import axiosClient, { STREAMING_API_URL } from "../axiosClient";
-import { Playlist, Audiofile } from "../../types/media";
-import { PlaylistInvite } from "../../types/invites";
+import { Playlist, Audiofile } from "../types/media";
+import { PlaylistInvite } from "../types/invites";
+import { checkRequestAuth } from "@/auth/state";
 
 ///////////////////////////////////////////////////////////////////////////
 // AUDIOFILE
 ///////////////////////////////////////////////////////////////////////////
 
+export type FileUploadResultEvent = {
+  id: number;
+  filename: string;
+  event: "error" | "success";
+  data: any;
+};
+export type FileUploadDoneEvent = {
+  event: "done";
+};
+
+export type AudiofileUploadCallbacks = {
+  onError: (error: any) => any;
+  onSuccess: (e: FileUploadResultEvent) => any;
+};
+
 export async function uploadAudioFile(
   files: FileList,
   playlistID: number,
-  onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
+  callbacks?: AudiofileUploadCallbacks,
 ) {
-  // set up the request config including the onUploadProgress event handler
-  let config: AxiosRequestConfig = {
-    baseURL: STREAMING_API_URL,
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-    // set a custom timeout since the default may be too short for uploads
-    timeout: 1000 * 60 * 5,
-    onUploadProgress,
-  };
-
-  const url = `/audiofiles/${playlistID}`;
+  const method = "POST";
+  const endpoint = `/audiofiles/${playlistID}`;
 
   const formData = new FormData();
   for (const file of files) {
     formData.append("files", file);
   }
 
-  return axiosClient.post(url, formData, config);
+  // since this endpoint does not use axios, we have to explicitly do an auth check
+  try {
+    const token = await checkRequestAuth({ url: endpoint, method });
+    const res = await fetch(STREAMING_API_URL + endpoint, {
+      method,
+      headers: {
+        Authorization: "Bearer " + token,
+      },
+      // browser will auto-set the content type and include the multipart boundary
+      body: formData,
+    });
+
+    if (!res.body) {
+      throw new Error("Body not found in reponse");
+    }
+
+    // parse the body and split the events
+    const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+
+    if (callbacks) {
+      await handleUploadEvents(reader, callbacks);
+    }
+  } catch (error) {
+    callbacks?.onError(error);
+    return;
+  }
+}
+
+async function handleUploadEvents(
+  reader: ReadableStreamDefaultReader<string>,
+  callbacks: AudiofileUploadCallbacks,
+) {
+  // String buffer to write store a single json payload.
+  // Concantentation is fine since most json objects are small and there is only a few.
+  let buf = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    // start of the unprocessed part of the value
+    let start = 0;
+    while (true) {
+      let newline_idx = value.indexOf("\n", start);
+      if (newline_idx === -1) {
+        // message slice is either empty or without newline (incomplete)
+        buf += value.slice(start);
+        break;
+      } else {
+        buf += value.slice(start, newline_idx);
+        // process the event and clear the buffer
+        const event = JSON.parse(buf) as
+          | FileUploadResultEvent
+          | FileUploadDoneEvent;
+        if (event.event === "success") {
+          callbacks.onSuccess(event);
+        } else if (event.event === "error") {
+          callbacks.onError(event);
+        } else {
+          throw new Error("Unexpected event");
+        }
+        buf = "";
+
+        // overflows are well handled by String.indexOf() and String.slice()
+        start = newline_idx + 1;
+      }
+    }
+  }
 }
 
 export async function deleteAudioFile(audioFileID: number) {

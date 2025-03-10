@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 import { addListeningHistory } from "@/api/requests/media";
-import { Audiofile } from "@/types/media";
+import { Audiofile } from "@/api/types/media";
 import { useShallow } from "zustand/react/shallow";
 import { useStore } from "@/store/store";
 import { getNextAudio, loadHls } from "./media-loader";

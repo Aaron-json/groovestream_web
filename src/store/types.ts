@@ -1,22 +1,21 @@
-import { Media } from "../types/media";
+import { Media } from "@/api/types/media";
 
 type BaseTask = {
   name?: string;
-  progress?: number;
   type: TaskType;
-}
+};
 
 export enum TaskType {
-  MediaTask
+  MediaTask,
 }
 
 export type MediaTask = BaseTask & {
   type: TaskType.MediaTask;
   media?: Media;
-}
+};
 
 export type Task = MediaTask;
 
 export type TaskStore = {
   [id: string]: Task;
-}
+};

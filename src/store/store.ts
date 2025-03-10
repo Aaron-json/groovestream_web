@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Audiofile } from "../types/media";
+import { Audiofile } from "@/api/types/media";
 import { Task, TaskStore, TaskType } from "./types";
 
 type Store = {

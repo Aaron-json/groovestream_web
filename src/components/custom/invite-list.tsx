@@ -1,4 +1,4 @@
-import { PlaylistInvite } from "@/types/invites";
+import { PlaylistInvite } from "@/api/types/invites";
 import InviteCard, { InviteCardSkeleton } from "./invite-card";
 
 type InviteListProps = {

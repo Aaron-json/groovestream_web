@@ -10,7 +10,7 @@ import MediaList from "@/components/custom/media-list";
 import InfoCard from "@/components/custom/info-card";
 import CreatePlaylistModal from "@/components/custom/create-playlist";
 import InviteList from "@/components/custom/invite-list";
-import { PlaylistInvite } from "@/types/invites";
+import { PlaylistInvite } from "@/api/types/invites";
 import { useCallback } from "react";
 import { toast } from "sonner";
 

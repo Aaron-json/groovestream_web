@@ -4,7 +4,7 @@ import { Session } from "@supabase/supabase-js";
 import { useState, useEffect } from "react";
 import { supabaseClient } from "../auth/client";
 
-const NO_INTERCEPTOR_URLS = [
+const NO_INTERCEPTOR_ENDPOINTS = [
   {
     // do not intercept requests to supabase auth endpoints
     url: "/users",
@@ -34,30 +34,43 @@ export function useAuth() {
 
     // set interceptor to add auth header to requests
     axiosClient.interceptors.request.use(async (config) => {
-      if (
-        NO_INTERCEPTOR_URLS.some(
-          (url) =>
-            url.url === config.url &&
-            url.method.toLowerCase() === config.method?.toLowerCase(),
-        )
-      ) {
-        return config;
-      }
-
-      const curSession = await supabaseClient.auth.getSession();
-
-      if (curSession.error) {
-        throw curSession.error;
-      } else if (!curSession.data.session) {
-        throw new Error("No session");
-      } else {
-        config.headers.Authorization =
-          "Bearer " + curSession.data.session.access_token;
-      }
+      const token = await checkRequestAuth({
+        url: config.url,
+        method: config.method,
+      });
+      config.headers.Authorization = "Bearer " + token;
       return config;
     });
     return () => data.subscription.unsubscribe();
   }, []);
 
   return { sessionRef, isAuthenticated } as const;
+}
+
+// Abstract the auth checking. some endpoints like file upload use the fetch api and not axios.
+// Returns an authorization header or undefined if the url is not meant to be
+// intercepted. On error, throws an error.
+export async function checkRequestAuth(config: {
+  url?: string;
+  method?: string;
+}): Promise<string | undefined> {
+  if (
+    NO_INTERCEPTOR_ENDPOINTS.some(
+      (url) =>
+        url.url === config.url &&
+        url.method.toLowerCase() === config.method?.toLowerCase(),
+    )
+  ) {
+    return undefined;
+  }
+
+  const curSession = await supabaseClient.auth.getSession();
+
+  if (curSession.error) {
+    throw curSession.error;
+  } else if (!curSession.data.session) {
+    throw new Error("No session");
+  } else {
+    return curSession.data.session.access_token;
+  }
 }

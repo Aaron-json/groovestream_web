@@ -1,4 +1,4 @@
-import { PlaylistInvite } from "@/types/invites";
+import { PlaylistInvite } from "@/api/types/invites";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

@@ -1,5 +1,5 @@
 import MediaCard, { MediaCardSkeleton } from "./media-card";
-import { Audiofile, Playlist } from "@/types/media";
+import { Audiofile, Playlist } from "@/api/types/media";
 
 export type MediaCardListProps = {
   title?: string;

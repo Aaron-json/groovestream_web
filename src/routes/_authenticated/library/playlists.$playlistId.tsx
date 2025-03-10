@@ -29,7 +29,7 @@ import AddPlaylistMember from "@/components/custom/add-playlist-member";
 import { usePlaylistAudioFiles } from "@/hooks/media";
 import InfoCard from "@/components/custom/info-card";
 import AudiofileTable from "@/components/custom/audiofile-table";
-import { ResponseError } from "@/types/errors";
+import { ResponseError } from "@/api/types/errors";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
 
@@ -61,6 +61,7 @@ function RouteComponent() {
   async function handleDeletePlaylist() {
     try {
       await deletePlaylist(playlist.id);
+      toast(`Playlist "${playlist.name}" deleted`);
       navigate({
         from: Route.fullPath,
         to: "/library",
@@ -160,10 +161,7 @@ function RouteComponent() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <FileUpload
-              playlistId={playlist.id}
-              onSuccess={refetchAudiofiles}
-            />
+            <FileUpload playlist={playlist} onSuccess={refetchAudiofiles} />
             <AddPlaylistMember playlistId={playlist.id} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

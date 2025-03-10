@@ -1,5 +1,5 @@
-import { FriendRequest } from "../../types/invites";
-import { Friend } from "../../types/relations";
+import { FriendRequest } from "../types/invites";
+import { Friend } from "../types/relations";
 import axiosClient from "../axiosClient";
 
 export async function getFriends(limit?: number, skip?: number) {

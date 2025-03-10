@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Check } from "lucide-react";
 import { createUser } from "@/api/requests/user";
-import { ResponseError } from "@/types/errors";
+import { ResponseError } from "@/api/types/errors";
 import { isAxiosError } from "axios";
 
 type FormValues = {

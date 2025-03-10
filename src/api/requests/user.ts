@@ -1,5 +1,5 @@
-import { ResponseError } from "@/types/errors";
-import { ProfilePicture, User } from "../../types/user";
+import { ResponseError } from "../types/errors";
+import { ProfilePicture, User } from "../types/user";
 import axiosClient from "../axiosClient";
 
 export async function getUser() {

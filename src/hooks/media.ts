@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   deleteAudioFile,
   deletePlaylist,
+  FileUploadResultEvent,
   getAudioFileHistory,
   getMostPlayedAudioFiles,
   getPlaylistAudiofiles,
@@ -10,8 +11,8 @@ import {
 import { useStore } from "../store/store";
 import { useId } from "react";
 import { MediaTask, TaskType } from "../store/types";
-import { AxiosProgressEvent } from "axios";
-import { Playlist, Audiofile } from "../types/media";
+import { Playlist, Audiofile } from "@/api/types/media";
+import { toast } from "sonner";
 
 export function usePlaylistAudioFiles(playlistId: number) {
   const key = "playlist-audiofiles" + "-" + playlistId.toString();
@@ -55,32 +56,64 @@ export function useListeningHistory(limit = 10, skip?: number) {
   return { ...query, key: LISTENING_HISTORY_STORE_KEY } as const;
 }
 
-export function useUploadAudioFile(files: FileList, playlist: Playlist) {
+function genTaskId() {
+  if (window.isSecureContext) {
+    return crypto.randomUUID();
+  } else {
+    // fallback for browser versions that do not consider
+    // locally served content as secure contexts. (Ex. Firefox versions before 84)
+    return `${Date.now().toString()}-${Math.round(Math.random() * 1000).toString()}`;
+  }
+}
+
+export function useUploadAudioFile() {
   const setTask = useStore((state) => state.setTask);
   const removeTask = useStore((state) => state.removeTask);
-  const taskId = useId();
-  const message = `Uploading audio files`;
-  const task: MediaTask = {
-    type: TaskType.MediaTask,
-    name: message,
-    progress: 0,
-    media: playlist,
-  };
 
-  try {
-    setTask(taskId, task);
-    return uploadAudioFile(
-      files,
-      playlist.id,
-      (progress: AxiosProgressEvent) => {
-        setTask(taskId, { ...task, progress: progress.progress });
-      },
-    );
-  } catch (error) {
-    throw error;
-  } finally {
-    removeTask(taskId);
-  }
+  return async function (files: FileList, playlist: Playlist) {
+    toast("Uploading audio files", {
+      description: "This may take a while...",
+    });
+
+    // keeps a mapping of the index of the file and its taskId
+    // so that we can clear it once it is done
+    const taskIdxToId: Record<number, string> = {};
+    function onError(e: any) {
+      if (e.filename && e.id && e.event) {
+        // an upload error event and not any other
+        // generic error
+        toast("Upload error", {
+          description: `Uploading "${e.filename}"`,
+        });
+        removeTask(taskIdxToId[e.id]);
+      } else {
+        toast("Upload error", {
+          description: e.message || "Unexpected error",
+        });
+      }
+    }
+
+    function onSuccess(e: FileUploadResultEvent) {
+      toast("Upload successul", {
+        description: `"${e.filename}" successfully uploaded`,
+      });
+      removeTask(taskIdxToId[e.id]);
+    }
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const taskId = genTaskId();
+      const task: MediaTask = {
+        type: TaskType.MediaTask,
+        name: `Uploading "${file.name}"`,
+        media: playlist,
+      };
+      setTask(taskId, task);
+      taskIdxToId[i] = taskId;
+    }
+
+    await uploadAudioFile(files, playlist.id, { onError, onSuccess });
+  };
 }
 
 export function useDeleteAudioFile(key: string, audiofile: Audiofile) {
@@ -90,7 +123,6 @@ export function useDeleteAudioFile(key: string, audiofile: Audiofile) {
   const task: MediaTask = {
     type: TaskType.MediaTask,
     name: "Deleting audio file: " + audiofile.filename,
-    progress: 0,
     media: audiofile,
   };
 
@@ -117,7 +149,6 @@ export function useDeletePlaylist(key: string, playlist: Playlist) {
   const task: MediaTask = {
     type: TaskType.MediaTask,
     name: "Deleting playlist",
-    progress: 0,
     media: playlist,
   };
   const query = useQuery({
