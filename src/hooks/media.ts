@@ -105,7 +105,7 @@ export function useUploadAudioFile() {
       const taskId = genTaskId();
       const task: MediaTask = {
         type: TaskType.MediaTask,
-        name: `Uploading "${file.name}"`,
+        title: `Uploading "${file.name}"`,
         media: playlist,
       };
       setTask(taskId, task);
@@ -122,7 +122,7 @@ export function useDeleteAudioFile(key: string, audiofile: Audiofile) {
   const taskId = useId();
   const task: MediaTask = {
     type: TaskType.MediaTask,
-    name: "Deleting audio file: " + audiofile.filename,
+    title: "Deleting audio file: " + audiofile.filename,
     media: audiofile,
   };
 
@@ -148,7 +148,7 @@ export function useDeletePlaylist(key: string, playlist: Playlist) {
   const taskId = useId();
   const task: MediaTask = {
     type: TaskType.MediaTask,
-    name: "Deleting playlist",
+    title: "Deleting playlist",
     media: playlist,
   };
   const query = useQuery({

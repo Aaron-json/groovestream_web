@@ -93,17 +93,14 @@ export default function AudiofileTable(props: AudiofileTableProps) {
       header: "Name",
       cell: (info) => info.getValue(),
     }),
-    columnHelper.accessor(
-      (row) => row.artists?.join(", ") || "Unknown artist",
-      {
-        id: "artist",
-        header: "Artist",
-        cell: (info) => info.getValue(),
-      },
-    ),
+    columnHelper.accessor((row) => row.artists?.join(", ") || "Unknown", {
+      id: "artist",
+      header: "Artist",
+      cell: (info) => info.getValue(),
+    }),
     ...(!isMobile
       ? [
-          columnHelper.accessor((row) => row.album || "Unknown album", {
+          columnHelper.accessor((row) => row.album || "Unknown", {
             id: "album",
             header: "Album",
             cell: (info) => info.getValue(),

@@ -1,23 +1,19 @@
 import { create } from "zustand";
 import { Audiofile } from "@/api/types/media";
-import { Task, TaskStore, TaskType } from "./types";
+import { Task } from "./types";
 
 type Store = {
   // MEDIA LISTS
-  mediaLists: {
-    [key: string]: Audiofile[];
-  };
+  mediaLists: Record<string, Audiofile[]>;
   setMediaList: (key: string, list: Audiofile[]) => void;
 
   // TASKS
-  tasks: TaskStore;
+  tasks: Record<string, Task>;
   setTask: (id: string, newTask: Task) => void;
   removeTask: (taskId: string) => void;
-  getTask: (taskId: string) => Task | undefined;
-  getTasks: (type?: TaskType) => Task[];
 };
 
-export const useStore = create<Store>((set, get) => ({
+export const useStore = create<Store>((set) => ({
   mediaLists: {},
   setMediaList: (key: string, list: Audiofile[]) => {
     set((prevState) => ({
@@ -38,14 +34,5 @@ export const useStore = create<Store>((set, get) => ({
       delete prevState.tasks[taskId];
       return { tasks: { ...prevState.tasks } };
     });
-  },
-  getTask: (taskId: string) => {
-    return get().tasks[taskId];
-  },
-  getTasks: (type?: TaskType) => {
-    if (type) {
-      return Object.values(get().tasks).filter((value) => value.type === type);
-    }
-    return Object.values(get().tasks);
   },
 }));

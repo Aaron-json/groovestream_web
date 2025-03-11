@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    font-size: clamp(14.8px, calc(0.5rem + 1vw), 17.8px);
+    font-size: clamp(14.8px, calc(0.5rem + 1vw), 17.6px);
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;

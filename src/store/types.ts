@@ -1,7 +1,7 @@
 import { Media } from "@/api/types/media";
 
 type BaseTask = {
-  name?: string;
+  title: string;
   type: TaskType;
 };
 
@@ -15,7 +15,3 @@ export type MediaTask = BaseTask & {
 };
 
 export type Task = MediaTask;
-
-export type TaskStore = {
-  [id: string]: Task;
-};

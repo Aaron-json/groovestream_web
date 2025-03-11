@@ -38,7 +38,7 @@ const ProfileButton = ({ avatarUrl = "/api/placeholder/40/40" }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Button variant="ghost" className="h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
             <AvatarImage
               src={avatarUrl}
@@ -59,7 +59,6 @@ const ProfileButton = ({ avatarUrl = "/api/placeholder/40/40" }) => {
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logout}>
           <LogOut className="mr-2 h-4 w-4" />
