@@ -45,7 +45,7 @@ function AuthenticatedLayout() {
               <MediaBar />
             </div>
           </div>
-          <Toaster position="top-right" />
+          <Toaster position="top-center" />
         </SidebarProvider>
       </MediaContextProvider>
     </QueryClientProvider>
