@@ -9,13 +9,18 @@ import {
   uploadAudioFile,
 } from "../api/requests/media";
 import { useStore } from "../store/store";
-import { useId } from "react";
 import { MediaTask, TaskType } from "../store/types";
 import { Playlist, Audiofile } from "@/api/types/media";
 import { toast } from "sonner";
 
+// cache keys
+const PLAYLIST_AUDIOFILES_CACHE_KEY_PREFIX = "playlist-audiofiles";
+const MOST_PLAYED_STORE_KEY = "most-played";
+const LISTENING_HISTORY_STORE_KEY = "listening-history";
+
 export function usePlaylistAudioFiles(playlistId: number) {
-  const key = "playlist-audiofiles" + "-" + playlistId.toString();
+  const key =
+    PLAYLIST_AUDIOFILES_CACHE_KEY_PREFIX + "-" + playlistId.toString();
   const setMediaList = useStore((state) => state.setMediaList);
   const query = useQuery({
     queryKey: [key],
@@ -29,7 +34,6 @@ export function usePlaylistAudioFiles(playlistId: number) {
 }
 
 export function useMostPlayed(limit = 10) {
-  const MOST_PLAYED_STORE_KEY = "most-played";
   const setMediaList = useStore((state) => state.setMediaList);
   const query = useQuery({
     queryKey: [MOST_PLAYED_STORE_KEY],
@@ -43,7 +47,6 @@ export function useMostPlayed(limit = 10) {
 }
 
 export function useListeningHistory(limit = 10, skip?: number) {
-  const LISTENING_HISTORY_STORE_KEY = "listening-history";
   const setMediaList = useStore((state) => state.setMediaList);
   const query = useQuery({
     queryKey: [LISTENING_HISTORY_STORE_KEY],
@@ -70,7 +73,7 @@ export function useUploadAudioFile() {
   const setTask = useStore((state) => state.setTask);
   const removeTask = useStore((state) => state.removeTask);
 
-  return async function (files: FileList, playlist: Playlist) {
+  return function (files: FileList, playlist: Playlist) {
     toast("Uploading audio files", {
       description: "This may take a while...",
     });
@@ -80,13 +83,13 @@ export function useUploadAudioFile() {
     const taskIdxToId: Record<number, string> = {};
     function onError(e: any) {
       if (e.filename && e.id && e.event) {
-        // an upload error event and not any other
-        // generic error
+        // an upload error event
         toast("Upload error", {
           description: `Uploading "${e.filename}"`,
         });
         removeTask(taskIdxToId[e.id]);
       } else {
+        // other generic error
         toast("Upload error", {
           description: e.message || "Unexpected error",
         });
@@ -112,57 +115,59 @@ export function useUploadAudioFile() {
       taskIdxToId[i] = taskId;
     }
 
-    await uploadAudioFile(files, playlist.id, { onError, onSuccess });
+    // This function should not throw an error. It catches  all errors
+    // and invokes the apppropriate callback
+    uploadAudioFile(files, playlist.id, { onError, onSuccess });
   };
 }
 
-export function useDeleteAudioFile(key: string, audiofile: Audiofile) {
+export function useDeleteAudioFile() {
   const removeTask = useStore((state) => state.removeTask);
   const setTask = useStore((state) => state.setTask);
-  const taskId = useId();
-  const task: MediaTask = {
-    type: TaskType.MediaTask,
-    title: "Deleting audio file: " + audiofile.filename,
-    media: audiofile,
-  };
 
-  const query = useQuery({
-    queryKey: [key],
-    queryFn: async () => {
-      try {
-        setTask(taskId, task);
-        return deleteAudioFile(audiofile.id);
-      } catch (error) {
-        throw error;
-      } finally {
-        removeTask(taskId);
-      }
-    },
-  });
-  return query;
+  return async function (audiofile: Audiofile) {
+    const taskId = genTaskId();
+    const task: MediaTask = {
+      type: TaskType.MediaTask,
+      title: "Deleting audio file: " + audiofile.filename,
+      media: audiofile,
+    };
+
+    setTask(taskId, task);
+    try {
+      await deleteAudioFile(audiofile.id);
+    } catch (error) {
+      throw error;
+    } finally {
+      removeTask(taskId);
+    }
+  };
 }
 
-export function useDeletePlaylist(key: string, playlist: Playlist) {
+export function useDeletePlaylist() {
   const removeTask = useStore((state) => state.removeTask);
   const setTask = useStore((state) => state.setTask);
-  const taskId = useId();
-  const task: MediaTask = {
-    type: TaskType.MediaTask,
-    title: "Deleting playlist",
-    media: playlist,
+
+  return async function (playlist: Playlist) {
+    toast(`Deleting playlist "${playlist.name}"`, {
+      description: "This may take a while",
+    });
+    const taskId = genTaskId();
+    const task: MediaTask = {
+      type: TaskType.MediaTask,
+      title: "Deleting playlist",
+      media: playlist,
+    };
+
+    setTask(taskId, task);
+    try {
+      await deletePlaylist(playlist.id);
+      toast("Playlist deleted successfully");
+    } catch (error) {
+      toast("Error deleting playlist");
+      throw error;
+    } finally {
+      removeTask(taskId);
+    }
   };
-  const query = useQuery({
-    queryKey: [key],
-    queryFn: async () => {
-      try {
-        setTask(taskId, task);
-        return deletePlaylist(playlist.id);
-      } catch (error) {
-        throw error;
-      } finally {
-        removeTask(taskId);
-      }
-    },
-  });
-  return query;
 }
