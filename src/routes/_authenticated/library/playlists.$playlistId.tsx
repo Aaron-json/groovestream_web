@@ -1,4 +1,4 @@
-import { getPlaylistInfo, leavePlaylist } from "@/api/requests/media";
+import { leavePlaylist } from "@/api/requests/media";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { EllipsisVertical, ListMusic, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,19 +22,33 @@ import {
 } from "@/components/ui/alert-dialog";
 import FileUpload from "@/components/custom/file-upload";
 import AddPlaylistMember from "@/components/custom/add-playlist-member";
-import { useDeletePlaylist, usePlaylistAudioFiles } from "@/hooks/media";
+import {
+  useDeletePlaylist,
+  usePlaylistAudioFiles,
+  usePlaylistInfo,
+} from "@/hooks/media";
 import InfoCard from "@/components/custom/info-card";
 import AudiofileTable from "@/components/custom/audiofile-table";
 import { ResponseError } from "@/api/types/errors";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
+import { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Audiofile, Playlist } from "@/api/types/media";
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId",
 )({
   component: RouteComponent,
-  loader: async ({ params }) => {
-    return getPlaylistInfo(+params.playlistId);
+  params: {
+    parse: function (params) {
+      // verify that the playlist id is valid
+      const playlist_id = +params.playlistId;
+      if (!Number.isInteger(playlist_id)) {
+        throw new Error("Invalid playlist id");
+      }
+      return { playlistId: playlist_id };
+    },
   },
   onError: () => {
     throw redirect({
@@ -44,19 +58,31 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
-  const playlist = Route.useLoaderData();
+  const { playlistId } = Route.useParams();
+  const {
+    data: playlist,
+    isLoading: playlistLoading,
+    error: playlistError,
+  } = usePlaylistInfo(playlistId);
+
   const {
     data: audiofiles,
     isLoading: audiofilesLoading,
-    error: audiofilesErr,
+    error: audiofilesError,
     refetch: refetchAudiofiles,
     key: storeKey,
-  } = usePlaylistAudioFiles(playlist.id);
+  } = usePlaylistAudioFiles(playlistId);
+
+  const [dialogOpenStates, setDialogOpenStates] = useState({
+    addMember: false,
+    fileUpload: false,
+    deletePlaylist: false,
+  });
   const { navigate } = useRouter();
 
   const deletePlaylistFunc = useDeletePlaylist();
 
-  async function handleDeletePlaylist() {
+  async function handleDeletePlaylist(playlist: Playlist) {
     navigate({
       from: Route.fullPath,
       to: "/library",
@@ -66,7 +92,7 @@ function RouteComponent() {
 
   async function handleLeavePlaylist() {
     try {
-      await leavePlaylist(playlist.id);
+      await leavePlaylist(playlistId);
       navigate({
         from: Route.fullPath,
         to: "/library",
@@ -85,10 +111,7 @@ function RouteComponent() {
     }
   }
 
-  function renderAudiofiles() {
-    if (!audiofiles) {
-      return null;
-    }
+  function renderAudiofiles(audiofiles: Audiofile[]) {
     if (audiofiles.length === 0) {
       return <InfoCard text="No tracks in this playlist yet" />;
     } else {
@@ -101,14 +124,22 @@ function RouteComponent() {
       );
     }
   }
-  if (audiofilesLoading) {
-    return null;
-  }
 
-  if (audiofilesErr || !audiofiles) {
+  if (!playlist || !audiofiles || playlistLoading || audiofilesLoading) {
+    return (
+      <div className="flex gap-4 space-auto px-10">
+        <Skeleton className="w-44 aspect-square rounded-md" />
+        <div className="flex flex-col gap-2">
+          <Skeleton className="w-60 h-5" />
+          <Skeleton className="w-40 h-5" />
+          <Skeleton className="w-40 h-5" />
+        </div>
+      </div>
+    );
+  }
+  if (audiofilesError || playlistError) {
     return <InfoCard text={"Something went wrong"} />;
   }
-
   return (
     <section className="flex flex-col gap-4">
       <div className="flex gap-4 px-10">
@@ -195,7 +226,7 @@ function RouteComponent() {
           </div>
         </div>
       </div>
-      {renderAudiofiles()}
+      {renderAudiofiles(audiofiles)}
     </section>
   );
 }

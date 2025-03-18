@@ -50,7 +50,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
     } else {
       navigate({
         to: `/library/playlists/$playlistId`,
-        params: { playlistId: media.id.toString() },
+        params: { playlistId: media.id },
       });
     }
   };

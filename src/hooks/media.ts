@@ -6,6 +6,7 @@ import {
   getAudioFileHistory,
   getMostPlayedAudioFiles,
   getPlaylistAudiofiles,
+  getPlaylistInfo,
   uploadAudioFile,
 } from "../api/requests/media";
 import { useStore } from "../store/store";
@@ -13,14 +14,28 @@ import { MediaTask, TaskType } from "../store/types";
 import { Playlist, Audiofile } from "@/api/types/media";
 import { toast } from "sonner";
 
-// cache keys
-const PLAYLIST_AUDIOFILES_CACHE_KEY_PREFIX = "playlist-audiofiles";
+// store and cache keys
+// These keys are used to access / update data in the
+// react-query layer. They are also sometimes used in our client
+// side cache. In these cases they are returned to the caller so
+// they can observe changes on that value as queries update it.
+const PLAYLIST_AUDIOFILES_STORE_KEY_PREFIX = "playlist-audiofiles";
+const PLAYLIST_INFO_STORE_KEY_PREFIX = "playlist-info";
 const MOST_PLAYED_STORE_KEY = "most-played";
 const LISTENING_HISTORY_STORE_KEY = "listening-history";
 
+export function usePlaylistInfo(playlistId: number) {
+  const key = PLAYLIST_INFO_STORE_KEY_PREFIX + "-" + playlistId.toString();
+  const query = useQuery({
+    queryKey: [key],
+    queryFn: async () => getPlaylistInfo(playlistId),
+  });
+  return { ...query } as const;
+}
+
 export function usePlaylistAudioFiles(playlistId: number) {
   const key =
-    PLAYLIST_AUDIOFILES_CACHE_KEY_PREFIX + "-" + playlistId.toString();
+    PLAYLIST_AUDIOFILES_STORE_KEY_PREFIX + "-" + playlistId.toString();
   const setMediaList = useStore((state) => state.setMediaList);
   const query = useQuery({
     queryKey: [key],
