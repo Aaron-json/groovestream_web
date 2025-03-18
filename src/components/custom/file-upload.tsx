@@ -18,6 +18,9 @@ type FileUploadProps = {
   trigger?: React.ReactNode;
   playlist: Playlist;
   onSuccess?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  defaultOpen?: boolean;
 };
 
 const MAX_FILES = 5;
@@ -81,7 +84,11 @@ export default function FileUpload(props: FileUploadProps) {
   };
 
   return (
-    <Dialog>
+    <Dialog
+      open={props.open}
+      defaultOpen={props.defaultOpen}
+      onOpenChange={props.onOpenChange}
+    >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>

@@ -132,7 +132,15 @@ function RouteComponent() {
             {audiofiles.length} {audiofiles.length === 1 ? "track" : "tracks"}
           </p>
           <div className="flex items-center">
-            <AlertDialog>
+            <AlertDialog
+              open={dialogOpenStates.deletePlaylist}
+              onOpenChange={(open) =>
+                setDialogOpenStates({
+                  ...dialogOpenStates,
+                  deletePlaylist: open,
+                })
+              }
+            >
               <AlertDialogTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <Trash2 className="h-4 w-4" />
@@ -148,14 +156,29 @@ function RouteComponent() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeletePlaylist}>
+                  <AlertDialogAction
+                    onClick={() => handleDeletePlaylist(playlist)}
+                  >
                     Continue
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <FileUpload playlist={playlist} onSuccess={refetchAudiofiles} />
-            <AddPlaylistMember playlistId={playlist.id} />
+            <FileUpload
+              open={dialogOpenStates.fileUpload}
+              onOpenChange={(open) =>
+                setDialogOpenStates({ ...dialogOpenStates, fileUpload: open })
+              }
+              playlist={playlist}
+              onSuccess={refetchAudiofiles}
+            />
+            <AddPlaylistMember
+              open={dialogOpenStates.addMember}
+              onOpenChange={(open) =>
+                setDialogOpenStates({ ...dialogOpenStates, addMember: open })
+              }
+              playlistId={playlistId}
+            />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">

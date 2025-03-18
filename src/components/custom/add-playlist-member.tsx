@@ -15,10 +15,14 @@ import { useForm } from "react-hook-form";
 import { sendPlaylistInvite } from "@/api/requests/media";
 import { isAxiosError } from "axios";
 import { ResponseError } from "@/api/types/errors";
+import { toast } from "sonner";
 
 type AddPlaylistMemberProps = {
   playlistId: number;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  defaultOpen?: boolean;
 };
 
 type AddPlaylistMemberValues = {
@@ -63,7 +67,11 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
     }
   }
   return (
-    <Dialog>
+    <Dialog
+      open={props.open}
+      onOpenChange={props.onOpenChange}
+      defaultOpen={props.defaultOpen}
+    >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
