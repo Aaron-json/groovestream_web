@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Audiofile, Playlist } from "@/api/types/media";
+import { queryClient } from "@/routes/_authenticated";
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId",
@@ -88,6 +89,7 @@ function RouteComponent() {
       to: "/library",
     });
     await deletePlaylistFunc(playlist);
+    queryClient.invalidateQueries({ queryKey: ["playlists"] });
   }
 
   async function handleLeavePlaylist() {
