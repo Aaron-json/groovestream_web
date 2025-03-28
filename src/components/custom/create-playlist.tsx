@@ -64,7 +64,7 @@ export default function CreatePlaylistModal(props: CreatePlaylistProps) {
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Playlist</DialogTitle>
           <DialogDescription>
