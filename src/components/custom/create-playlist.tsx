@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Plus } from "lucide-react";
 import {
@@ -15,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { createPlaylist } from "@/api/requests/media";
 import { AlertCircle } from "lucide-react";
+import { queryClient } from "@/routes/_authenticated";
 
 type CreatePlaylistValues = {
   name: string;
@@ -22,11 +24,12 @@ type CreatePlaylistValues = {
 
 type CreatePlaylistProps = {
   trigger?: React.ReactNode;
-  onSuccess?: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
 export default function CreatePlaylistModal(props: CreatePlaylistProps) {
-  const { register, handleSubmit, formState, setError } =
+  const { reset, register, handleSubmit, formState, setError } =
     useForm<CreatePlaylistValues>({
       defaultValues: {
         name: "",
@@ -40,20 +43,26 @@ export default function CreatePlaylistModal(props: CreatePlaylistProps) {
     </Button>
   );
 
+  // reset form data everytime it opens or closes
+  useEffect(() => {
+    reset();
+  }, [props.open]);
+
   const onSubmit = async (data: CreatePlaylistValues) => {
     try {
       // use await so the error is caught
       await createPlaylist(data.name);
-      props.onSuccess?.();
+      props.onOpenChange(false);
+      queryClient.invalidateQueries({ queryKey: ["playlists"] });
     } catch (err: any) {
-      const message = err.message ?? "An unexpected error occurred.";
+      const message = "An unexpected error occurred.";
       setError("root", {
         message,
       });
     }
   };
   return (
-    <Dialog>
+    <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
