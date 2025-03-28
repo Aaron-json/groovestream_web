@@ -101,6 +101,11 @@ function RouteComponent() {
     }
   }
 
+  // if both playlists and invites cannot be loaded,
+  // show a single error for the whole page
+  if (playlistInvitesErr && playlistsErr) {
+    return <InfoCard text={"Something went wrong"} />;
+  }
   return (
     <section>
       <div className="flex items-center justify-between">
