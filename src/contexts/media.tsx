@@ -222,7 +222,7 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
       unloadMedia();
       return;
     }
-    const nextAudiofile = currentMediaList[nextIndex] as Audiofile;
+    const nextAudiofile = currentMediaList[nextIndex];
 
     if (nextAudiofile.id === _currentMedia.audiofile.id) {
       try {
