@@ -9,7 +9,7 @@ type InfoCardProps = {
 export default function InfoCard(props: InfoCardProps) {
   const icon = props.icon ?? <Music2 className="w-6 h-6 mr-2" />;
   return (
-    <Card className="max-w-md mx-auto mt-8">
+    <Card className="w-[30rem] mx-auto mt-8">
       <CardContent className="flex items-center justify-center p-8 text-muted-foreground">
         {icon}
         <span>{props.text}</span>
