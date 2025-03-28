@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated")({
   },
 });
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: false,
