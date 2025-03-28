@@ -75,7 +75,7 @@ export default function FileUpload(props: FileUploadProps) {
         return;
       }
     }
-    await uploadFunc(files, props.playlist); // captures all erros internally
+    uploadFunc(files, props.playlist); // captures all errors internally
     setFormState({ state: "input" });
     props.onSuccess?.();
     if (e.currentTarget) {
