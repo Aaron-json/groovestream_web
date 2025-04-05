@@ -52,7 +52,7 @@ function RouteComponent() {
         toast("Error accepting invite");
       }
     },
-    [refetchPlaylistInvites, toast],
+    [refetchPlaylistInvites, refetchPlaylists, toast],
   );
 
   const handleDeclineInvite = useCallback(
@@ -65,7 +65,7 @@ function RouteComponent() {
         toast("Error declining invite");
       }
     },
-    [refetchPlaylistInvites, toast],
+    [refetchPlaylistInvites, refetchPlaylists, toast],
   );
 
   function renderPlaylists() {
