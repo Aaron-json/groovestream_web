@@ -141,9 +141,14 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
 
     // use type any since the playlistID is on some playables but not all
     const audiofile = newMedia.audiofile;
-    const playlist_file = audiofile.objects.find((val: string) =>
-      val.endsWith(".m3u8"),
-    );
+    let playlist_file;
+    if (audiofile.object_id) {
+      playlist_file = audiofile.object_id + ".m3u8";
+    } else {
+      playlist_file = audiofile.objects.find((val: string) =>
+        val.endsWith(".m3u8"),
+      );
+    }
     if (playlist_file === undefined) {
       unloadMedia();
       throw new Error("Playlist file not found");

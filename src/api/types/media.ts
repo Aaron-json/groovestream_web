@@ -1,6 +1,7 @@
 export interface Audiofile {
   id: number;
   filename: string;
+  object_id: string;
   objects: string[];
   title: string | null;
   album: string | null;
