@@ -60,17 +60,17 @@ export default function FileUpload(props: FileUploadProps) {
     }
 
     for (const file of files) {
-      if (file.size > MAX_FILE_SIZE) {
-        setFormState({
-          state: "input",
-          message: `File "${file.name}" exceeds size limit`,
-        });
-        return;
-      }
       if (!SUPPORTED_FILE_TYPES.includes(file.type)) {
         setFormState({
           state: "input",
           message: `File "${file.name}" is not a supported type`,
+        });
+        return;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        setFormState({
+          state: "input",
+          message: `File "${file.name}" exceeds size limit`,
         });
         return;
       }
