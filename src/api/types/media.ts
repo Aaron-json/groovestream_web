@@ -20,7 +20,7 @@ export type Protocol = "hls" | "dash";
 export type Codec = "aac" | "flac";
 
 export type AudiofileDeliverable = {
-  id: number;
+  id: string;
   audiofile_id: number;
   objects: string[];
   manifest_file: string;
