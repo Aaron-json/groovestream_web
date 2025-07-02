@@ -1,14 +1,31 @@
 import { leavePlaylist } from "@/api/requests/media";
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
-import { EllipsisVertical, ListMusic, Trash2, Users } from "lucide-react";
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  Link,
+  useRouter,
+  useMatch,
+} from "@tanstack/react-router";
+import {
+  EllipsisVertical,
+  ListMusic,
+  Trash2,
+  Upload,
+  Users,
+  LogOut,
+  Play,
+  Pause,
+  LoaderCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,9 +35,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import FileUpload from "@/components/custom/file-upload";
 import AddPlaylistMember from "@/components/custom/add-playlist-member";
 import {
   useDeletePlaylist,
@@ -28,14 +43,14 @@ import {
   usePlaylistInfo,
 } from "@/hooks/media";
 import InfoCard from "@/components/custom/info-card";
-import AudiofileTable from "@/components/custom/audiofile-table";
 import { ResponseError } from "@/api/types/errors";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Audiofile, Playlist } from "@/api/types/media";
+import { Playlist } from "@/api/types/media";
 import { queryClient } from "@/routes/_authenticated";
+import { mediaContext } from "@/contexts/media";
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId",
@@ -43,15 +58,15 @@ export const Route = createFileRoute(
   component: RouteComponent,
   params: {
     parse: function (params) {
-      // verify that the playlist id is valid
       const playlist_id = +params.playlistId;
-      if (!Number.isInteger(playlist_id)) {
+      if (Number.isNaN(playlist_id) || !Number.isInteger(playlist_id)) {
         throw new Error("Invalid playlist id");
       }
       return { playlistId: playlist_id };
     },
   },
-  onError: () => {
+  onError: (err) => {
+    console.error("Route error:", err);
     throw redirect({
       to: "/library",
     });
@@ -59,6 +74,17 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
+  const mediaCtx = useContext(mediaContext);
+  if (!mediaCtx) {
+    throw new Error("page must be inside the media context");
+  }
+
+  const playlistIndexMatch = useMatch({
+    from: "/_authenticated/library/playlists/$playlistId/",
+    shouldThrow: false,
+  });
+  const playlistIndexRendered = playlistIndexMatch !== undefined;
+
   const { playlistId } = Route.useParams();
   const {
     data: playlist,
@@ -66,45 +92,46 @@ function RouteComponent() {
     error: playlistError,
   } = usePlaylistInfo(playlistId);
 
-  const {
-    data: audiofiles,
-    isLoading: audiofilesLoading,
-    error: audiofilesError,
-    refetch: refetchAudiofiles,
-    key: storeKey,
-  } = usePlaylistAudioFiles(playlistId);
-
   const [dialogOpenStates, setDialogOpenStates] = useState({
     addMember: false,
-    fileUpload: false,
     deletePlaylist: false,
   });
-  const { navigate } = useRouter();
+  const router = useRouter();
 
-  const deletePlaylistFunc = useDeletePlaylist();
+  const deletePlaylistMutation = useDeletePlaylist();
 
-  async function handleDeletePlaylist(playlist: Playlist) {
-    navigate({
-      from: Route.fullPath,
-      to: "/library",
-    });
-    await deletePlaylistFunc(playlist);
-    queryClient.invalidateQueries({ queryKey: ["playlists"] });
+  // this will also load the audiofiles in store so we can safely call play.
+  const { key: mediaStoreKey } = usePlaylistAudioFiles(playlistId);
+
+  async function handleDeletePlaylist(playlistToDelete: Playlist) {
+    try {
+      await deletePlaylistMutation(playlistToDelete);
+      toast("Playlist deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["playlists"] });
+      router.navigate({
+        from: Route.fullPath,
+        to: "/library",
+      });
+    } catch (error) {
+      toast("Error deleting playlist", { description: "Please try again." });
+    }
   }
 
   async function handleLeavePlaylist() {
     try {
       await leavePlaylist(playlistId);
-      navigate({
+      toast("Successfully left the playlist");
+      queryClient.invalidateQueries({ queryKey: ["playlists"] });
+      router.navigate({
         from: Route.fullPath,
         to: "/library",
       });
-    } catch (error: any) {
-      let message = undefined;
+    } catch (error: unknown) {
+      let message = "Could not leave the playlist. Please try again.";
       if (isAxiosError<ResponseError>(error)) {
         const errorCode = error.response?.data.error_code;
         if (errorCode === "OWNER_CANNOT_LEAVE") {
-          message = "The owner of a playlist cannot leave";
+          message = "The owner of a playlist cannot leave it.";
         }
       }
       toast("Error leaving playlist", {
@@ -113,122 +140,215 @@ function RouteComponent() {
     }
   }
 
-  function renderAudiofiles(audiofiles: Audiofile[]) {
-    if (audiofiles.length === 0) {
-      return <InfoCard text="No tracks in this playlist yet" />;
+  if (playlistLoading) {
+    return (
+      <section className="flex flex-col gap-4">
+        {" "}
+        <div className="flex gap-4 h-40 md:h-44">
+          <Skeleton className="h-full aspect-square rounded-md flex-shrink-0" />
+
+          <div className="flex flex-col gap-1 flex-grow justify-end">
+            <Skeleton className="h-6 w-4/5" />
+            <Skeleton className="h-6 w-7/12" />{" "}
+            <Skeleton className="h-6 w-1/3" />
+            <div className="flex items-center gap-2 mt-2">
+              {" "}
+              <Skeleton className="h-9 w-28" /> <Skeleton className="h-9 w-9" />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (playlistError) {
+    return <InfoCard text={"Something went wrong loading the playlist."} />;
+  }
+
+  if (!playlist) {
+    return <InfoCard text="Playlist not found." />;
+  }
+
+  const getPlayPauseButton = () => {
+    if (mediaCtx.getMedia()?.mediaStoreKey === mediaStoreKey) {
+      if (mediaCtx.playbackState === "playing") {
+        return (
+          <Button
+            onClick={() => mediaCtx.playPauseToggle()}
+            variant="outline"
+            size="sm"
+          >
+            <Pause /> Pause
+          </Button>
+        );
+      } else if (mediaCtx.playbackState === "loading") {
+        // TODO: center animation. animation does not show at the moment
+        return <LoaderCircle className="animate-spin" />;
+      } else {
+        return (
+          <Button
+            onClick={() => mediaCtx.playPauseToggle()}
+            variant="outline"
+            size="sm"
+          >
+            <Play /> Play
+          </Button>
+        );
+      }
     } else {
       return (
-        <AudiofileTable
-          audiofiles={audiofiles}
-          mediaStoreKey={storeKey}
-          refetch={refetchAudiofiles}
-        />
+        <Button
+          onClick={() => mediaCtx.setMedia(mediaStoreKey)}
+          variant="outline"
+          size="sm"
+        >
+          <Play /> Play
+        </Button>
+      );
+    }
+  };
+
+  function getSecondaryButton() {
+    if (playlistIndexRendered) {
+      return (
+        <Link
+          to="/library/playlists/$playlistId/upload"
+          params={{ playlistId }}
+          aria-label="Upload audio to playlist"
+        >
+          <Button variant="outline" size="sm">
+            <Upload />
+          </Button>
+        </Link>
+      );
+    } else {
+      return (
+        <Link
+          to="/library/playlists/$playlistId"
+          params={{ playlistId }}
+          aria-label="Playlist audio files"
+        >
+          <Button variant="outline" size="sm">
+            <ListMusic />
+          </Button>
+        </Link>
       );
     }
   }
 
-  if (!playlist || !audiofiles || playlistLoading || audiofilesLoading) {
-    return (
-      <div className="flex gap-4 space-auto px-10">
-        <Skeleton className="w-44 aspect-square rounded-md" />
-        <div className="flex flex-col gap-2">
-          <Skeleton className="w-60 h-5" />
-          <Skeleton className="w-40 h-5" />
-          <Skeleton className="w-40 h-5" />
-        </div>
-      </div>
-    );
-  }
-  if (audiofilesError || playlistError) {
-    return <InfoCard text={"Something went wrong"} />;
-  }
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex gap-4 px-10">
-        <div className="w-44 aspect-square border rounded-md overflow-hidden">
-          <ListMusic className="w-full h-full text-muted-foreground" />
+      <div className="flex gap-4 h-40 md:h-44">
+        <div className="h-full aspect-square bg-muted rounded-md flex items-center justify-center flex-shrink-0">
+          <ListMusic className="w-1/2 h-1/2 text-muted-foreground" />
         </div>
-        <div className="flex flex-col justify-center gap-2">
-          <h1 className="text-2xl">{playlist.name}</h1>
-          <p className="text-muted-foreground text-sm">
-            Created by{" "}
-            <span className="font-medium">{playlist.owner_username}</span>
+
+        <div className="flex flex-col gap-1 flex-grow justify-end">
+          <h1 className="text-3xl font-bold">{playlist.name}</h1>
+          <p className="text-md text-muted-foreground hover:text-foreground transition-colors duration-150">
+            {playlist.owner_username}
           </p>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
+            Created{" "}
             {new Date(playlist.created_at).toLocaleDateString(undefined, {
               year: "numeric",
-              month: "long",
+              month: "short",
               day: "numeric",
             })}
           </p>
-          <p className="text-sm font-medium">
-            {audiofiles.length} {audiofiles.length === 1 ? "track" : "tracks"}
-          </p>
-          <div className="flex items-center">
-            <AlertDialog
-              open={dialogOpenStates.deletePlaylist}
-              onOpenChange={(open) =>
-                setDialogOpenStates({
-                  ...dialogOpenStates,
-                  deletePlaylist: open,
-                })
-              }
-            >
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. All audio in this playlist
-                    will be deleted.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => handleDeletePlaylist(playlist)}
-                  >
-                    Continue
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            <FileUpload
-              open={dialogOpenStates.fileUpload}
-              onOpenChange={(open) =>
-                setDialogOpenStates({ ...dialogOpenStates, fileUpload: open })
-              }
-              playlist={playlist}
-              onSuccess={refetchAudiofiles}
-            />
-            <AddPlaylistMember
-              open={dialogOpenStates.addMember}
-              onOpenChange={(open) =>
-                setDialogOpenStates({ ...dialogOpenStates, addMember: open })
-              }
-              playlistId={playlistId}
-            />
+          <div className="flex items-center gap-2 mt-2">
+            {getPlayPauseButton()}
+            {getSecondaryButton()}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <EllipsisVertical className="h-4 w-4" />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="More playlist actions"
+                >
+                  <EllipsisVertical />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={handleLeavePlaylist}>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setDialogOpenStates((prevState) => ({
+                      ...prevState,
+                      addMember: true,
+                    }));
+                  }}
+                >
                   <Users className="mr-2 h-4 w-4" />
+                  <span>Add Members</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={handleLeavePlaylist}>
+                  <LogOut className="mr-2 h-4 w-4" />
                   <span>Leave Playlist</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setDialogOpenStates((prevState) => ({
+                      ...prevState,
+                      deletePlaylist: true,
+                    }));
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  <span>Delete Playlist</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
       </div>
-      {renderAudiofiles(audiofiles)}
+
+      <AddPlaylistMember
+        playlistId={playlistId}
+        open={dialogOpenStates.addMember}
+        onOpenChange={(open) =>
+          setDialogOpenStates((prevState) => ({
+            ...prevState,
+            addMember: open,
+          }))
+        }
+      />
+
+      <AlertDialog
+        open={dialogOpenStates.deletePlaylist}
+        onOpenChange={(open) =>
+          setDialogOpenStates((prevState) => ({
+            ...prevState,
+            deletePlaylist: open,
+          }))
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              playlist "{playlist.name}" and all its tracks.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => handleDeletePlaylist(playlist)}
+            >
+              Delete Playlist
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <Outlet />
     </section>
   );
 }

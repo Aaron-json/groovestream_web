@@ -30,6 +30,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
   }
   const navigate = useNavigate();
   const _isAudiofile = isAudiofile(media);
+  const currentAudiofile = mediaCtx.getMedia()?.audiofile;
 
   const handleClick = async (_: React.MouseEvent<HTMLDivElement>) => {
     if (onClick) {
@@ -39,7 +40,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
     if (_isAudiofile) {
       if (mediaStoreKey) {
         try {
-          await mediaCtx.setMedia(media, mediaStoreKey, index);
+          await mediaCtx.setMedia(mediaStoreKey, index);
         } catch (error: any) {
           const message = error.message ? error.message : "Error loading media";
           toast("Error loading media", {
@@ -60,10 +61,10 @@ const MediaCard: React.FC<MediaCardProps> = ({
     if (!_isAudiofile) {
       return;
     }
-    if (mediaCtx.currentMedia?.id === media.id) {
+    if (currentAudiofile?.id === media.id) {
       mediaCtx.playPauseToggle();
     } else if (mediaStoreKey) {
-      mediaCtx.setMedia(media, mediaStoreKey, index);
+      mediaCtx.setMedia(mediaStoreKey, index);
     }
   };
 
@@ -83,7 +84,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
     if (
       mediaCtx.playbackState !== "playing" ||
       (mediaCtx.playbackState === "playing" &&
-        mediaCtx.currentMedia?.id !== media.id)
+        currentAudiofile?.id !== media.id)
     ) {
       icon = <Play className="h-5 w-5" />;
     } else {

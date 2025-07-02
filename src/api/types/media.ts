@@ -1,8 +1,7 @@
-export interface Audiofile {
+export type Audiofile = {
   id: number;
   filename: string;
   object_id: string;
-  objects: string[];
   title: string | null;
   album: string | null;
   playlist_id: number;
@@ -14,20 +13,29 @@ export interface Audiofile {
   track_number: number | null;
   track_total: number | null;
   genre: string | null;
-  bitrate: number | null;
-  mime_type: string;
-  format: string;
   channels: number | null;
-  sample_rate: number | null;
-}
+};
 
-export interface Playlist {
+export type Protocol = "hls" | "dash";
+export type Codec = "aac" | "flac";
+
+export type AudiofileDeliverable = {
+  id: number;
+  audiofile_id: number;
+  objects: string[];
+  manifest_file: string;
+  protocol: Protocol;
+  codec: Codec;
+  created_at: string;
+};
+
+export type Playlist = {
   id: number;
   name: string;
   owner_id: number;
   owner_username: string;
   created_at: string;
-}
+};
 
 export type Media = Audiofile | Playlist;
 

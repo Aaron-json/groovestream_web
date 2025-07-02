@@ -6,6 +6,7 @@ type Store = {
   // MEDIA LISTS
   mediaLists: Record<string, Audiofile[]>;
   setMediaList: (key: string, list: Audiofile[]) => void;
+  removeMediaList: (key: string) => void;
 
   // TASKS
   tasks: Record<string, Task>;
@@ -21,6 +22,12 @@ export const useStore = create<Store>((set) => ({
         ...prevState.mediaLists,
         [key]: list,
       },
+    }));
+  },
+  removeMediaList: (key: string) => {
+    set((prevState) => ({
+      ...prevState,
+      [key]: undefined,
     }));
   },
   tasks: {},

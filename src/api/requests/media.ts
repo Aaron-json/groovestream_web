@@ -1,5 +1,5 @@
 import axiosClient, { STREAMING_API_URL } from "../axiosClient";
-import { Playlist, Audiofile } from "../types/media";
+import { Playlist, Audiofile, AudiofileDeliverable } from "../types/media";
 import { PlaylistInvite } from "../types/invites";
 import { checkRequestAuth } from "@/auth/state";
 
@@ -9,12 +9,9 @@ import { checkRequestAuth } from "@/auth/state";
 
 export type FileUploadResultEvent = {
   id: number;
-  filename: string;
+  filename?: string;
   event: "error" | "success";
-  data: any;
-};
-export type FileUploadDoneEvent = {
-  event: "done";
+  message: string;
 };
 
 export type AudiofileUploadCallbacks = {
@@ -23,7 +20,7 @@ export type AudiofileUploadCallbacks = {
 };
 
 export async function uploadAudioFile(
-  files: FileList,
+  files: File[],
   playlistID: number,
   callbacks?: AudiofileUploadCallbacks,
 ) {
@@ -87,9 +84,7 @@ async function handleUploadEvents(
       } else {
         buf += value.slice(start, newline_idx);
         // process the event and clear the buffer
-        const event = JSON.parse(buf) as
-          | FileUploadResultEvent
-          | FileUploadDoneEvent;
+        const event = JSON.parse(buf) as FileUploadResultEvent;
         if (event.event === "success") {
           callbacks.onSuccess(event);
         } else if (event.event === "error") {
@@ -108,6 +103,13 @@ async function handleUploadEvents(
 
 export async function deleteAudioFile(audioFileID: number) {
   return axiosClient.delete(`/audiofiles/${audioFileID}`);
+}
+
+export async function getDeliverables(audiofileId: number) {
+  const response = await axiosClient.get<AudiofileDeliverable[]>(
+    `/audiofiles/${audiofileId}/deliverables`,
+  );
+  return response.data;
 }
 export async function getObjectUrl(objectId: string) {
   let url = `/audiofiles/object/${objectId}/url`;

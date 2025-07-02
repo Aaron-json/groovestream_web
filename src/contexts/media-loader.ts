@@ -1,4 +1,4 @@
-import { getObjectUrl } from "@/api/requests/media";
+import { getDeliverables, getObjectUrl } from "@/api/requests/media";
 import Hls, {
   HlsConfig,
   LoaderCallbacks,
@@ -15,13 +15,9 @@ export class CustomLoader extends Hls.DefaultConfig.loader {
     callbacks: LoaderCallbacks<LoaderContext>,
   ): Promise<void> {
     try {
-      // Hls allows relative URLs, so hls.js will try to load the fragment files from the
-      // same origin as the manifest. This is not what we want, so we need to remove the
-      // base from the URL.
-      // TODO: this is a workaround, the backend should use absolute URLS
-      const url = context.url.slice(context.url.lastIndexOf("/") + 1);
-      const signedUrl = await getObjectUrl(url);
-      context = { ...context, url: signedUrl };
+      const object_name = context.url.slice(context.url.lastIndexOf("/") + 1);
+      const signed_url = await getObjectUrl(object_name);
+      context = { ...context, url: signed_url };
       super.load(context, config, callbacks);
     } catch (error) {
       // Handle any errors in getting signed URL
@@ -56,7 +52,19 @@ interface HlsLoadResult {
   duration: number;
 }
 
-export function loadHls(manifest: string, video: HTMLVideoElement) {
+export async function loadHls(audiofile_id: number, video: HTMLVideoElement) {
+  const deliverables = await getDeliverables(audiofile_id);
+  const hlsDeliverables = deliverables.filter(
+    (deliverable) =>
+      deliverable.protocol === "hls" && deliverable.codec === "aac",
+  );
+  if (hlsDeliverables.length === 0) {
+    throw new Error("No deliverables found");
+  }
+
+  // TODO: add more info in the backend for selection
+  const deliverable = hlsDeliverables[0];
+
   const hls = new Hls(HLS_CONFIG);
   return new Promise<HlsLoadResult>((resolve, reject) => {
     let mediaAttached = false;
@@ -89,7 +97,7 @@ export function loadHls(manifest: string, video: HTMLVideoElement) {
       hls.destroy();
     });
 
-    hls.loadSource(manifest);
+    hls.loadSource(deliverable.manifest_file);
     hls.attachMedia(video);
   });
 }

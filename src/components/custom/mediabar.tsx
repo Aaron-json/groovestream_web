@@ -20,6 +20,8 @@ export default function MediaBar() {
   if (!mediaCtx) {
     throw new Error("Media context not found");
   }
+  const audiofile = mediaCtx.getMedia()?.audiofile;
+
   const isMobile = useIsMobile();
 
   const renderPlaybackIcon = () => {
@@ -33,18 +35,15 @@ export default function MediaBar() {
   };
 
   const displayName = () => {
-    if (mediaCtx.currentMedia) {
-      return mediaCtx.currentMedia.title || mediaCtx.currentMedia.filename;
+    if (audiofile) {
+      return audiofile.title || audiofile.filename;
     } else {
       return "No media";
     }
   };
   const displayArtist = () => {
-    if (
-      mediaCtx.currentMedia?.artists &&
-      mediaCtx.currentMedia.artists.length > 0
-    ) {
-      return mediaCtx.currentMedia.artists.join(", ");
+    if (audiofile?.artists && audiofile.artists.length > 0) {
+      return audiofile.artists.join(", ");
     } else {
       return "Unknown artist";
     }
@@ -129,16 +128,17 @@ function Seeker() {
   if (!mediaCtx) {
     throw new Error("Playback Controls must be used within a media provider");
   }
-  const { currentMedia, playbackState, setSeek, getSeek } = mediaCtx;
+  const { getMedia, playbackState, setSeek, getSeek } = mediaCtx;
   const [displaySeek, setDisplaySeek] = useState([getSeek()]);
   const [ifSeeking, setIfSeeking] = useState(false);
+  const audiofile = getMedia()?.audiofile;
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
     if (!ifSeeking && playbackState === "playing") {
       timeout = setInterval(() => {
         setDisplaySeek([Math.round(getSeek())]);
-      }, 1e3);
+      }, 5e2);
     }
     return () => clearInterval(timeout);
   }, [playbackState, ifSeeking]);
@@ -159,9 +159,7 @@ function Seeker() {
       <Slider
         className="seeker flex-1"
         max={
-          currentMedia && currentMedia.duration
-            ? Math.round(currentMedia.duration)
-            : 0
+          audiofile && audiofile.duration ? Math.round(audiofile.duration) : 0
         }
         min={0}
         step={1}
@@ -173,8 +171,8 @@ function Seeker() {
       />
 
       <span className="text-gray-400 text-sm min-w-[40px] text-right">
-        {currentMedia && currentMedia.duration
-          ? formatDuration(Math.round(currentMedia.duration))
+        {audiofile && audiofile.duration
+          ? formatDuration(Math.round(audiofile.duration))
           : formatDuration(0)}
       </span>
     </div>

@@ -24,14 +24,12 @@ export type CurrentMedia = {
   audiofile: Audiofile;
 };
 export type MediaContextValue = {
-  currentMedia: Audiofile | undefined;
-  setMedia: (
-    audiofile: Audiofile,
-    mediaStoreKey: string,
-    index?: number,
-  ) => Promise<void>;
+  getMedia: () => CurrentMedia | undefined;
+  setMedia: (mediaStoreKey: string, index?: number) => Promise<void>;
   unload: () => any;
   playbackState: MediaPlaybackState;
+  play: () => void;
+  pause: () => void;
   playPauseToggle: () => void;
   setMute: (mute: boolean) => void;
   mute: boolean;
@@ -55,15 +53,15 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
   const [_mute, _setMute] = useState(false);
   const [playbackState, setPlaybackState] =
     useState<MediaPlaybackState>("unloaded");
-  const [_currentMedia, _setCurrentMedia] = useState<CurrentMedia>();
+  const [currentMedia, setCurrentMedia] = useState<CurrentMedia>();
   const currentMediaList = useStore(
     useShallow((state) => {
-      if (!_currentMedia) {
+      if (!currentMedia) {
         return undefined;
-      } else if (!state.mediaLists[_currentMedia.mediaStoreKey]) {
+      } else if (!state.mediaLists[currentMedia.mediaStoreKey]) {
         return undefined;
       } else {
-        return state.mediaLists[_currentMedia.mediaStoreKey];
+        return state.mediaLists[currentMedia.mediaStoreKey];
       }
     }),
   );
@@ -103,7 +101,7 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
   // volume and mute
 
   function onEnded() {
-    if (!_currentMedia || !currentMediaList) {
+    if (!currentMedia || !currentMediaList) {
       unloadMedia();
     } else {
       playNextPrev("next");
@@ -121,13 +119,31 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
     _setMute(target.muted);
   }
 
+  function pause() {
+    if (playbackState === "playing") {
+      videoRef.current.pause();
+    }
+  }
+
+  async function play() {
+    if (playbackState === "paused") {
+      try {
+        await videoRef.current.play();
+      } catch (error) {
+        // unload media to avoid inconsistent states
+        unloadMedia();
+        // in case caller wants to do extra error handling
+        // like UI feedback to the user
+        throw error;
+      }
+    }
+  }
+
   async function playPauseToggle() {
-    if (!_currentMedia) {
-      return;
-    } else if (playbackState == "playing") {
+    if (playbackState == "playing") {
       videoRef.current.pause();
     } else if (playbackState === "paused") {
-      await videoRef.current.play();
+      await play();
     }
   }
 
@@ -139,27 +155,15 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
     setPlaybackState("loading");
     destroyHls();
 
-    // use type any since the playlistID is on some playables but not all
     const audiofile = newMedia.audiofile;
-    let playlist_file;
-    if (audiofile.object_id) {
-      playlist_file = audiofile.object_id + ".m3u8";
-    } else {
-      playlist_file = audiofile.objects.find((val: string) =>
-        val.endsWith(".m3u8"),
-      );
-    }
-    if (playlist_file === undefined) {
-      unloadMedia();
-      throw new Error("Playlist file not found");
-    }
+
     try {
-      const loadRes = await loadHls(playlist_file, videoRef.current);
+      const loadRes = await loadHls(audiofile.id, videoRef.current);
       if (audiofile.duration === undefined || audiofile.duration === null) {
         // sometimes the server does not successfully get a value for duration
         newMedia.audiofile.duration = loadRes.duration;
       }
-      _setCurrentMedia(newMedia);
+      setCurrentMedia(newMedia);
       await videoRef.current.play();
     } catch (error: any) {
       unloadMedia();
@@ -171,8 +175,8 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
   }
   function unloadMedia() {
     destroyHls();
-    setPlaybackState("unloaded");
-    _setCurrentMedia(undefined);
+    setPlaybackState(() => "unloaded");
+    setCurrentMedia(() => undefined);
   }
 
   function destroyHls() {
@@ -180,18 +184,22 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
     hlsRef.current = undefined;
   }
 
+  function getMedia() {
+    return currentMedia;
+  }
+
   /**
    * Updates the current audiofile and begins loading it.The updater function will be called to get track corresponding
    * to the action passed to the function. This updater function MUST be specific to the component that passed it to this function.
    */
-  async function setMedia(
-    audiofile: Audiofile,
-    mediaStoreKey: string,
-    index?: number,
-  ) {
+  async function setMedia(mediaStoreKey: string, index?: number) {
+    if (index === undefined) {
+      index = 0;
+    }
+    const audiofile = useStore.getState().mediaLists[mediaStoreKey][index];
     if (
-      mediaStoreKey === _currentMedia?.mediaStoreKey &&
-      audiofile.id === _currentMedia?.audiofile.id
+      mediaStoreKey === currentMedia?.mediaStoreKey &&
+      audiofile.id === currentMedia?.audiofile.id
     ) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
@@ -210,7 +218,7 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
   }
 
   async function playNextPrev(action: MediaUpdateAction) {
-    if (!_currentMedia || !currentMediaList) {
+    if (!currentMedia || !currentMediaList) {
       unloadMedia();
       return;
     }
@@ -219,9 +227,9 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
     }
     const nextIndex = getNextAudio(
       currentMediaList,
-      _currentMedia.audiofile,
+      currentMedia.audiofile,
       action,
-      _currentMedia.index,
+      currentMedia.index,
     );
     if (nextIndex === -1) {
       unloadMedia();
@@ -229,7 +237,7 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
     }
     const nextAudiofile = currentMediaList[nextIndex];
 
-    if (nextAudiofile.id === _currentMedia.audiofile.id) {
+    if (nextAudiofile.id === currentMedia.audiofile.id) {
       try {
         videoRef.current.currentTime = 0;
         await videoRef.current.play();
@@ -239,7 +247,7 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
       }
     } else {
       loadMedia({
-        ..._currentMedia,
+        ...currentMedia,
         audiofile: nextAudiofile,
         index: nextIndex,
       });
@@ -247,7 +255,7 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
   }
 
   function getSeek() {
-    if (!_currentMedia) {
+    if (!currentMedia) {
       return 0;
     }
     return videoRef.current.currentTime;
@@ -260,10 +268,12 @@ export function MediaContextProvider({ children }: PropsWithChildren) {
   return (
     <mediaContext.Provider
       value={{
-        currentMedia: _currentMedia?.audiofile,
         setMedia,
-        unload: () => _setCurrentMedia(undefined),
+        getMedia,
+        unload: () => setCurrentMedia(undefined),
         playbackState,
+        pause,
+        play,
         playPauseToggle,
         setMute,
         mute: _mute,

@@ -53,10 +53,8 @@ const ProfileButton = ({ avatarUrl = "/api/placeholder/40/40" }) => {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-sm leading-none">{userData.username}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {userData.email}
-            </p>
+            <p className="text-sm">{userData.username}</p>
+            <p className="text-xs text-muted-foreground">{userData.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

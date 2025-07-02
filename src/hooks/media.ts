@@ -13,19 +13,28 @@ import { useStore } from "../store/store";
 import { MediaTask, TaskType } from "../store/types";
 import { Playlist, Audiofile } from "@/api/types/media";
 import { toast } from "sonner";
+import { queryClient } from "@/routes/_authenticated";
 
 // store and cache keys
 // These keys are used to access / update data in the
 // react-query layer. They are also sometimes used in our client
 // side cache. In these cases they are returned to the caller so
 // they can observe changes on that value as queries update it.
-const PLAYLIST_AUDIOFILES_STORE_KEY_PREFIX = "playlist-audiofiles";
-const PLAYLIST_INFO_STORE_KEY_PREFIX = "playlist-info";
 const MOST_PLAYED_STORE_KEY = "most-played";
 const LISTENING_HISTORY_STORE_KEY = "listening-history";
 
+export function getPlaylistMediaStoreKey(playlist_id: number) {
+  const PLAYLIST_AUDIOFILES_STORE_KEY_PREFIX = "playlist-audiofiles";
+  return PLAYLIST_AUDIOFILES_STORE_KEY_PREFIX + "-" + playlist_id;
+}
+
+export function getPlaylistInfoStoreKey(playlist_id: number) {
+  const PLAYLIST_INFO_STORE_KEY_PREFIX = "playlist-info";
+  return PLAYLIST_INFO_STORE_KEY_PREFIX + "-" + playlist_id;
+}
+
 export function usePlaylistInfo(playlistId: number) {
-  const key = PLAYLIST_INFO_STORE_KEY_PREFIX + "-" + playlistId.toString();
+  const key = getPlaylistInfoStoreKey(playlistId);
   const query = useQuery({
     queryKey: [key],
     queryFn: async () => getPlaylistInfo(playlistId),
@@ -34,8 +43,7 @@ export function usePlaylistInfo(playlistId: number) {
 }
 
 export function usePlaylistAudioFiles(playlistId: number) {
-  const key =
-    PLAYLIST_AUDIOFILES_STORE_KEY_PREFIX + "-" + playlistId.toString();
+  const key = getPlaylistMediaStoreKey(playlistId);
   const setMediaList = useStore((state) => state.setMediaList);
   const query = useQuery({
     queryKey: [key],
@@ -88,27 +96,35 @@ export function useUploadAudioFile() {
   const setTask = useStore((state) => state.setTask);
   const removeTask = useStore((state) => state.removeTask);
 
-  return function (files: FileList, playlist: Playlist) {
+  return function (files: File[], playlist: Playlist) {
     toast("Uploading audio files", {
-      description: "This may take a while...",
+      description:
+        "This may take a while. You can monitor progress from your tasks list",
     });
 
     // keeps a mapping of the index of the file and its taskId
     // so that we can clear it once it is done
     const taskIdxToId: Record<number, string> = {};
-    function onError(e: any) {
-      if (e.filename && e.id && e.event) {
-        // an upload error event
-        toast("Upload error", {
-          description: `Uploading "${e.filename}"`,
-        });
-        removeTask(taskIdxToId[e.id]);
-      } else {
-        // other generic error
-        toast("Upload error", {
-          description: e.message || "Unexpected error",
-        });
+
+    function resolveFilename(e: any) {
+      if (e.id && e.event) {
+        if (e.filename) {
+          return e.filename;
+        } else {
+          return files[e.id].name;
+        }
       }
+    }
+    function onError(e: any) {
+      let description = resolveFilename(e);
+
+      if (!description) {
+        description = e.message || "unexpected error";
+      }
+      if (e.id) {
+        removeTask(taskIdxToId[e.id]);
+      }
+      toast("Upload error", { description });
     }
 
     function onSuccess(e: FileUploadResultEvent) {
@@ -116,6 +132,10 @@ export function useUploadAudioFile() {
         description: `"${e.filename}" successfully uploaded`,
       });
       removeTask(taskIdxToId[e.id]);
+      const playlist_key = getPlaylistMediaStoreKey(playlist.id);
+      queryClient.invalidateQueries({
+        queryKey: [playlist_key],
+      });
     }
 
     for (let i = 0; i < files.length; i++) {
@@ -141,6 +161,7 @@ export function useDeleteAudioFile() {
   const setTask = useStore((state) => state.setTask);
 
   return async function (audiofile: Audiofile) {
+    const playlist_key = getPlaylistMediaStoreKey(audiofile.playlist_id);
     const taskId = genTaskId();
     const task: MediaTask = {
       type: TaskType.MediaTask,
@@ -151,6 +172,9 @@ export function useDeleteAudioFile() {
     setTask(taskId, task);
     try {
       await deleteAudioFile(audiofile.id);
+      queryClient.invalidateQueries({
+        queryKey: [playlist_key],
+      });
     } catch (error) {
       throw error;
     } finally {
@@ -162,6 +186,7 @@ export function useDeleteAudioFile() {
 export function useDeletePlaylist() {
   const removeTask = useStore((state) => state.removeTask);
   const setTask = useStore((state) => state.setTask);
+  const removeMediaList = useStore((state) => state.removeMediaList);
 
   return async function (playlist: Playlist) {
     toast(`Deleting playlist "${playlist.name}"`, {
@@ -178,6 +203,7 @@ export function useDeletePlaylist() {
     try {
       await deletePlaylist(playlist.id);
       toast("Playlist deleted successfully");
+      removeMediaList(getPlaylistMediaStoreKey(playlist.id));
     } catch (error) {
       toast("Error deleting playlist");
       throw error;

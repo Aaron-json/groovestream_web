@@ -38,14 +38,14 @@ function AuthenticatedLayout() {
           <AppSidebar />
           <div className="flex flex-col w-full px-2">
             <TopBar />
-            <div className="flex-1 pt-2 px-2 mb-2">
+            <div className="flex-1 p-2 mb-2">
               <Outlet />
             </div>
             <div className={`sticky bottom-2 left-2 right-2`}>
               <MediaBar />
             </div>
           </div>
-          <Toaster position="top-center" />
+          <Toaster position="bottom-left" />
         </SidebarProvider>
       </MediaContextProvider>
     </QueryClientProvider>

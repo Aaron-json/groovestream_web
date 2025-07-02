@@ -75,7 +75,7 @@ function RouteComponent() {
       return <InfoCard text={"Something went wrong"} />;
     } else if (playlists.length === 0) {
       return (
-        <InfoCard text="No playlists yet in your library. Create one or ask your friends to invite you to one." />
+        <InfoCard text="No playlists in your library yet. Create one or ask your friends to invite you." />
       );
     } else {
       return <MediaList media={playlists} title="Playlists" />;

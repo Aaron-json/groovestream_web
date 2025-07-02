@@ -1,5 +1,6 @@
 import SidebarToggle from "./sidebar-toggle";
 import Avatar from "./avatar";
+import TasksDropdown from "./tasks-dropdown";
 
 export default function TopBar() {
   return (
@@ -8,6 +9,7 @@ export default function TopBar() {
         <SidebarToggle />
       </div>
       <div className="h-full flex items-center">
+        <TasksDropdown />
         <Avatar />
       </div>
     </header>

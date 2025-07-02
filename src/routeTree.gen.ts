@@ -10,147 +10,195 @@
 
 // Import Routes
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as AuthenticatedImport } from './routes/_authenticated'
-import { Route as AuthImport } from './routes/_auth'
-import { Route as AuthenticatedIndexImport } from './routes/_authenticated/index'
-import { Route as AuthenticatedSocialImport } from './routes/_authenticated/social'
-import { Route as AuthRegisterImport } from './routes/_auth/register'
-import { Route as AuthLoginImport } from './routes/_auth/login'
-import { Route as AuthenticatedLibraryIndexImport } from './routes/_authenticated/library/index'
-import { Route as AuthenticatedLibraryPlaylistsPlaylistIdImport } from './routes/_authenticated/library/playlists.$playlistId'
+import { Route as rootRoute } from "./routes/__root";
+import { Route as AuthenticatedImport } from "./routes/_authenticated";
+import { Route as AuthImport } from "./routes/_auth";
+import { Route as AuthenticatedIndexImport } from "./routes/_authenticated/index";
+import { Route as AuthenticatedSocialImport } from "./routes/_authenticated/social";
+import { Route as AuthRegisterImport } from "./routes/_auth/register";
+import { Route as AuthLoginImport } from "./routes/_auth/login";
+import { Route as AuthenticatedLibraryIndexImport } from "./routes/_authenticated/library/index";
+import { Route as AuthenticatedLibraryPlaylistsPlaylistIdImport } from "./routes/_authenticated/library/playlists.$playlistId";
+import { Route as AuthenticatedLibraryPlaylistsPlaylistIdIndexImport } from "./routes/_authenticated/library/playlists.$playlistId/index";
+import { Route as AuthenticatedLibraryPlaylistsPlaylistIdUploadImport } from "./routes/_authenticated/library/playlists.$playlistId/upload";
 
 // Create/Update Routes
 
 const AuthenticatedRoute = AuthenticatedImport.update({
-  id: '/_authenticated',
+  id: "/_authenticated",
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const AuthRoute = AuthImport.update({
-  id: '/_auth',
+  id: "/_auth",
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const AuthenticatedIndexRoute = AuthenticatedIndexImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 
 const AuthenticatedSocialRoute = AuthenticatedSocialImport.update({
-  id: '/social',
-  path: '/social',
+  id: "/social",
+  path: "/social",
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 
 const AuthRegisterRoute = AuthRegisterImport.update({
-  id: '/register',
-  path: '/register',
+  id: "/register",
+  path: "/register",
   getParentRoute: () => AuthRoute,
-} as any)
+} as any);
 
 const AuthLoginRoute = AuthLoginImport.update({
-  id: '/login',
-  path: '/login',
+  id: "/login",
+  path: "/login",
   getParentRoute: () => AuthRoute,
-} as any)
+} as any);
 
 const AuthenticatedLibraryIndexRoute = AuthenticatedLibraryIndexImport.update({
-  id: '/library/',
-  path: '/library/',
+  id: "/library/",
+  path: "/library/",
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 
 const AuthenticatedLibraryPlaylistsPlaylistIdRoute =
   AuthenticatedLibraryPlaylistsPlaylistIdImport.update({
-    id: '/library/playlists/$playlistId',
-    path: '/library/playlists/$playlistId',
+    id: "/library/playlists/$playlistId",
+    path: "/library/playlists/$playlistId",
     getParentRoute: () => AuthenticatedRoute,
-  } as any)
+  } as any);
+
+const AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute =
+  AuthenticatedLibraryPlaylistsPlaylistIdIndexImport.update({
+    id: "/",
+    path: "/",
+    getParentRoute: () => AuthenticatedLibraryPlaylistsPlaylistIdRoute,
+  } as any);
+
+const AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute =
+  AuthenticatedLibraryPlaylistsPlaylistIdUploadImport.update({
+    id: "/upload",
+    path: "/upload",
+    getParentRoute: () => AuthenticatedLibraryPlaylistsPlaylistIdRoute,
+  } as any);
 
 // Populate the FileRoutesByPath interface
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/_auth': {
-      id: '/_auth'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthImport
-      parentRoute: typeof rootRoute
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthenticatedImport
-      parentRoute: typeof rootRoute
-    }
-    '/_auth/login': {
-      id: '/_auth/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof AuthLoginImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/register': {
-      id: '/_auth/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof AuthRegisterImport
-      parentRoute: typeof AuthImport
-    }
-    '/_authenticated/social': {
-      id: '/_authenticated/social'
-      path: '/social'
-      fullPath: '/social'
-      preLoaderRoute: typeof AuthenticatedSocialImport
-      parentRoute: typeof AuthenticatedImport
-    }
-    '/_authenticated/': {
-      id: '/_authenticated/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexImport
-      parentRoute: typeof AuthenticatedImport
-    }
-    '/_authenticated/library/': {
-      id: '/_authenticated/library/'
-      path: '/library'
-      fullPath: '/library'
-      preLoaderRoute: typeof AuthenticatedLibraryIndexImport
-      parentRoute: typeof AuthenticatedImport
-    }
-    '/_authenticated/library/playlists/$playlistId': {
-      id: '/_authenticated/library/playlists/$playlistId'
-      path: '/library/playlists/$playlistId'
-      fullPath: '/library/playlists/$playlistId'
-      preLoaderRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdImport
-      parentRoute: typeof AuthenticatedImport
-    }
+    "/_auth": {
+      id: "/_auth";
+      path: "";
+      fullPath: "";
+      preLoaderRoute: typeof AuthImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/_authenticated": {
+      id: "/_authenticated";
+      path: "";
+      fullPath: "";
+      preLoaderRoute: typeof AuthenticatedImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/_auth/login": {
+      id: "/_auth/login";
+      path: "/login";
+      fullPath: "/login";
+      preLoaderRoute: typeof AuthLoginImport;
+      parentRoute: typeof AuthImport;
+    };
+    "/_auth/register": {
+      id: "/_auth/register";
+      path: "/register";
+      fullPath: "/register";
+      preLoaderRoute: typeof AuthRegisterImport;
+      parentRoute: typeof AuthImport;
+    };
+    "/_authenticated/social": {
+      id: "/_authenticated/social";
+      path: "/social";
+      fullPath: "/social";
+      preLoaderRoute: typeof AuthenticatedSocialImport;
+      parentRoute: typeof AuthenticatedImport;
+    };
+    "/_authenticated/": {
+      id: "/_authenticated/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof AuthenticatedIndexImport;
+      parentRoute: typeof AuthenticatedImport;
+    };
+    "/_authenticated/library/": {
+      id: "/_authenticated/library/";
+      path: "/library";
+      fullPath: "/library";
+      preLoaderRoute: typeof AuthenticatedLibraryIndexImport;
+      parentRoute: typeof AuthenticatedImport;
+    };
+    "/_authenticated/library/playlists/$playlistId": {
+      id: "/_authenticated/library/playlists/$playlistId";
+      path: "/library/playlists/$playlistId";
+      fullPath: "/library/playlists/$playlistId";
+      preLoaderRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdImport;
+      parentRoute: typeof AuthenticatedImport;
+    };
+    "/_authenticated/library/playlists/$playlistId/upload": {
+      id: "/_authenticated/library/playlists/$playlistId/upload";
+      path: "/upload";
+      fullPath: "/library/playlists/$playlistId/upload";
+      preLoaderRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdUploadImport;
+      parentRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdImport;
+    };
+    "/_authenticated/library/playlists/$playlistId/": {
+      id: "/_authenticated/library/playlists/$playlistId/";
+      path: "/";
+      fullPath: "/library/playlists/$playlistId/";
+      preLoaderRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdIndexImport;
+      parentRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdImport;
+    };
   }
 }
 
 // Create and export the route tree
 
 interface AuthRouteChildren {
-  AuthLoginRoute: typeof AuthLoginRoute
-  AuthRegisterRoute: typeof AuthRegisterRoute
+  AuthLoginRoute: typeof AuthLoginRoute;
+  AuthRegisterRoute: typeof AuthRegisterRoute;
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
+};
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren);
+
+interface AuthenticatedLibraryPlaylistsPlaylistIdRouteChildren {
+  AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute;
+  AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute;
 }
 
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+const AuthenticatedLibraryPlaylistsPlaylistIdRouteChildren: AuthenticatedLibraryPlaylistsPlaylistIdRouteChildren =
+  {
+    AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute:
+      AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute,
+    AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute:
+      AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute,
+  };
+
+const AuthenticatedLibraryPlaylistsPlaylistIdRouteWithChildren =
+  AuthenticatedLibraryPlaylistsPlaylistIdRoute._addFileChildren(
+    AuthenticatedLibraryPlaylistsPlaylistIdRouteChildren,
+  );
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedSocialRoute: typeof AuthenticatedSocialRoute
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedLibraryIndexRoute: typeof AuthenticatedLibraryIndexRoute
-  AuthenticatedLibraryPlaylistsPlaylistIdRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdRoute
+  AuthenticatedSocialRoute: typeof AuthenticatedSocialRoute;
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute;
+  AuthenticatedLibraryIndexRoute: typeof AuthenticatedLibraryIndexRoute;
+  AuthenticatedLibraryPlaylistsPlaylistIdRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdRouteWithChildren;
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -158,90 +206,100 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedLibraryIndexRoute: AuthenticatedLibraryIndexRoute,
   AuthenticatedLibraryPlaylistsPlaylistIdRoute:
-    AuthenticatedLibraryPlaylistsPlaylistIdRoute,
-}
+    AuthenticatedLibraryPlaylistsPlaylistIdRouteWithChildren,
+};
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
-)
+);
 
 export interface FileRoutesByFullPath {
-  '': typeof AuthenticatedRouteWithChildren
-  '/login': typeof AuthLoginRoute
-  '/register': typeof AuthRegisterRoute
-  '/social': typeof AuthenticatedSocialRoute
-  '/': typeof AuthenticatedIndexRoute
-  '/library': typeof AuthenticatedLibraryIndexRoute
-  '/library/playlists/$playlistId': typeof AuthenticatedLibraryPlaylistsPlaylistIdRoute
+  "": typeof AuthenticatedRouteWithChildren;
+  "/login": typeof AuthLoginRoute;
+  "/register": typeof AuthRegisterRoute;
+  "/social": typeof AuthenticatedSocialRoute;
+  "/": typeof AuthenticatedIndexRoute;
+  "/library": typeof AuthenticatedLibraryIndexRoute;
+  "/library/playlists/$playlistId": typeof AuthenticatedLibraryPlaylistsPlaylistIdRouteWithChildren;
+  "/library/playlists/$playlistId/upload": typeof AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute;
+  "/library/playlists/$playlistId/": typeof AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute;
 }
 
 export interface FileRoutesByTo {
-  '': typeof AuthRouteWithChildren
-  '/login': typeof AuthLoginRoute
-  '/register': typeof AuthRegisterRoute
-  '/social': typeof AuthenticatedSocialRoute
-  '/': typeof AuthenticatedIndexRoute
-  '/library': typeof AuthenticatedLibraryIndexRoute
-  '/library/playlists/$playlistId': typeof AuthenticatedLibraryPlaylistsPlaylistIdRoute
+  "": typeof AuthRouteWithChildren;
+  "/login": typeof AuthLoginRoute;
+  "/register": typeof AuthRegisterRoute;
+  "/social": typeof AuthenticatedSocialRoute;
+  "/": typeof AuthenticatedIndexRoute;
+  "/library": typeof AuthenticatedLibraryIndexRoute;
+  "/library/playlists/$playlistId/upload": typeof AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute;
+  "/library/playlists/$playlistId": typeof AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute;
 }
 
 export interface FileRoutesById {
-  __root__: typeof rootRoute
-  '/_auth': typeof AuthRouteWithChildren
-  '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/_auth/login': typeof AuthLoginRoute
-  '/_auth/register': typeof AuthRegisterRoute
-  '/_authenticated/social': typeof AuthenticatedSocialRoute
-  '/_authenticated/': typeof AuthenticatedIndexRoute
-  '/_authenticated/library/': typeof AuthenticatedLibraryIndexRoute
-  '/_authenticated/library/playlists/$playlistId': typeof AuthenticatedLibraryPlaylistsPlaylistIdRoute
+  __root__: typeof rootRoute;
+  "/_auth": typeof AuthRouteWithChildren;
+  "/_authenticated": typeof AuthenticatedRouteWithChildren;
+  "/_auth/login": typeof AuthLoginRoute;
+  "/_auth/register": typeof AuthRegisterRoute;
+  "/_authenticated/social": typeof AuthenticatedSocialRoute;
+  "/_authenticated/": typeof AuthenticatedIndexRoute;
+  "/_authenticated/library/": typeof AuthenticatedLibraryIndexRoute;
+  "/_authenticated/library/playlists/$playlistId": typeof AuthenticatedLibraryPlaylistsPlaylistIdRouteWithChildren;
+  "/_authenticated/library/playlists/$playlistId/upload": typeof AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute;
+  "/_authenticated/library/playlists/$playlistId/": typeof AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute;
 }
 
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    | ''
-    | '/login'
-    | '/register'
-    | '/social'
-    | '/'
-    | '/library'
-    | '/library/playlists/$playlistId'
-  fileRoutesByTo: FileRoutesByTo
+    | ""
+    | "/login"
+    | "/register"
+    | "/social"
+    | "/"
+    | "/library"
+    | "/library/playlists/$playlistId"
+    | "/library/playlists/$playlistId/upload"
+    | "/library/playlists/$playlistId/";
+  fileRoutesByTo: FileRoutesByTo;
   to:
-    | ''
-    | '/login'
-    | '/register'
-    | '/social'
-    | '/'
-    | '/library'
-    | '/library/playlists/$playlistId'
+    | ""
+    | "/login"
+    | "/register"
+    | "/social"
+    | "/"
+    | "/library"
+    | "/library/playlists/$playlistId/upload"
+    | "/library/playlists/$playlistId";
   id:
-    | '__root__'
-    | '/_auth'
-    | '/_authenticated'
-    | '/_auth/login'
-    | '/_auth/register'
-    | '/_authenticated/social'
-    | '/_authenticated/'
-    | '/_authenticated/library/'
-    | '/_authenticated/library/playlists/$playlistId'
-  fileRoutesById: FileRoutesById
+    | "__root__"
+    | "/_auth"
+    | "/_authenticated"
+    | "/_auth/login"
+    | "/_auth/register"
+    | "/_authenticated/social"
+    | "/_authenticated/"
+    | "/_authenticated/library/"
+    | "/_authenticated/library/playlists/$playlistId"
+    | "/_authenticated/library/playlists/$playlistId/upload"
+    | "/_authenticated/library/playlists/$playlistId/";
+  fileRoutesById: FileRoutesById;
 }
 
 export interface RootRouteChildren {
-  AuthRoute: typeof AuthRouteWithChildren
-  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AuthRoute: typeof AuthRouteWithChildren;
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren;
 }
 
 const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-}
+};
 
 export const routeTree = rootRoute
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
 /* ROUTE_MANIFEST_START
 {
@@ -291,7 +349,19 @@ export const routeTree = rootRoute
     },
     "/_authenticated/library/playlists/$playlistId": {
       "filePath": "_authenticated/library/playlists.$playlistId.tsx",
-      "parent": "/_authenticated"
+      "parent": "/_authenticated",
+      "children": [
+        "/_authenticated/library/playlists/$playlistId/upload",
+        "/_authenticated/library/playlists/$playlistId/"
+      ]
+    },
+    "/_authenticated/library/playlists/$playlistId/upload": {
+      "filePath": "_authenticated/library/playlists.$playlistId/upload.tsx",
+      "parent": "/_authenticated/library/playlists/$playlistId"
+    },
+    "/_authenticated/library/playlists/$playlistId/": {
+      "filePath": "_authenticated/library/playlists.$playlistId/index.tsx",
+      "parent": "/_authenticated/library/playlists/$playlistId"
     }
   }
 }

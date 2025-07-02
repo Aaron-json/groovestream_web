@@ -1,5 +1,5 @@
 import { Button } from "../ui/button";
-import { Check, UserRoundPlus } from "lucide-react";
+import { Check, UserRoundPlus, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,13 +15,14 @@ import { useForm } from "react-hook-form";
 import { sendPlaylistInvite } from "@/api/requests/media";
 import { isAxiosError } from "axios";
 import { ResponseError } from "@/api/types/errors";
+import React from "react";
 
 type AddPlaylistMemberProps = {
   playlistId: number;
   trigger?: React.ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  defaultOpen?: boolean;
+  open?: boolean; // For controlled mode
+  onOpenChange?: (open: boolean) => void; // For controlled mode
+  defaultOpen?: boolean; // For uncontrolled mode initial state
 };
 
 type AddPlaylistMemberValues = {
@@ -29,21 +30,23 @@ type AddPlaylistMemberValues = {
 };
 
 export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
-  const { register, handleSubmit, formState, setError } =
+  const { register, handleSubmit, formState, setError, reset } =
     useForm<AddPlaylistMemberValues>({
       defaultValues: {
         username: "",
       },
     });
-  const trigger = props.trigger || (
+
+  const defaultInternalTrigger = (
     <Button variant="ghost" size="icon">
       <UserRoundPlus className="h-4 w-4" />
     </Button>
   );
+
   async function onSubmit(data: AddPlaylistMemberValues) {
     try {
-      // use await so the error is caught
       await sendPlaylistInvite(props.playlistId, data.username);
+      reset();
     } catch (err) {
       let message = "An unexpected error occurred";
       if (isAxiosError<ResponseError>(err)) {
@@ -65,13 +68,37 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
       });
     }
   }
+
+  const handleOpenChange = (open: boolean) => {
+    if (props.onOpenChange) {
+      props.onOpenChange(open);
+    }
+    if (!open) {
+      // Reset form state when dialog closes
+      reset({ username: "" });
+      setError("root", { message: undefined });
+    }
+  };
+
+  const isExternallyControlled = props.open !== undefined;
+
   return (
     <Dialog
       open={props.open}
-      onOpenChange={props.onOpenChange}
+      onOpenChange={handleOpenChange}
       defaultOpen={props.defaultOpen}
     >
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {/*
+        Render a DialogTrigger only if:
+        1. The dialog is NOT externally controlled via the 'open' prop.
+        2. In this case, use 'props.trigger' if provided, otherwise use the default button.
+        If the dialog IS externally controlled, no trigger is rendered by this component itself.
+      */}
+      {!isExternallyControlled && (
+        <DialogTrigger asChild>
+          {props.trigger !== undefined ? props.trigger : defaultInternalTrigger}
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Member to Playlist</DialogTitle>
@@ -79,30 +106,43 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
         <DialogDescription>
           Enter the username of the person you want to add to the playlist.
         </DialogDescription>
-        {formState.isSubmitSuccessful && (
-          <div className="flex items-center rounded-md border p-2">
-            <Check className="mr-2 h-5 w-5" />
-            <span className="text-sm">Invite sent successfully</span>
+
+        {formState.isSubmitSuccessful && !formState.errors.root && (
+          <div className="mt-4 flex items-center rounded-md border border-green-500 bg-green-50 p-3 text-sm text-green-700">
+            <Check className="mr-2 h-5 w-5 flex-shrink-0" />
+            Invite sent successfully to{" "}
+            {formState.defaultValues?.username || "user"}.
           </div>
         )}
-        {formState.errors.root && (
-          <div className="flex items-center rounded-md border-destructive/50 bg-destructive/10 p-2">
-            <span className="text-sm">{formState.errors.root.message}</span>
+        {formState.errors.root?.message && (
+          <div className="mt-4 flex items-center rounded-md border border-red-500 bg-red-50 p-3 text-sm text-red-700">
+            <AlertTriangle className="mr-2 h-5 w-5 flex-shrink-0" />
+            {formState.errors.root.message}
           </div>
         )}
-        <form id="add-playlist-member" onSubmit={handleSubmit(onSubmit)}>
-          <div className="flex items-center space-x-2">
-            <div className="grid flex-1 gap-2">
-              <label htmlFor="username">Username</label>
-              <Input
-                id="username"
-                type="text"
-                className="input input-bordered"
-                {...register("username", {
-                  required: "Username is required",
-                })}
-              />
-            </div>
+
+        <form
+          id="add-playlist-member"
+          onSubmit={handleSubmit(onSubmit)}
+          className="py-4"
+        >
+          <div className="grid flex-1 gap-2">
+            <label htmlFor="username" className="sr-only">
+              Username
+            </label>
+            <Input
+              id="username"
+              type="text"
+              placeholder="Username"
+              {...register("username", {
+                required: "Username is required",
+              })}
+            />
+            {formState.errors.username && (
+              <p className="text-sm text-red-600 mt-1">
+                {formState.errors.username.message}
+              </p>
+            )}
           </div>
         </form>
         <DialogFooter>
@@ -115,7 +155,7 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
             form="add-playlist-member"
             disabled={formState.isSubmitting}
           >
-            Add
+            {formState.isSubmitting ? "Adding..." : "Add"}
           </Button>
         </DialogFooter>
       </DialogContent>
