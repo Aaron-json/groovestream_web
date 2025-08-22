@@ -1,4 +1,4 @@
-import { useContext, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -11,10 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Audiofile } from "@/api/types/media";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDuration } from "@/lib/media";
-import { mediaContext } from "@/contexts/media";
 import { toast } from "sonner";
 import { Trash2, Search, PlayCircle, PauseCircle, Music2 } from "lucide-react";
-import { deleteAudioFile } from "@/api/requests/media";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,10 +40,14 @@ import {
   Row,
 } from "@tanstack/react-table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MediaQueryKey, useDeleteAudioFile } from "@/hooks/media";
+import { useMediaStore } from "@/lib/media";
+import { useShallow } from "zustand/react/shallow";
 
 type AudiofileTableProps = {
   audiofiles: Audiofile[];
-  mediaStoreKey?: string;
+  storeKey: string;
+  queryKey: MediaQueryKey;
   skeleton?: boolean;
   onChange?: () => any;
   refetch?: () => void;
@@ -54,25 +56,26 @@ type AudiofileTableProps = {
 const columnHelper = createColumnHelper<Audiofile>();
 
 export default function AudiofileTable(props: AudiofileTableProps) {
-  const { audiofiles: data, mediaStoreKey, skeleton = false, refetch } = props;
+  const { audiofiles: data, storeKey, skeleton = false, queryKey } = props;
   const isMobile = useIsMobile();
-  const mediaCtx = useContext(mediaContext);
   const [globalFilter, setGlobalFilter] = useState("");
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
-  const [isDeletingId, setIsDeletingId] = useState<number | null>(null);
+  const handleDeleteAudiofile = useDeleteAudioFile();
 
-  if (!mediaCtx) {
-    throw new Error(
-      "AudiofileTable must be used within a MediaContextProvider",
-    );
-  }
+  const mediaState = useMediaStore(
+    useShallow((state) => ({
+      media: state.media,
+      setMedia: state.setMedia,
+      playbackState: state.playbackState,
+    })),
+  );
 
-  const currentAudiofile = mediaCtx.getMedia()?.audiofile;
+  const currentAudiofile = mediaState.media?.audiofile;
 
   const handlePlayTrack = async (index: number) => {
-    if (mediaStoreKey) {
+    if (storeKey && queryKey) {
       try {
-        await mediaCtx.setMedia(mediaStoreKey, index);
+        await mediaState.setMedia(storeKey, queryKey, index);
       } catch (error: any) {
         toast.error("Error loading media", {
           description: error.message || "Could not play the selected audio.",
@@ -82,21 +85,6 @@ export default function AudiofileTable(props: AudiofileTableProps) {
       toast.error("Playback context error", {
         description: "MediaStoreKey is missing for playback.",
       });
-    }
-  };
-
-  const handleDeleteAudiofile = async (audiofile: Audiofile) => {
-    setIsDeletingId(audiofile.id);
-    try {
-      await deleteAudioFile(audiofile.id);
-      toast.success(`"${audiofile.title || audiofile.filename}" removed.`);
-      refetch?.();
-    } catch (error: any) {
-      toast.error("Error deleting audio file", {
-        description: error.message || "Could not remove the audio file.",
-      });
-    } finally {
-      setIsDeletingId(null);
     }
   };
 
@@ -110,7 +98,7 @@ export default function AudiofileTable(props: AudiofileTableProps) {
           const audiofile = row.original;
           const isCurrentTrack = currentAudiofile?.id === audiofile.id;
           const isPlaying =
-            isCurrentTrack && mediaCtx.playbackState === "playing";
+            isCurrentTrack && mediaState.playbackState === "playing";
           const isHovered = hoveredRowId === String(audiofile.id);
 
           return (
@@ -215,7 +203,7 @@ export default function AudiofileTable(props: AudiofileTableProps) {
                   onClick={(e) => e.stopPropagation()}
                   aria-label={`Delete ${row.original.title || row.original.filename}`}
                 >
-                  <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -228,18 +216,12 @@ export default function AudiofileTable(props: AudiofileTableProps) {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel
-                    disabled={isDeletingId === row.original.id}
-                  >
-                    Cancel
-                  </AlertDialogCancel>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={() => handleDeleteAudiofile(row.original)}
-                    disabled={isDeletingId === row.original.id}
                   >
-                    {isDeletingId === row.original.id
-                      ? "Deleting..."
-                      : "Delete"}
+                    Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -248,7 +230,7 @@ export default function AudiofileTable(props: AudiofileTableProps) {
         ),
       }),
     ],
-    [isMobile, mediaCtx, mediaStoreKey, hoveredRowId, isDeletingId],
+    [isMobile, mediaState, storeKey, hoveredRowId],
   );
 
   const table = useReactTable({

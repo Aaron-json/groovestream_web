@@ -6,7 +6,7 @@ import {
   getUserPlaylists,
   rejectPlaylistInvite,
 } from "@/api/requests/media";
-import MediaList from "@/components/custom/media-list";
+import MediaList, { MediaListSkeleton } from "@/components/custom/media-list";
 import InfoCard from "@/components/custom/info-card";
 import CreatePlaylistModal from "@/components/custom/create-playlist";
 import InviteList from "@/components/custom/invite-list";
@@ -70,7 +70,7 @@ function RouteComponent() {
 
   function renderPlaylists() {
     if (playlistsLoading) {
-      return <MediaList media={[]} loading={true} />; //display skeleton
+      return <MediaListSkeleton />; //display skeleton
     } else if (playlistsErr || !playlists) {
       return <InfoCard text={"Something went wrong"} />;
     } else if (playlists.length === 0) {

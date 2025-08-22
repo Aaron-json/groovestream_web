@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -11,23 +11,23 @@ import {
   Music2,
   LoaderCircle,
 } from "lucide-react";
-import { mediaContext } from "@/contexts/media";
-import { formatDuration } from "@/lib/media";
+import { useMediaStore, formatDuration } from "@/lib/media";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function MediaBar() {
-  const mediaCtx = useContext(mediaContext);
-  if (!mediaCtx) {
-    throw new Error("Media context not found");
-  }
-  const audiofile = mediaCtx.getMedia()?.audiofile;
-
   const isMobile = useIsMobile();
 
+  const media = useMediaStore((state) => state.media);
+  const playbackState = useMediaStore((state) => state.playbackState);
+  const next = useMediaStore((state) => state.next);
+  const prev = useMediaStore((state) => state.prev);
+  const playPauseToggle = useMediaStore((state) => state.playPauseToggle);
+  const audiofile = media?.audiofile;
+
   const renderPlaybackIcon = () => {
-    if (mediaCtx.playbackState === "playing") {
+    if (playbackState === "playing") {
       return <Pause className="h-5 w-5" />;
-    } else if (mediaCtx.playbackState === "loading") {
+    } else if (playbackState === "loading") {
       return <LoaderCircle className="h-5 w-5 animate-spin" />;
     } else {
       return <Play className="h-5 w-5" />;
@@ -66,17 +66,11 @@ export default function MediaBar() {
   const PlayControls = () => {
     return (
       <div className="flex gap-2 items-center space-x-4">
-        <ControlButton
-          icon={<SkipBack className="h-5 w-5" />}
-          onClick={mediaCtx.playPrev}
-        />
-        <ControlButton
-          icon={renderPlaybackIcon()}
-          onClick={mediaCtx.playPauseToggle}
-        />
+        <ControlButton icon={<SkipBack className="h-5 w-5" />} onClick={prev} />
+        <ControlButton icon={renderPlaybackIcon()} onClick={playPauseToggle} />
         <ControlButton
           icon={<SkipForward className="h-5 w-5" />}
-          onClick={mediaCtx.playNext}
+          onClick={next}
         />
       </div>
     );
@@ -97,7 +91,7 @@ export default function MediaBar() {
               <TrackInfo />
               <ControlButton
                 icon={renderPlaybackIcon()}
-                onClick={mediaCtx.playPauseToggle}
+                onClick={playPauseToggle}
               />
             </div>
             <ProgressSlider />
@@ -124,21 +118,20 @@ export default function MediaBar() {
 }
 
 function Seeker() {
-  const mediaCtx = useContext(mediaContext);
-  if (!mediaCtx) {
-    throw new Error("Playback Controls must be used within a media provider");
-  }
-  const { getMedia, playbackState, setSeek, getSeek } = mediaCtx;
+  const media = useMediaStore((state) => state.media);
+  const playbackState = useMediaStore((state) => state.playbackState);
+  const setSeek = useMediaStore((state) => state.setSeek);
+  const getSeek = useMediaStore((state) => state.getSeek);
   const [displaySeek, setDisplaySeek] = useState([getSeek()]);
   const [ifSeeking, setIfSeeking] = useState(false);
-  const audiofile = getMedia()?.audiofile;
+  const audiofile = media?.audiofile;
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
     if (!ifSeeking && playbackState === "playing") {
       timeout = setInterval(() => {
-        setDisplaySeek([Math.round(getSeek())]);
-      }, 5e2);
+        setDisplaySeek([Math.floor(getSeek())]);
+      }, 3e2);
     }
     return () => clearInterval(timeout);
   }, [playbackState, ifSeeking]);
@@ -199,16 +192,17 @@ function ControlButton({
 }
 
 function VolumeControl() {
-  const mediaCtx = useContext(mediaContext);
-  if (!mediaCtx) {
-    throw new Error("Media context not found");
-  }
-  const [_volume, _setVolume] = React.useState([mediaCtx.volume]);
-  useEffect(() => {
-    _setVolume([mediaCtx.volume]);
-  }, [mediaCtx.volume]);
+  const volume = useMediaStore((state) => state.volume);
+  const setVolume = useMediaStore((state) => state.setVolume);
+  const mute = useMediaStore((state) => state.mute);
+  const setMute = useMediaStore((state) => state.setMute);
+  const [_volume, _setVolume] = React.useState([volume]);
 
-  const volumeIcon = mediaCtx.mute ? (
+  useEffect(() => {
+    _setVolume([volume]);
+  }, [volume]);
+
+  const volumeIcon = mute ? (
     <VolumeX className="h-5 w-5" />
   ) : (
     <Volume2 className="h-5 w-5" />
@@ -216,13 +210,10 @@ function VolumeControl() {
 
   return (
     <div className="flex items-center space-x-2">
-      <ControlButton
-        icon={volumeIcon}
-        onClick={() => mediaCtx.setMute(!mediaCtx.mute)}
-      />
+      <ControlButton icon={volumeIcon} onClick={() => setMute(!mute)} />
       <Slider
         value={_volume}
-        onValueChange={(val) => mediaCtx.setVolume(val[0])}
+        onValueChange={(val) => setVolume(val[0])}
         max={1}
         min={0}
         step={0.01}

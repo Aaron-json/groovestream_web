@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMostPlayed, useListeningHistory } from "@/hooks/media";
-import MediaList from "@/components/custom/media-list";
+import MediaList, { MediaListSkeleton } from "@/components/custom/media-list";
 import InfoCard from "@/components/custom/info-card";
 import { getUser } from "@/api/requests/user";
 import { useQuery } from "@tanstack/react-query";
@@ -20,19 +20,21 @@ function RouteComponent() {
     data: mostPlayed,
     isLoading: mostPlayedLoading,
     error: mostPlayedErr,
-    key: mostPlayedKey,
+    storeKey: mostPlayedStoreKey,
+    queryKey: mostPlayedQueryKey,
   } = useMostPlayed(10);
 
   const {
     data: history,
     isLoading: historyLoading,
     error: historyErr,
-    key: historyKey,
+    storeKey: historyStoreKey,
+    queryKey: historyQueryKey,
   } = useListeningHistory(6);
 
   // loading states
   if (historyLoading || mostPlayedLoading || userLoading) {
-    return <MediaList loading={true} media={[]} />;
+    return <MediaListSkeleton />;
   } else if (
     // error states
     mostPlayedErr ||
@@ -56,14 +58,16 @@ function RouteComponent() {
           <MediaList
             title="Most Played"
             media={mostPlayed}
-            mediaStoreKey={mostPlayedKey}
+            storeKey={mostPlayedStoreKey}
+            queryKey={mostPlayedQueryKey}
           />
         )}
         {history.length > 0 && (
           <MediaList
             title="Listening History"
             media={history}
-            mediaStoreKey={historyKey}
+            storeKey={historyStoreKey}
+            queryKey={historyQueryKey}
           />
         )}
       </section>

@@ -8,7 +8,7 @@ export default function TopBar() {
       <div className="h-full flex items-center">
         <SidebarToggle />
       </div>
-      <div className="h-full flex items-center">
+      <div className="h-full flex items-center gap-2">
         <TasksDropdown />
         <Avatar />
       </div>

@@ -14,7 +14,7 @@ import { getUser } from "@/api/requests/user";
 import { supabaseClient } from "@/auth/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const ProfileButton = ({ avatarUrl = "/api/placeholder/40/40" }) => {
+const ProfileButton = () => {
   const {
     data: userData,
     isLoading: userDataLoading,
@@ -41,9 +41,9 @@ const ProfileButton = ({ avatarUrl = "/api/placeholder/40/40" }) => {
         <Button variant="ghost" className="h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
             <AvatarImage
-              src={avatarUrl}
+              src={"hello"}
               alt={`${userData.username}'s profile`}
-            />
+            ></AvatarImage>
             <AvatarFallback>
               {userData.username.charAt(0).toUpperCase()}
             </AvatarFallback>

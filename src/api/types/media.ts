@@ -16,16 +16,13 @@ export type Audiofile = {
   channels: number | null;
 };
 
-export type Protocol = "hls" | "dash";
-export type Codec = "aac" | "flac";
-
 export type AudiofileDeliverable = {
   id: string;
   audiofile_id: number;
   objects: string[];
   manifest_file: string;
-  protocol: Protocol;
-  codec: Codec;
+  protocol: "hls" | "dash";
+  codec: "aac" | "flac";
   created_at: string;
 };
 

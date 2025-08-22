@@ -39,18 +39,18 @@ import {
 import AddPlaylistMember from "@/components/custom/add-playlist-member";
 import {
   useDeletePlaylist,
-  usePlaylistAudioFiles,
+  usePlaylistAudiofiles,
   usePlaylistInfo,
 } from "@/hooks/media";
 import InfoCard from "@/components/custom/info-card";
 import { ResponseError } from "@/api/types/errors";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Playlist } from "@/api/types/media";
 import { queryClient } from "@/routes/_authenticated";
-import { mediaContext } from "@/contexts/media";
+import { useMediaStore } from "@/lib/media";
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId",
@@ -65,8 +65,7 @@ export const Route = createFileRoute(
       return { playlistId: playlist_id };
     },
   },
-  onError: (err) => {
-    console.error("Route error:", err);
+  onError: () => {
     throw redirect({
       to: "/library",
     });
@@ -74,10 +73,10 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
-  const mediaCtx = useContext(mediaContext);
-  if (!mediaCtx) {
-    throw new Error("page must be inside the media context");
-  }
+  const media = useMediaStore((state) => state.media);
+  const playbackState = useMediaStore((state) => state.playbackState);
+  const playPauseToggle = useMediaStore((state) => state.playPauseToggle);
+  const setMedia = useMediaStore((state) => state.setMedia);
 
   const playlistIndexMatch = useMatch({
     from: "/_authenticated/library/playlists/$playlistId/",
@@ -101,7 +100,7 @@ function RouteComponent() {
   const deletePlaylistMutation = useDeletePlaylist();
 
   // this will also load the audiofiles in store so we can safely call play.
-  const { key: mediaStoreKey } = usePlaylistAudioFiles(playlistId);
+  const { storeKey, queryKey } = usePlaylistAudiofiles(playlistId);
 
   async function handleDeletePlaylist(playlistToDelete: Playlist) {
     try {
@@ -169,40 +168,35 @@ function RouteComponent() {
     return <InfoCard text="Playlist not found." />;
   }
 
-  const getPlayPauseButton = () => {
-    if (mediaCtx.getMedia()?.mediaStoreKey === mediaStoreKey) {
-      if (mediaCtx.playbackState === "playing") {
+  const getPlaybackButton = () => {
+    if (media?.storeKey === storeKey) {
+      if (playbackState === "playing") {
         return (
-          <Button
-            onClick={() => mediaCtx.playPauseToggle()}
-            variant="outline"
-            size="sm"
-          >
-            <Pause /> Pause
+          <Button onClick={() => playPauseToggle()} variant="outline" size="sm">
+            <Pause />
           </Button>
         );
-      } else if (mediaCtx.playbackState === "loading") {
-        // TODO: center animation. animation does not show at the moment
-        return <LoaderCircle className="animate-spin" />;
+      } else if (playbackState === "loading") {
+        return (
+          <Button variant="outline" size="sm">
+            <LoaderCircle className="animate-spin" />
+          </Button>
+        );
       } else {
         return (
-          <Button
-            onClick={() => mediaCtx.playPauseToggle()}
-            variant="outline"
-            size="sm"
-          >
-            <Play /> Play
+          <Button onClick={() => playPauseToggle()} variant="outline" size="sm">
+            <Play />
           </Button>
         );
       }
     } else {
       return (
         <Button
-          onClick={() => mediaCtx.setMedia(mediaStoreKey)}
-          variant="outline"
+          onClick={() => setMedia(storeKey, queryKey)}
+          variant="default"
           size="sm"
         >
-          <Play /> Play
+          <Play />
         </Button>
       );
     }
@@ -257,7 +251,7 @@ function RouteComponent() {
             })}
           </p>
           <div className="flex items-center gap-2 mt-2">
-            {getPlayPauseButton()}
+            {getPlaybackButton()}
             {getSecondaryButton()}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -291,7 +285,7 @@ function RouteComponent() {
                 <DropdownMenuSeparator />
 
                 <DropdownMenuItem
-                  className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                  className="bg-destructive text-destructive-foreground focus:bg-destructive/90"
                   onSelect={(e) => {
                     e.preventDefault();
                     setDialogOpenStates((prevState) => ({

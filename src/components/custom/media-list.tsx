@@ -1,18 +1,21 @@
+import { MediaQueryKey } from "@/hooks/media";
 import MediaCard, { MediaCardSkeleton } from "./media-card";
 import { Audiofile, Playlist } from "@/api/types/media";
 
 export type MediaCardListProps = {
+  storeKey?: string;
+  queryKey?: MediaQueryKey;
   title?: string;
   media: (Audiofile | Playlist)[];
   loading?: boolean;
-  mediaStoreKey?: string;
 };
 
 export default function MediaList({
   title,
   media,
   loading,
-  mediaStoreKey,
+  storeKey,
+  queryKey,
 }: MediaCardListProps) {
   if (loading) {
     return <MediaListSkeleton />;
@@ -27,7 +30,8 @@ export default function MediaList({
           <MediaCard
             key={audiofile.id}
             media={audiofile}
-            mediaStoreKey={mediaStoreKey}
+            storeKey={storeKey}
+            queryKey={queryKey}
             index={index}
           />
         ))}
@@ -36,7 +40,7 @@ export default function MediaList({
   );
 }
 
-function MediaListSkeleton() {
+export function MediaListSkeleton() {
   return (
     <div className="flex w-full p-2">
       <div className="flex flex-wrap gap-4">

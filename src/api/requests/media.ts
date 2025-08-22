@@ -1,104 +1,101 @@
-import axiosClient, { STREAMING_API_URL } from "../axiosClient";
+import axiosClient from "../axiosClient";
 import { Playlist, Audiofile, AudiofileDeliverable } from "../types/media";
 import { PlaylistInvite } from "../types/invites";
-import { checkRequestAuth } from "@/auth/state";
+import axios, { AxiosRequestConfig } from "axios";
 
 ///////////////////////////////////////////////////////////////////////////
 // AUDIOFILE
 ///////////////////////////////////////////////////////////////////////////
 
-export type FileUploadResultEvent = {
-  id: number;
-  filename?: string;
-  event: "error" | "success";
-  message: string;
+type CreateUploadResponse = {
+  url: string;
+  headers: Record<string, string>;
+  method: string;
+  task_id: string;
+  object_id: string;
 };
-
-export type AudiofileUploadCallbacks = {
-  onError: (error: any) => any;
-  onSuccess: (e: FileUploadResultEvent) => any;
-};
-
-export async function uploadAudioFile(
-  files: File[],
-  playlistID: number,
-  callbacks?: AudiofileUploadCallbacks,
-) {
-  const method = "POST";
-  const endpoint = `/audiofiles/${playlistID}`;
-
-  const formData = new FormData();
-  for (const file of files) {
-    formData.append("files", file);
-  }
-
-  // since this endpoint does not use axios, we have to explicitly do an auth check
-  try {
-    const token = await checkRequestAuth({ url: endpoint, method });
-    const res = await fetch(STREAMING_API_URL + endpoint, {
-      method,
-      headers: {
-        Authorization: "Bearer " + token,
-      },
-      // browser will auto-set the content type and include the multipart boundary
-      body: formData,
-    });
-
-    if (!res.body) {
-      throw new Error("Body not found in reponse");
-    }
-
-    // parse the body and split the events
-    const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
-
-    if (callbacks) {
-      await handleUploadEvents(reader, callbacks);
-    }
-  } catch (error) {
-    callbacks?.onError(error);
-    return;
-  }
+export async function createUpload(file: File, playlist_id: number) {
+  const res = await axiosClient.post<CreateUploadResponse>("/upload/url", {
+    filename: file.name,
+    playlist_id,
+    content_length: file.size,
+  });
+  return res.data;
 }
 
-async function handleUploadEvents(
-  reader: ReadableStreamDefaultReader<string>,
-  callbacks: AudiofileUploadCallbacks,
+export async function confirmUpload(task_id: string) {
+  return axiosClient.post("/upload/confirm", {
+    task_id,
+  });
+}
+
+type UploadAudiofileOptions = {
+  onProgress?: (current: number, total: number) => any;
+};
+export async function uploadAudiofile(
+  file: File,
+  playlist_id: number,
+  options?: UploadAudiofileOptions,
 ) {
-  // String buffer to write store a single json payload.
-  // Concantentation is fine since most json objects are small and there is only a few.
-  let buf = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
-    }
+  const url_response = await createUpload(file, playlist_id);
 
-    // start of the unprocessed part of the value
-    let start = 0;
-    while (true) {
-      let newline_idx = value.indexOf("\n", start);
-      if (newline_idx === -1) {
-        // message slice is either empty or without newline (incomplete)
-        buf += value.slice(start);
-        break;
+  const config: AxiosRequestConfig = {};
+  config.headers = {
+    "Content-Type": "application/octet-stream",
+    // avoid overwriting existing objects
+    "If-None-Match": "*",
+  };
+
+  const onProgressCallback = options?.onProgress;
+  if (onProgressCallback) {
+    config.onUploadProgress = (e) => {
+      if (e.lengthComputable && e.total) {
+        onProgressCallback(e.loaded, e.total);
       } else {
-        buf += value.slice(start, newline_idx);
-        // process the event and clear the buffer
-        const event = JSON.parse(buf) as FileUploadResultEvent;
-        if (event.event === "success") {
-          callbacks.onSuccess(event);
-        } else if (event.event === "error") {
-          callbacks.onError(event);
-        } else {
-          throw new Error("Unexpected event");
-        }
-        buf = "";
-
-        // overflows are well handled by String.indexOf() and String.slice()
-        start = newline_idx + 1;
+        onProgressCallback(0, 0);
       }
-    }
+    };
   }
+
+  await axios.put(url_response.url, file, config);
+
+  await confirmUpload(url_response.task_id);
+}
+
+export type CloudTaskStatus =
+  | "UNCONFIRMED"
+  | "PENDING"
+  | "PROCESSING"
+  | "COMPLETED"
+  | "FAILED";
+
+export type CloudTaskType = "AUDIO_UPLOAD";
+
+export type AudioUploadTaskPayload = {
+  playlist_id: number;
+  object_id: string;
+  user_id: number;
+  filename: string;
+  task_id: string;
+};
+
+export type CloudTaskPayload = AudioUploadTaskPayload;
+
+export interface CloudTask {
+  id: string;
+  status: CloudTaskStatus;
+  type: CloudTaskType;
+  payload: CloudTaskPayload;
+  user_id: number | null;
+  error: string | null;
+  unconfirmed_expires_at: string;
+  status_updated_at: string;
+  created_at: string;
+}
+
+export async function getCloudTasks() {
+  const res = await axiosClient.get<CloudTask[]>("/tasks");
+  return res.data;
 }
 
 export async function deleteAudioFile(audioFileID: number) {
@@ -117,7 +114,6 @@ export async function getObjectUrl(objectId: string) {
   // uses a different server than the standad
   const response = await axiosClient.get<string>(url, {
     timeout: 1000 * 60 * 2,
-    baseURL: STREAMING_API_URL,
     responseType: "text",
   });
   return response.data;

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { usePlaylistAudioFiles } from "@/hooks/media";
+import { usePlaylistAudiofiles } from "@/hooks/media";
 import InfoCard from "@/components/custom/info-card";
 import AudiofileTable from "@/components/custom/audiofile-table";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,8 +20,9 @@ function RouteComponent() {
     isLoading: audiofilesLoading,
     error: audiofilesError,
     refetch: refetchAudiofiles,
-    key: storeKey,
-  } = usePlaylistAudioFiles(playlistId);
+    storeKey,
+    queryKey,
+  } = usePlaylistAudiofiles(playlistId);
 
   function renderAudiofiles(currentAudiofiles: Audiofile[]) {
     if (currentAudiofiles.length === 0) {
@@ -30,7 +31,8 @@ function RouteComponent() {
     return (
       <AudiofileTable
         audiofiles={currentAudiofiles}
-        mediaStoreKey={storeKey}
+        storeKey={storeKey}
+        queryKey={queryKey}
         onChange={() => {
           queryClient.invalidateQueries();
         }}

@@ -1,4 +1,3 @@
-import { useContext } from "react";
 import { Music3, Play, Pause, ListMusic } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,30 +6,33 @@ import { Media } from "@/api/types/media";
 import { isAudiofile } from "@/api/types/media";
 import { Skeleton } from "../ui/skeleton";
 import { useNavigate } from "@tanstack/react-router";
-import { mediaContext } from "@/contexts/media";
-import { formatDuration } from "@/lib/media";
 import { toast } from "sonner";
+import { MediaQueryKey } from "@/hooks/media";
+import { useMediaStore, formatDuration } from "@/lib/media";
 
 export type MediaCardProps = {
   media: Media;
+  storeKey?: string;
+  queryKey?: MediaQueryKey;
   onClick?: () => void;
-  mediaStoreKey?: string;
   index?: number;
 };
 
 const MediaCard: React.FC<MediaCardProps> = ({
   media,
   onClick,
-  mediaStoreKey,
+  storeKey,
+  queryKey,
   index,
 }) => {
-  const mediaCtx = useContext(mediaContext);
-  if (!mediaCtx) {
-    throw new Error("Media context not found");
-  }
+  const currentMedia = useMediaStore((state) => state.media);
+  const setMedia = useMediaStore((state) => state.setMedia);
+  const playPauseToggle = useMediaStore((state) => state.playPauseToggle);
+  const playbackState = useMediaStore((state) => state.playbackState);
+
   const navigate = useNavigate();
   const _isAudiofile = isAudiofile(media);
-  const currentAudiofile = mediaCtx.getMedia()?.audiofile;
+  const currentAudiofile = currentMedia?.audiofile;
 
   const handleClick = async (_: React.MouseEvent<HTMLDivElement>) => {
     if (onClick) {
@@ -38,9 +40,9 @@ const MediaCard: React.FC<MediaCardProps> = ({
       return;
     }
     if (_isAudiofile) {
-      if (mediaStoreKey) {
+      if (storeKey && queryKey) {
         try {
-          await mediaCtx.setMedia(mediaStoreKey, index);
+          await setMedia(storeKey, queryKey, index);
         } catch (error: any) {
           const message = error.message ? error.message : "Error loading media";
           toast("Error loading media", {
@@ -62,9 +64,9 @@ const MediaCard: React.FC<MediaCardProps> = ({
       return;
     }
     if (currentAudiofile?.id === media.id) {
-      mediaCtx.playPauseToggle();
-    } else if (mediaStoreKey) {
-      mediaCtx.setMedia(mediaStoreKey, index);
+      playPauseToggle();
+    } else if (storeKey && queryKey) {
+      setMedia(storeKey, queryKey, index);
     }
   };
 
@@ -82,9 +84,8 @@ const MediaCard: React.FC<MediaCardProps> = ({
     }
     let icon: React.ReactNode;
     if (
-      mediaCtx.playbackState !== "playing" ||
-      (mediaCtx.playbackState === "playing" &&
-        currentAudiofile?.id !== media.id)
+      playbackState !== "playing" ||
+      (playbackState === "playing" && currentAudiofile?.id !== media.id)
     ) {
       icon = <Play className="h-5 w-5" />;
     } else {

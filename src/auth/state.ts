@@ -6,7 +6,6 @@ import { supabaseClient } from "../auth/client";
 
 const NO_INTERCEPTOR_ENDPOINTS = [
   {
-    // do not intercept requests to supabase auth endpoints
     url: "/users",
     method: "post",
   },
@@ -16,13 +15,10 @@ export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>();
   const sessionRef = useRef<Session | null>(null);
 
-  const onSessionChange = useCallback(
-    (session: Session | null) => {
-      sessionRef.current = session;
-      setIsAuthenticated(!!session);
-    },
-    [isAuthenticated],
-  );
+  const onSessionChange = useCallback((session: Session | null) => {
+    sessionRef.current = session;
+    setIsAuthenticated(!!session);
+  }, []);
   useEffect(() => {
     // get the initial session
     const { data } = supabaseClient.auth.onAuthStateChange((_, session) => {

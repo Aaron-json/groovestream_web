@@ -3,6 +3,7 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import "./index.css";
 import { routeTree } from "./routeTree.gen";
 import { useAuth } from "./auth/state";
+import TextLogo from "./components/custom/textlogo";
 
 // Create a root router instance
 export const router = createRouter({
@@ -22,7 +23,11 @@ declare module "@tanstack/react-router" {
 function App() {
   const auth = useAuth();
   if (auth.isAuthenticated === undefined) {
-    return null;
+    return (
+      <section className="h-full flex justify-center items-center">
+        <TextLogo />
+      </section>
+    );
   }
   return <RouterProvider router={router} context={{ auth }} />;
 }
