@@ -49,7 +49,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Playlist } from "@/api/types/media";
-import { queryClient } from "@/routes/_authenticated";
+import { queryClient } from "@/lib/query";
 import { useMediaStore } from "@/lib/media";
 
 export const Route = createFileRoute(
@@ -58,10 +58,8 @@ export const Route = createFileRoute(
   component: RouteComponent,
   params: {
     parse: function (params) {
-      const playlist_id = +params.playlistId;
-      if (Number.isNaN(playlist_id) || !Number.isInteger(playlist_id)) {
-        throw new Error("Invalid playlist id");
-      }
+      // playlist id is a string now
+      const playlist_id = params.playlistId;
       return { playlistId: playlist_id };
     },
   },

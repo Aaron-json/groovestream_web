@@ -11,7 +11,7 @@ import InfoCard from "@/components/custom/info-card";
 import CreatePlaylistModal from "@/components/custom/create-playlist";
 import InviteList from "@/components/custom/invite-list";
 import { PlaylistInvite } from "@/api/types/invites";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/library/")({
@@ -36,10 +36,6 @@ function RouteComponent() {
   } = useQuery({
     queryKey: ["playlistInvites"],
     queryFn: () => getPlaylistInvites(10),
-  });
-
-  const [dialogOpenStates, setDialogOpenStates] = useState({
-    createPlaylist: false,
   });
 
   const handleAcceptInvite = useCallback(
@@ -107,18 +103,15 @@ function RouteComponent() {
     return <InfoCard text={"Something went wrong"} />;
   }
   return (
-    <section>
+    <section className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Library</h1>
-        <CreatePlaylistModal
-          open={dialogOpenStates.createPlaylist}
-          onOpenChange={(open) =>
-            setDialogOpenStates({ ...dialogOpenStates, createPlaylist: open })
-          }
-        />
+        <CreatePlaylistModal />
       </div>
-      {renderPlaylists()}
-      {renderPlaylistInvites()}
+      <div className="flex flex-col gap-4">
+        {renderPlaylists()}
+        {renderPlaylistInvites()}
+      </div>
     </section>
   );
 }

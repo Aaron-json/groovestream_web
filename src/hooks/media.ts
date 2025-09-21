@@ -11,7 +11,7 @@ import {
 import { MediaTask, NewMediaTask, TaskType, useTaskStore } from "@/lib/tasks";
 import { Playlist, Audiofile } from "@/api/types/media";
 import { toast } from "sonner";
-import { queryClient } from "@/routes/_authenticated";
+import { queryClient } from "@/lib/query";
 import { useMediaListStore, useMediaStore } from "@/lib/media";
 
 export type MediaQueryKey = string[];
@@ -30,17 +30,21 @@ function flattenQueryKey(cacheKey: MediaQueryKey) {
 const MOST_PLAYED_STORE_KEY: MediaQueryKey = ["most-played"];
 const LISTENING_HISTORY_STORE_KEY: MediaQueryKey = ["listening-history"];
 
-export function getPlaylistMediaStoreKey(playlist_id: number): MediaQueryKey {
+export function getPlaylistMediaStoreKey(
+  playlist_id: Playlist["id"],
+): MediaQueryKey {
   const PLAYLIST_AUDIOFILES_STORE_KEY_PREFIX = "playlist-audiofiles";
   return [PLAYLIST_AUDIOFILES_STORE_KEY_PREFIX, playlist_id.toString()];
 }
 
-export function getPlaylistInfoStoreKey(playlist_id: number): MediaQueryKey {
+export function getPlaylistInfoStoreKey(
+  playlist_id: Playlist["id"],
+): MediaQueryKey {
   const PLAYLIST_INFO_STORE_KEY_PREFIX = "playlist-info";
   return [PLAYLIST_INFO_STORE_KEY_PREFIX, playlist_id.toString()];
 }
 
-export function usePlaylistInfo(playlistId: number) {
+export function usePlaylistInfo(playlistId: Playlist["id"]) {
   const queryKey = getPlaylistInfoStoreKey(playlistId);
   const query = useQuery({
     queryKey,
@@ -49,7 +53,7 @@ export function usePlaylistInfo(playlistId: number) {
   return { ...query } as const;
 }
 
-export function usePlaylistAudiofiles(playlistId: number) {
+export function usePlaylistAudiofiles(playlistId: Playlist["id"]) {
   const queryKey = getPlaylistMediaStoreKey(playlistId);
   const storeKey = flattenQueryKey(queryKey);
   const setMediaList = useMediaListStore((state) => state.setMediaList);

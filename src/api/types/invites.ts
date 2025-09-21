@@ -1,19 +1,19 @@
 export interface PlaylistInvite {
-  id: number;
-  from_id: number;
+  id: string;
+  from_id: string;
   from_username: string;
-  to_id: number;
-  playlist_id: number;
+  to_id: string;
+  playlist_id: string;
   playlist_name: string;
-  playlist_owner_id: number;
+  playlist_owner_id: string;
   playlist_owner_username: string;
   created_at: string;
 }
 
 export interface FriendRequest {
-  id: number;
-  from_id: number;
+  id: string;
+  from_id: string;
   from_username: string;
-  to_id: number;
+  to_id: string;
   created_at: string;
 }

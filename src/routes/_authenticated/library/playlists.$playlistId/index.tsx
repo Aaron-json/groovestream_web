@@ -4,7 +4,7 @@ import InfoCard from "@/components/custom/info-card";
 import AudiofileTable from "@/components/custom/audiofile-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Audiofile } from "@/api/types/media";
-import { queryClient } from "@/routes/_authenticated";
+import { queryClient } from "@/lib/query";
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId/",

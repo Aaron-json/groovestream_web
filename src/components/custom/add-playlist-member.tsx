@@ -16,9 +16,10 @@ import { sendPlaylistInvite } from "@/api/requests/media";
 import { isAxiosError } from "axios";
 import { ResponseError } from "@/api/types/errors";
 import React from "react";
+import { Playlist } from "@/api/types/media";
 
 type AddPlaylistMemberProps = {
-  playlistId: number;
+  playlistId: Playlist["id"];
   trigger?: React.ReactNode;
   open?: boolean; // For controlled mode
   onOpenChange?: (open: boolean) => void; // For controlled mode

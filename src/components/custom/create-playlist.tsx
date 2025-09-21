@@ -1,41 +1,28 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Plus } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { createPlaylist } from "@/api/requests/media";
 import { AlertCircle } from "lucide-react";
-import { queryClient } from "@/routes/_authenticated";
+import { queryClient } from "@/lib/query";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+
+import { Drawer, DrawerTrigger, DrawerContent } from "@/components/ui/drawer";
 
 type CreatePlaylistValues = {
   name: string;
 };
 
-type CreatePlaylistProps = {
+type CreatePlaylistModalProps = {
   trigger?: React.ReactNode;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
 };
 
-export default function CreatePlaylistModal(props: CreatePlaylistProps) {
-  const { reset, register, handleSubmit, formState, setError } =
-    useForm<CreatePlaylistValues>({
-      defaultValues: {
-        name: "",
-      },
-    });
-
+export default function CreatePlaylistModal(props: CreatePlaylistModalProps) {
+  const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
   const trigger = props.trigger || (
     <Button variant="secondary">
       <Plus className="h-4 w-4 mr-2" />
@@ -43,17 +30,48 @@ export default function CreatePlaylistModal(props: CreatePlaylistProps) {
     </Button>
   );
 
-  // reset form data everytime it opens or closes
+  if (!isMobile) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogContent className="flex items-center justify-center">
+          <CreatePlaylistForm onFinish={() => setOpen(false)} />
+        </DialogContent>
+      </Dialog>
+    );
+  } else {
+    return (
+      <Drawer open={open} onOpenChange={setOpen}>
+        <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+        <DrawerContent className="flex items-center justify-center pb-4">
+          <CreatePlaylistForm onFinish={() => setOpen(false)} />
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+}
+
+interface CreatePlaylistFormProps {
+  onFinish?: () => void;
+}
+export function CreatePlaylistForm({ onFinish }: CreatePlaylistFormProps) {
+  const { reset, register, handleSubmit, formState, setError } =
+    useForm<CreatePlaylistValues>({
+      defaultValues: {
+        name: "",
+      },
+    });
+
   useEffect(() => {
     reset();
-  }, [props.open]);
+  }, []);
 
   const onSubmit = async (data: CreatePlaylistValues) => {
     try {
-      // use await so the error is caught
       await createPlaylist(data.name);
-      props.onOpenChange(false);
       queryClient.invalidateQueries({ queryKey: ["playlists"] });
+      reset();
+      if (onFinish) onFinish();
     } catch (err: any) {
       const message = "An unexpected error occurred.";
       setError("root", {
@@ -61,57 +79,62 @@ export default function CreatePlaylistModal(props: CreatePlaylistProps) {
       });
     }
   };
+
   return (
-    <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create Playlist</DialogTitle>
-          <DialogDescription>
-            Create a playlist to store and share your favorite music.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} id="create-playlist-form">
-          {formState.isSubmitSuccessful && (
-            <div className="flex items-center rounded-md border p-2">
-              <Check className="mr-2 h-5 w-5" />
-              <span className="text-sm">Playlist created successfully</span>
-            </div>
-          )}
-          {formState.errors.root && (
-            <div className="flex items-center rounded-md border-destructive/50 bg-destructive/10 p-2">
-              <AlertCircle className="mr-2 h-5 w-5" />
-              <span className="text-sm">{formState.errors.root.message}</span>
-            </div>
-          )}
-          <div className="flex items-center space-x-2">
-            <div className="grid flex-1 gap-2">
-              <Label htmlFor="playlist-name">Playlist Name</Label>
-              <Input
-                id="playlist-name"
-                {...register("name", {
-                  required: "Playlist name is required",
-                })}
-              />
-            </div>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      id="create-playlist-form"
+      className="flex flex-col items-center w-full max-w-96 gap-4"
+    >
+      <div className="flex flex-col items-center">
+        <h2 className="text-xl font-semibold">Create Playlist</h2>
+        <p className="text-muted-foreground text-center">
+          Create a playlist to store and share your favorite music.
+        </p>
+      </div>
+
+      <div className="w-full grid gap-2">
+        <Label htmlFor="playlist-name">Playlist Name</Label>
+        <Input
+          id="playlist-name"
+          {...register("name", { required: "required" })}
+        />
+      </div>
+
+      <div className="w-full flex flex-col h-8">
+        {formState.isSubmitSuccessful && (
+          <div className="flex items-center">
+            <Check className="mr-2 h-3 w-3" />
+            <span className="text-sm">Playlist created successfully</span>
           </div>
-        </form>
-        <DialogFooter className="justify-between">
-          <DialogClose asChild>
-            <Button type="submit" variant="ghost">
-              Close
-            </Button>
-          </DialogClose>
-          <Button
-            type="submit"
-            form="create-playlist-form"
-            variant="default"
-            disabled={formState.isSubmitting}
-          >
-            {formState.isSubmitting ? "Loading..." : "Create"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        )}
+        {formState.errors.root && (
+          <div className="flex items-center bg-destructive text-destructive-foreground rounded-md border p-2">
+            <AlertCircle className="mr-2 h-3 w-3" />
+            <span className="text-sm">{formState.errors.root.message}</span>
+          </div>
+        )}
+      </div>
+      <div className="w-full flex justify-around gap-6">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            onFinish?.();
+          }}
+          className="flex-1 max-w-sm"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          variant="default"
+          disabled={formState.isSubmitting}
+          className="flex-1 max-w-sm"
+        >
+          {formState.isSubmitting ? "Loading..." : "Create"}
+        </Button>
+      </div>
+    </form>
   );
 }

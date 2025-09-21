@@ -1,12 +1,12 @@
 export type Audiofile = {
-  id: number;
+  id: string;
   filename: string;
   object_id: string;
   title: string | null;
   album: string | null;
-  playlist_id: number;
+  playlist_id: string;
   uploaded_at: string;
-  uploaded_by_id: number | null;
+  uploaded_by_id: string | null;
   uploaded_by_username: string | null;
   artists: string[] | null;
   duration: number | null;
@@ -18,7 +18,7 @@ export type Audiofile = {
 
 export type AudiofileDeliverable = {
   id: string;
-  audiofile_id: number;
+  audiofile_id: string;
   objects: string[];
   manifest_file: string;
   protocol: "hls" | "dash";
@@ -27,9 +27,9 @@ export type AudiofileDeliverable = {
 };
 
 export type Playlist = {
-  id: number;
+  id: string;
   name: string;
-  owner_id: number;
+  owner_id: string;
   owner_username: string;
   created_at: string;
 };

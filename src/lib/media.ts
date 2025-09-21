@@ -100,7 +100,7 @@ interface HlsLoadResult {
   duration: number;
 }
 
-async function loadHls(audiofile_id: number, video: HTMLVideoElement) {
+async function loadHls(audiofile_id: Audiofile["id"], video: HTMLVideoElement) {
   const deliverables = await getDeliverables(audiofile_id);
   const hlsDeliverables = deliverables.filter(
     (deliverable) =>

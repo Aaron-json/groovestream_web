@@ -2,14 +2,36 @@ import { useRef, useCallback } from "react";
 import axiosClient from "../api/axiosClient";
 import { Session } from "@supabase/supabase-js";
 import { useState, useEffect } from "react";
-import { supabaseClient } from "../auth/client";
+import { createClient } from "@supabase/supabase-js";
+import { Route as AuthRoute } from "@/routes/auth";
 
-const NO_INTERCEPTOR_ENDPOINTS = [
-  {
-    url: "/users",
-    method: "post",
-  },
-];
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const anon_key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+export const supabaseClient = createClient(supabaseUrl, anon_key);
+
+export async function signInGoogle() {
+  const location = `${window.location.origin}/${AuthRoute.path}`;
+
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: location,
+      queryParams: {
+        prompt: "select_account",
+      },
+    },
+  });
+  if (error) {
+    throw error;
+  }
+}
+
+export async function signOut() {
+  const { error } = await supabaseClient.auth.signOut();
+  if (error) {
+    throw error;
+  }
+}
 
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>();
@@ -30,10 +52,7 @@ export function useAuth() {
 
     // set interceptor to add auth header to requests
     axiosClient.interceptors.request.use(async (config) => {
-      const token = await checkRequestAuth({
-        url: config.url,
-        method: config.method,
-      });
+      const token = await checkRequestAuth();
       config.headers.Authorization = "Bearer " + token;
       return config;
     });
@@ -46,20 +65,7 @@ export function useAuth() {
 // Abstract the auth checking. some endpoints like file upload use the fetch api and not axios.
 // Returns an authorization header or undefined if the url is not meant to be
 // intercepted. On error, throws an error.
-export async function checkRequestAuth(config: {
-  url?: string;
-  method?: string;
-}): Promise<string | undefined> {
-  if (
-    NO_INTERCEPTOR_ENDPOINTS.some(
-      (url) =>
-        url.url === config.url &&
-        url.method.toLowerCase() === config.method?.toLowerCase(),
-    )
-  ) {
-    return undefined;
-  }
-
+export async function checkRequestAuth(): Promise<string | undefined> {
   const curSession = await supabaseClient.auth.getSession();
 
   if (curSession.error) {

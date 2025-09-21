@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getUser } from "@/api/requests/user";
-import { supabaseClient } from "@/auth/client";
+import { supabaseClient, useAuth } from "@/lib/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ProfileButton = () => {
@@ -20,6 +20,8 @@ const ProfileButton = () => {
     isLoading: userDataLoading,
     error: userDataErr,
   } = useQuery({ queryKey: ["user"], queryFn: getUser });
+  const { sessionRef } = useAuth();
+  const email = sessionRef.current?.user?.email;
 
   async function logout() {
     const { error } = await supabaseClient.auth.signOut();
@@ -50,11 +52,11 @@ const ProfileButton = () => {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-sm">{userData.username}</p>
-            <p className="text-xs text-muted-foreground">{userData.email}</p>
+            <p>{userData.username}</p>
+            {email && <p className="text-muted-foreground">{email}</p>}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

@@ -1,29 +1,16 @@
 import { ResponseError } from "../types/errors";
-import { ProfilePicture, User } from "../types/user";
+import { User } from "../types/user";
 import axiosClient from "../axiosClient";
 
 export async function getUser() {
   const response = await axiosClient.get<User>("/users");
   return response.data;
 }
-export async function getOwnProfilePicture() {
-  const response = await axiosClient.get<ProfilePicture>(
-    "/users/profile-picture",
-  );
-  return response.data;
-}
-export async function getProfilePicture(userID: number) {
-  const response = await axiosClient.get<ProfilePicture>(
-    `/users/profile-picture/${userID}`,
-  );
-  return response.data;
-}
-export type SignUpData = {
-  email: string;
+
+export type UserProfile = {
   username: string;
-  password: string;
 };
-export async function createUser(data: SignUpData) {
+export async function createUserProfile(data: UserProfile) {
   const response = await axiosClient.post<any, ResponseError>("/users", data);
   return response.data;
 }

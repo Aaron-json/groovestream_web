@@ -3,9 +3,7 @@ import { Outlet } from "@tanstack/react-router";
 import AppSidebar from "../components/custom/appsidebar";
 import { SidebarProvider } from "../components/ui/sidebar";
 import MediaBar from "@/components/custom/mediabar";
-import { QueryClientProvider } from "@tanstack/react-query";
 import TopBar from "@/components/custom/topbar";
-import { QueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -13,38 +11,31 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: ({ context }) => {
     if (!context.auth.isAuthenticated) {
       throw redirect({
-        to: "/login",
+        to: "/auth",
+      });
+    }
+    if (context.user === null) {
+      throw redirect({
+        to: "/complete-profile",
       });
     }
   },
 });
 
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-    },
-  },
-});
-
 function AuthenticatedLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <SidebarProvider>
-        <AppSidebar />
-        <div className="flex flex-col w-full px-2">
-          <TopBar />
-          <div className="flex-1 p-2 mb-2">
-            <Outlet />
-          </div>
-          <div className={`sticky bottom-2 left-2 right-2`}>
-            <MediaBar />
-          </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <div className="flex flex-col w-full px-2">
+        <TopBar />
+        <div className="flex-1 p-2 mb-2">
+          <Outlet />
         </div>
-        <Toaster position="bottom-left" />
-      </SidebarProvider>
-    </QueryClientProvider>
+        <div className={`sticky bottom-2 left-2 right-2`}>
+          <MediaBar />
+        </div>
+      </div>
+      <Toaster position="bottom-left" />
+    </SidebarProvider>
   );
 }
