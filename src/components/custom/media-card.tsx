@@ -39,7 +39,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
     currentMedia?.audiofile?.id === media.id &&
     playbackState === "playing";
 
-  const handleCardClick = async (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleCardClick = async (_: React.MouseEvent<HTMLDivElement>) => {
     if (onClick) {
       onClick();
       return;

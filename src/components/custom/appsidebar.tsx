@@ -1,4 +1,4 @@
-import { ChevronRight, HomeIcon, LibraryIcon } from "lucide-react";
+import { HomeIcon, LibraryIcon } from "lucide-react";
 import {
   Sidebar,
   SidebarMenu,
@@ -12,10 +12,6 @@ import {
 } from "@/components/ui/sidebar";
 import TextLogo from "./textlogo";
 import { Link } from "@tanstack/react-router";
-import { CustomAvatar } from "./avatar";
-import { useQuery } from "@tanstack/react-query";
-import { getUser } from "@/api/requests/user";
-import { useAuth } from "@/lib/auth";
 import SidebarUserCard from "./sidebar-user-card";
 
 const navItems = [

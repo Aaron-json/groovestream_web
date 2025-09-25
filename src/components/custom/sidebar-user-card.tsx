@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronDown, ChevronRight, ChevronUp, LogOut } from "lucide-react";
+import { ChevronDown, ChevronUp, LogOut } from "lucide-react";
 import { CustomAvatar } from "./avatar";
 import { signOut, useAuth } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
