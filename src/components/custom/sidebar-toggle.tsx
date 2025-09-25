@@ -1,4 +1,4 @@
-import { MenuIcon } from "lucide-react";
+import { PanelLeftIcon } from "lucide-react";
 import { useSidebar } from "../ui/sidebar";
 import { Button } from "@/components/ui/button";
 
@@ -18,9 +18,8 @@ export default function SidebarToggle() {
       size="icon"
       className="h-10 w-auto aspect-square"
     >
-      <MenuIcon
-        strokeWidth={2.1}
-        size={24}
+      <PanelLeftIcon
+        strokeWidth={2.5}
         className="h-full w-auto aspect-square"
       />
     </Button>

@@ -26,12 +26,12 @@ function AuthenticatedLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <div className="flex flex-col w-full px-2">
+      <div className="flex flex-col w-full px-2 overflow-hidden">
         <TopBar />
         <div className="flex-1 p-2 mb-2">
           <Outlet />
         </div>
-        <div className={`sticky bottom-2 left-2 right-2`}>
+        <div className="sticky bottom-2 left-2 right-2">
           <MediaBar />
         </div>
       </div>

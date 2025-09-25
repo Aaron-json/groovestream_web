@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Plus } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -61,10 +61,6 @@ export function CreatePlaylistForm({ onFinish }: CreatePlaylistFormProps) {
         name: "",
       },
     });
-
-  useEffect(() => {
-    reset();
-  }, []);
 
   const onSubmit = async (data: CreatePlaylistValues) => {
     try {

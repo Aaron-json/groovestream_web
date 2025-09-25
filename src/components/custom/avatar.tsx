@@ -7,14 +7,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Avatar as ShadAvatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 import { LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getUser } from "@/api/requests/user";
-import { supabaseClient, useAuth } from "@/lib/auth";
+import { signOut, useAuth } from "@/lib/auth";
 import { Skeleton } from "@/components/ui/skeleton";
+import { User } from "@/api/types/user";
 
-const ProfileButton = () => {
+const AvatarDropdown = () => {
   const {
     data: userData,
     isLoading: userDataLoading,
@@ -22,14 +27,6 @@ const ProfileButton = () => {
   } = useQuery({ queryKey: ["user"], queryFn: getUser });
   const { sessionRef } = useAuth();
   const email = sessionRef.current?.user?.email;
-
-  async function logout() {
-    const { error } = await supabaseClient.auth.signOut();
-    if (error) {
-      throw error;
-    }
-    location.reload();
-  }
 
   if (userDataLoading || !userData) {
     return <Skeleton className="h-10 w-10 rounded-full" />;
@@ -41,7 +38,7 @@ const ProfileButton = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10">
+          <ShadAvatar className="h-10 w-10 border">
             <AvatarImage
               src={"hello"}
               alt={`${userData.username}'s profile`}
@@ -49,18 +46,18 @@ const ProfileButton = () => {
             <AvatarFallback>
               {userData.username.charAt(0).toUpperCase()}
             </AvatarFallback>
-          </Avatar>
+          </ShadAvatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuLabel>
-          <div className="flex flex-col space-y-1">
+          <div className="flex flex-col leading-tight">
             <p>{userData.username}</p>
             {email && <p className="text-muted-foreground">{email}</p>}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout}>
+        <DropdownMenuItem onClick={signOut}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>
@@ -69,4 +66,31 @@ const ProfileButton = () => {
   );
 };
 
-export default ProfileButton;
+type CustomAvatarProps = {
+  user: User | undefined;
+  email?: string;
+  picture_url?: string;
+};
+
+export function CustomAvatar(
+  props: CustomAvatarProps & {
+    className: React.ComponentPropsWithoutRef<typeof ShadAvatar>["className"];
+  },
+) {
+  if (!props.user) {
+    return <Skeleton className="animate-none h-10 w-10 rounded-full" />;
+  }
+  return (
+    <ShadAvatar className={props.className}>
+      <AvatarImage
+        src={props.picture_url}
+        alt={`${props.user.username}'s profile`}
+      ></AvatarImage>
+      <AvatarFallback>
+        {props.user.username.charAt(0).toUpperCase()}
+      </AvatarFallback>
+    </ShadAvatar>
+  );
+}
+
+export default AvatarDropdown;

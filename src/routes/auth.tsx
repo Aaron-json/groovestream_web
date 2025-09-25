@@ -51,9 +51,6 @@ export default function RouteComponent() {
               </span>
             </li>
           </ul>
-          <p className="text-sm text-muted-foreground">
-            Where music meets friendship.
-          </p>
         </div>
       </div>
 

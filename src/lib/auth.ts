@@ -31,6 +31,7 @@ export async function signOut() {
   if (error) {
     throw error;
   }
+  window.location.reload();
 }
 
 export function useAuth() {
