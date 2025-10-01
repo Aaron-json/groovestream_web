@@ -81,7 +81,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
   return (
     <Card
       onClick={handleCardClick}
-      className="w-[9.5rem] cursor-pointer hover:bg-accent/50 transition-colors duration-200 border-border"
+      className="w-[9rem] cursor-pointer hover:bg-accent/50 transition-colors duration-200 border-border"
     >
       <CardContent className="p-0">
         <div className="flex flex-col">
@@ -106,7 +106,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
             )}
           </AspectRatio>
 
-          <div className="flex flex-col gap-1 p-2">
+          <div className="flex flex-col p-1.5">
             <h3 className="font-medium text-sm text-foreground truncate leading-tight">
               {isAudio ? media.title || media.filename : media.name}
             </h3>
@@ -133,7 +133,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
 
 export function MediaCardSkeleton() {
   return (
-    <div className="w-[9.5rem]">
+    <div className="w-[9rem]">
       <div className="space-y-3">
         <Skeleton className="aspect-square w-full rounded-md" />
         <div className="space-y-2 px-1">

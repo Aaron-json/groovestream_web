@@ -13,6 +13,8 @@ import InviteList from "@/components/custom/invite-list";
 import { PlaylistInvite } from "@/api/types/invites";
 import { useCallback } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Plus, Music2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/library/")({
   component: RouteComponent,
@@ -28,6 +30,7 @@ function RouteComponent() {
     queryKey: ["playlists"],
     queryFn: () => getUserPlaylists(),
   });
+
   const {
     data: playlistInvites,
     error: playlistInvitesErr,
@@ -42,50 +45,48 @@ function RouteComponent() {
     async (invite: PlaylistInvite) => {
       try {
         await acceptPlaylistInvite(invite.from_id, invite.playlist_id);
+        toast.success("Invite accepted");
         refetchPlaylistInvites();
         refetchPlaylists();
       } catch (error) {
-        toast("Error accepting invite");
+        toast.error("Failed to accept invite");
       }
     },
-    [refetchPlaylistInvites, refetchPlaylists, toast],
+    [refetchPlaylistInvites, refetchPlaylists],
   );
 
   const handleDeclineInvite = useCallback(
     async (invite: PlaylistInvite) => {
       try {
         await rejectPlaylistInvite(invite.from_id, invite.playlist_id);
+        toast.success("Invite declined");
         refetchPlaylistInvites();
-        refetchPlaylists();
       } catch (error) {
-        toast("Error declining invite");
+        toast.error("Failed to decline invite");
       }
     },
-    [refetchPlaylistInvites, refetchPlaylists, toast],
+    [refetchPlaylistInvites],
   );
 
-  function renderPlaylists() {
-    if (playlistsLoading) {
-      return <MediaListSkeleton />; //display skeleton
-    } else if (playlistsErr || !playlists) {
-      return <InfoCard text={"Something went wrong"} />;
-    } else if (playlists.length === 0) {
-      return (
-        <InfoCard text="No playlists in your library yet. Create one or ask your friends to invite you." />
-      );
-    } else {
-      return <MediaList media={playlists} title="Playlists" />;
-    }
+  // Show single error if both fail
+  if (playlistInvitesErr && playlistsErr) {
+    return (
+      <section className="space-y-6">
+        <PageHeader />
+        <InfoCard text="Unable to load your library. Please try again later." />
+      </section>
+    );
   }
-  function renderPlaylistInvites() {
-    if (playlistInvitesLoading) {
-      return null;
-    } else if (playlistInvitesErr || !playlistInvites) {
-      return <InfoCard text={"Something went wrong"} />;
-    } else if (playlistInvites.length === 0) {
-      return null;
-    } else {
-      return (
+
+  const hasPlaylists = playlists && playlists.length > 0;
+  const hasInvites = playlistInvites && playlistInvites.length > 0;
+
+  return (
+    <section className="flex flex-col gap-6">
+      <PageHeader />
+
+      {/* Invites Section */}
+      {!playlistInvitesLoading && hasInvites && (
         <InviteList
           invites={playlistInvites}
           title="Playlist Invites"
@@ -93,25 +94,64 @@ function RouteComponent() {
           onAccept={handleAcceptInvite}
           onDecline={handleDeclineInvite}
         />
-      );
-    }
-  }
+      )}
 
-  // if both playlists and invites cannot be loaded,
-  // show a single error for the whole page
-  if (playlistInvitesErr && playlistsErr) {
-    return <InfoCard text={"Something went wrong"} />;
-  }
-  return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Library</h1>
-        <CreatePlaylistModal />
-      </div>
-      <div className="flex flex-col gap-4">
-        {renderPlaylists()}
-        {renderPlaylistInvites()}
+      {/* Playlists Section */}
+      <div className="flex justify-center">
+        {playlistsLoading ? (
+          <MediaListSkeleton />
+        ) : playlistsErr ? (
+          <InfoCard text="Unable to load playlists" />
+        ) : hasPlaylists ? (
+          <MediaList media={playlists} title="Your Playlists" />
+        ) : (
+          <EmptyState />
+        )}
       </div>
     </section>
+  );
+}
+
+function PageHeader() {
+  return (
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-2xl font-semibold">Library</h1>
+        <p className="text-muted-foreground mt-1">
+          Manage your playlists and invites
+        </p>
+      </div>
+
+      <CreatePlaylistModal
+        trigger={
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Playlist
+          </Button>
+        }
+      />
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="border-2 border-dashed rounded-lg p-12 text-center w-full max-w-2xl">
+      <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+        <Music2 className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <h3 className="text-lg font-medium mb-2">No playlists yet</h3>
+      <p className="text-muted-foreground mb-4">
+        Create your first playlist or accept an invite from friends
+      </p>
+      <CreatePlaylistModal
+        trigger={
+          <Button variant="outline">
+            <Plus className="h-4 w-4 mr-2" />
+            Create Your First Playlist
+          </Button>
+        }
+      />
+    </div>
   );
 }

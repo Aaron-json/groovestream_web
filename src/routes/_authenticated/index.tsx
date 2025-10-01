@@ -53,7 +53,10 @@ function RouteComponent() {
     );
   } else {
     return (
-      <section className="flex flex-col gap-2">
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Home</h1>
+        </div>
         {mostPlayed.length > 0 && (
           <MediaList
             title="Most Played"

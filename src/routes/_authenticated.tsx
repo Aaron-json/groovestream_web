@@ -28,7 +28,7 @@ function AuthenticatedLayout() {
       <AppSidebar />
       <div className="flex flex-col w-full px-2 overflow-hidden">
         <TopBar />
-        <div className="flex-1 p-2 mb-2">
+        <div className="flex-1 py-2 px-8 mb-2 overflow-hidden">
           <Outlet />
         </div>
         <div className="sticky bottom-2 left-2 right-2">
