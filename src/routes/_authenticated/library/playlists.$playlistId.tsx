@@ -201,7 +201,7 @@ function RouteComponent() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex items-center gap-1">
             <Button
               onClick={handlePlayback}
               variant={isCurrentPlaylist ? "outline" : "default"}
@@ -215,8 +215,8 @@ function RouteComponent() {
               ) : (
                 <Play className="h-4 w-4" />
               )}
-              <span className="ml-2 hidden sm:inline">
-                {isLoading ? "Loading..." : isPlaying ? "Pause" : "Play"}
+              <span className="w-12">
+                {isLoading ? "Loading" : isPlaying ? "Pause" : "Play"}
               </span>
             </Button>
 
@@ -224,17 +224,18 @@ function RouteComponent() {
               <Link
                 to="/library/playlists/$playlistId/upload"
                 params={{ playlistId }}
+                className="flex items-center gap-1"
               >
                 <Button variant="outline" size="sm">
                   <Upload className="h-4 w-4" />
-                  <span className="ml-2 hidden sm:inline">Upload</span>
+                  <span className="w-12">Upload</span>
                 </Button>
               </Link>
             ) : (
               <Link to="/library/playlists/$playlistId" params={{ playlistId }}>
                 <Button variant="outline" size="sm">
                   <ListMusic className="h-4 w-4" />
-                  <span className="ml-2 hidden sm:inline">Tracks</span>
+                  <span className="w-12">Tracks</span>
                 </Button>
               </Link>
             )}

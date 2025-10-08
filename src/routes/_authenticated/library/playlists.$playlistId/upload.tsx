@@ -46,10 +46,11 @@ export default function RouteComponent() {
     const validFiles: File[] = [];
 
     for (const file of newFiles) {
-      if (files.some(existingFile => existingFile.name === file.name)) {
-        toast.error(`"${file.name}" already selected`);
-        continue;
-      }
+      // TODO: find a better way to check for duplicates
+      // if (files.some(existingFile => existingFile.name === file.name)) {
+      //   toast.error(`"${file.name}" already selected`);
+      //   continue;
+      // }
 
       if (files.length + validFiles.length >= MAX_FILES) {
         toast.error(`Maximum ${MAX_FILES} files allowed`);
