@@ -253,12 +253,12 @@ function RouteComponent() {
                     setDialogState((prev) => ({ ...prev, addMember: true }));
                   }}
                 >
-                  <Users className="mr-2 h-4 w-4" />
+                  <Users className="mr-1 h-4 w-4" />
                   Add Members
                 </DropdownMenuItem>
 
                 <DropdownMenuItem onClick={handleLeavePlaylist}>
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <LogOut className="mr-1 h-4 w-4" />
                   Leave Playlist
                 </DropdownMenuItem>
 
@@ -274,7 +274,7 @@ function RouteComponent() {
                     }));
                   }}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <Trash2 className="mr-1 h-4 w-4" />
                   Delete Playlist
                 </DropdownMenuItem>
               </DropdownMenuContent>

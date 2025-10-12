@@ -6,13 +6,8 @@ import {
   getDeliverables,
   getObjectUrl,
 } from "@/api/requests/media";
-import Hls, {
-  HlsConfig,
-  LoaderCallbacks,
-  LoaderConfiguration,
-  LoaderContext,
-} from "hls.js";
 import { toast } from "sonner";
+import shaka from "shaka-player";
 
 export type MediaListSlice = {
   mediaLists: Record<string, Audiofile[]>;
@@ -49,62 +44,20 @@ videoElement.style.visibility = "hidden";
 videoElement.volume = DEFAULT_VOLUME;
 document.body.appendChild(videoElement);
 
-let hls: Hls | undefined = undefined;
+let player: shaka.Player | undefined = undefined;
 
-function destroyHls() {
-  hls?.destroy();
-  hls = undefined;
-}
-
-class CustomLoader extends Hls.DefaultConfig.loader {
-  async load(
-    context: LoaderContext,
-    config: LoaderConfiguration,
-    callbacks: LoaderCallbacks<LoaderContext>,
-  ): Promise<void> {
-    try {
-      const object_name = context.url.slice(context.url.lastIndexOf("/") + 1);
-      const signed_url = await getObjectUrl(object_name);
-      context = { ...context, url: signed_url };
-      super.load(context, config, callbacks);
-    } catch (error) {
-      // Handle any errors in getting signed URL
-      callbacks.onError(
-        { code: 500, text: "Error fetching URL" },
-        context,
-        null,
-        super.stats,
-      );
-    }
-  }
-}
-
-const HLS_CONFIG: Partial<HlsConfig> = {
-  loader: CustomLoader,
-  enableWorker: true,
-  lowLatencyMode: true,
-  backBufferLength: 90,
-  // Add specific audio optimization configs
-  maxBufferLength: 30, // 30s
-  maxMaxBufferLength: 60, // 60s
-  maxBufferSize: 20 * 1000 * 1000, // 20MB
-  // Optimize for audio-only streams
-  progressive: true,
-  manifestLoadingTimeOut: 10000, // 10s
-  manifestLoadingMaxRetry: 2,
-  levelLoadingTimeOut: 10000, // 10s
-  fragLoadingTimeOut: 10000, // 10s
-};
-
-interface HlsLoadResult {
+interface LoadResult {
   duration: number;
 }
 
-async function loadHls(audiofile_id: Audiofile["id"], video: HTMLVideoElement) {
+async function loadHls(audiofile_id: Audiofile["id"]): Promise<LoadResult> {
+  if (!player) {
+    throw new Error("Player not initialized");
+  }
   const deliverables = await getDeliverables(audiofile_id);
   const hlsDeliverables = deliverables.filter(
     (deliverable) =>
-      deliverable.protocol === "hls" && deliverable.codec === "aac",
+      deliverable.protocol === "dash" && deliverable.codec === "aac",
   );
   if (hlsDeliverables.length === 0) {
     throw new Error("No deliverables found");
@@ -113,41 +66,10 @@ async function loadHls(audiofile_id: Audiofile["id"], video: HTMLVideoElement) {
   // TODO: add more info in the backend for selection
   const deliverable = hlsDeliverables[0];
 
-  const hls = new Hls(HLS_CONFIG);
-  return new Promise<HlsLoadResult>((resolve, reject) => {
-    let mediaAttached = false;
-    let levelLoaded = false;
-    let duration = 0;
+  await player.load(deliverable.manifest_file);
+  const duration = videoElement.duration;
 
-    function tryResolve() {
-      if (mediaAttached && levelLoaded) {
-        resolve({
-          duration,
-        });
-        // remove error listener to avoid shadowing future hls errors
-        hls.off(Hls.Events.ERROR);
-      }
-    }
-
-    hls.once(Hls.Events.MEDIA_ATTACHED, function () {
-      mediaAttached = true;
-      tryResolve();
-    });
-
-    hls.once(Hls.Events.LEVEL_LOADED, function (_, data) {
-      levelLoaded = true;
-      duration = Math.round(data.details.totalduration);
-      tryResolve();
-    });
-
-    hls.once(Hls.Events.ERROR, function (_, data) {
-      reject(data);
-      hls.destroy();
-    });
-
-    hls.loadSource(deliverable.manifest_file);
-    hls.attachMedia(video);
-  });
+  return { duration };
 }
 
 function getNextAudio(
@@ -241,12 +163,11 @@ async function loadMedia(newMedia: CurrentMedia) {
     return;
   }
   _setPlaybackState("loading");
-  destroyHls();
 
   const audiofile = newMedia.audiofile;
 
   try {
-    const loadRes = await loadHls(audiofile.id, videoElement);
+    const loadRes = await loadHls(audiofile.id);
     if (audiofile.duration === undefined || audiofile.duration === null) {
       // sometimes the server does not successfully get a value for duration
       newMedia.audiofile.duration = loadRes.duration;
@@ -335,7 +256,6 @@ export const useMediaStore = create<MediaSlice>((set, get) => {
       _setPlaybackState("unloaded");
       _setMedia(undefined);
       videoElement.pause();
-      destroyHls();
     },
     playbackState: "unloaded",
     _setPlaybackState: (state) => {
@@ -418,6 +338,36 @@ videoElement.addEventListener("volumechange", (e) => {
   useMediaStore.getState()._setVolumeState(target.volume);
   useMediaStore.getState()._setMuteState(target.muted);
 });
+
+export function isBrowserSupported(): boolean {
+  return shaka.Player.isBrowserSupported();
+}
+
+export async function initPlayer(onError: ((error: any) => void) | null) {
+  shaka.polyfill.installAll();
+
+  player = new shaka.Player();
+  await player.attach(videoElement);
+
+  const netEngine = player.getNetworkingEngine();
+  if (!netEngine) {
+    throw new Error("Networking engine not found");
+  }
+
+  netEngine.registerRequestFilter(async (type, request) => {
+    if (
+      type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
+      type === shaka.net.NetworkingEngine.RequestType.SEGMENT
+    ) {
+      const original_url = request.uris[0];
+      const object_name = original_url.slice(original_url.lastIndexOf("/") + 1);
+      const signed_url = await getObjectUrl(object_name);
+      request.uris[0] = signed_url;
+    }
+  });
+
+  player.addEventListener("error", onError);
+}
 
 export function formatDuration(duration?: number | null): string {
   if (duration === null || duration === undefined) return "--:--";

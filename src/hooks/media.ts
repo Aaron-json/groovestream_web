@@ -138,6 +138,9 @@ export function useUploadAudioFile() {
             setTask(taskId, newTask);
           },
         });
+        queryClient.invalidateQueries({
+          queryKey: ["cloud-tasks"],
+        });
       } catch (err: any) {
         toast("Error uploading file", {
           description: err.message ?? null,

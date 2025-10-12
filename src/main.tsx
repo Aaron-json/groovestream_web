@@ -66,7 +66,7 @@ function App() {
         <div className="flex flex-none items-center justify-center h-28">
           <TextLogo />
         </div>
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Something went wrong</CardTitle>
           </CardHeader>
