@@ -2,7 +2,7 @@ import axios from "axios";
 
 export const PRIMARY_API_URL = import.meta.env.PROD
   ? "https://groovestream.up.railway.app"
-  : "http://localhost:8081";
+  : "https://localhost:8081";
 
 // The client is created with the primary URL, for request to another url, override the baseUrl in
 // your request config
