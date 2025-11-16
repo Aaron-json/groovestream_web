@@ -63,9 +63,7 @@ export function useAuth() {
   return { sessionRef, isAuthenticated } as const;
 }
 
-// Abstract the auth checking. some endpoints like file upload use the fetch api and not axios.
-// Returns an authorization header or undefined if the url is not meant to be
-// intercepted. On error, throws an error.
+// Returns an authentication token. If the user is not authenticated, throws an error.
 export async function checkRequestAuth(): Promise<string | undefined> {
   const curSession = await supabaseClient.auth.getSession();
 

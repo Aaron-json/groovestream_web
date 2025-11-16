@@ -109,7 +109,8 @@ export async function getDeliverables(audiofileId: Audiofile["id"]) {
   );
   return response.data;
 }
-export async function getObjectUrl(objectId: string) {
+
+export async function getObjectSignedUrl(objectId: string) {
   let url = `/audiofiles/object/${objectId}/url`;
   // set a custom timeout since the default may be too short for downloads
   // uses a different server than the standad
@@ -118,6 +119,11 @@ export async function getObjectUrl(objectId: string) {
     responseType: "text",
   });
   return response.data;
+}
+
+export async function getObject(objectId: string) {
+  let url = `/audiofiles/object/${objectId}`;
+  return url
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

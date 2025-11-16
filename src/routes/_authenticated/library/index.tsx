@@ -85,7 +85,6 @@ function RouteComponent() {
     <section className="flex flex-col gap-6">
       <PageHeader />
 
-      {/* Invites Section */}
       {!playlistInvitesLoading && hasInvites && (
         <InviteList
           invites={playlistInvites}
@@ -96,7 +95,6 @@ function RouteComponent() {
         />
       )}
 
-      {/* Playlists Section */}
       <div className="flex justify-center">
         {playlistsLoading ? (
           <MediaListSkeleton />

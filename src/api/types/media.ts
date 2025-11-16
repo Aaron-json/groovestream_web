@@ -16,14 +16,18 @@ export type Audiofile = {
   channels: number | null;
 };
 
+type AudioContainer = "fm4a";
+type AudioCodec = "aac" | "flac";
 export type AudiofileDeliverable = {
   id: string;
   audiofile_id: string;
-  objects: string[];
-  manifest_file: string;
-  protocol: "hls" | "dash";
-  codec: "aac" | "flac";
-  created_at: string;
+  container: AudioContainer;
+  codec: AudioCodec;
+  bitrate: number;
+  sample_rate: number;
+  channels: number;
+  dash_manifest_id: string;
+  hls_manifest_id: string;
 };
 
 export type Playlist = {

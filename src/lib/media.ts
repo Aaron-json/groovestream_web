@@ -4,7 +4,7 @@ import { MediaQueryKey } from "@/hooks/media";
 import {
   addListeningHistory,
   getDeliverables,
-  getObjectUrl,
+  getObjectSignedUrl,
 } from "@/api/requests/media";
 import { toast } from "sonner";
 import shaka from "shaka-player";
@@ -50,23 +50,30 @@ interface LoadResult {
   duration: number;
 }
 
-async function loadHls(audiofile_id: Audiofile["id"]): Promise<LoadResult> {
+async function loadManifest(
+  audiofile_id: Audiofile["id"],
+): Promise<LoadResult> {
   if (!player) {
     throw new Error("Player not initialized");
   }
-  const deliverables = await getDeliverables(audiofile_id);
-  const hlsDeliverables = deliverables.filter(
-    (deliverable) =>
-      deliverable.protocol === "dash" && deliverable.codec === "aac",
-  );
-  if (hlsDeliverables.length === 0) {
-    throw new Error("No deliverables found");
+  let deliverables = await getDeliverables(audiofile_id);
+
+  // prefer dash if exists
+  let manifestUrl: string | undefined;
+  manifestUrl = deliverables.find((d) => d.dash_manifest_id)?.dash_manifest_id;
+
+  if (!manifestUrl) {
+    // no dash try hls
+    manifestUrl = deliverables.find((d) => d.hls_manifest_id)?.hls_manifest_id;
   }
 
-  // TODO: add more info in the backend for selection
-  const deliverable = hlsDeliverables[0];
+  if (!manifestUrl) {
+    throw new Error(
+      `No DASH or HLS manifest found for audiofile_id: ${audiofile_id}`,
+    );
+  }
 
-  await player.load(deliverable.manifest_file);
+  await player.load(manifestUrl);
   const duration = videoElement.duration;
 
   return { duration };
@@ -167,7 +174,7 @@ async function loadMedia(newMedia: CurrentMedia) {
   const audiofile = newMedia.audiofile;
 
   try {
-    const loadRes = await loadHls(audiofile.id);
+    const loadRes = await loadManifest(audiofile.id);
     if (audiofile.duration === undefined || audiofile.duration === null) {
       // sometimes the server does not successfully get a value for duration
       newMedia.audiofile.duration = loadRes.duration;
@@ -232,8 +239,8 @@ export const useMediaStore = create<MediaSlice>((set, get) => {
       queryKey: MediaQueryKey,
       index?: number,
     ) => {
-      let mediaLists = useMediaListStore.getState().mediaLists;
-      let currentMedia = get().media;
+      const mediaLists = useMediaListStore.getState().mediaLists;
+      const currentMedia = get().media;
       if (index === undefined) {
         index = 0;
       }
@@ -306,7 +313,7 @@ export const useMediaStore = create<MediaSlice>((set, get) => {
       videoElement.volume = volume;
     },
     getSeek: () => {
-      let currentMedia = get().media;
+      const currentMedia = get().media;
       if (!currentMedia) {
         return 0;
       }
@@ -361,7 +368,7 @@ export async function initPlayer(onError: ((error: any) => void) | null) {
     ) {
       const original_url = request.uris[0];
       const object_name = original_url.slice(original_url.lastIndexOf("/") + 1);
-      const signed_url = await getObjectUrl(object_name);
+      const signed_url = await getObjectSignedUrl(object_name);
       request.uris[0] = signed_url;
     }
   });

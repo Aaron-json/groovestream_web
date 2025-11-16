@@ -14,15 +14,6 @@ export async function createUserProfile(data: UserProfile) {
   const response = await axiosClient.post<any, ResponseError>("/users", data);
   return response.data;
 }
-export async function uploadProfilePicture(file: File) {
-  return await axiosClient.put("/users/profile-picture", file, {
-    headers: {
-      "Content-Type": "image/" + file.type,
-    },
-    // set a custom timeout since the default may be too short for downloads
-    timeout: 1000 * 60,
-  });
-}
 
 type UserUpdateFields = {
   username?: string;

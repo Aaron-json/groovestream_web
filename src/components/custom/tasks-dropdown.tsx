@@ -87,10 +87,14 @@ function LocalTasks({ tasks }: LocalTasksProps) {
       </div>
 
       {tasks.map(([id, task]) => {
-        const Icon = task.type === TaskType.MediaTask ? ListMusic : ClipboardList;
+        const Icon =
+          task.type === TaskType.MediaTask ? ListMusic : ClipboardList;
 
         return (
-          <DropdownMenuItem key={id} className="px-3 py-2.5 cursor-default focus:text-accent-foreground">
+          <DropdownMenuItem
+            key={id}
+            className="px-3 py-2.5 cursor-default focus:text-accent-foreground"
+          >
             <div className="flex flex-col w-full gap-2">
               <div className="flex items-center gap-2">
                 <Icon className="h-4 w-4 shrink-0 opacity-70" />
@@ -149,7 +153,10 @@ function CloudTasks({ tasks }: CloudTasksProps) {
           }
 
           return (
-            <DropdownMenuItem key={task.id} className="px-3 py-2.5 cursor-default focus:text-accent-foreground">
+            <DropdownMenuItem
+              key={task.id}
+              className="px-3 py-2.5 cursor-default focus:text-accent-foreground"
+            >
               <div className="flex flex-col w-full gap-1">
                 <div className="flex items-center gap-2">
                   <ClipboardList className="h-4 w-4 shrink-0 opacity-70" />
