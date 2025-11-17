@@ -373,6 +373,16 @@ export async function initPlayer(onError: ((error: any) => void) | null) {
     }
   });
 
+  player.configure({
+    streaming: {
+      lowLatencyMode: true,
+      rebufferingGoal: 0.01, // minimun buffere before playback
+      bufferingGoal: 10, // buffer ahead of the playhead
+      bufferBehind: 30 // max buffer size behind the playhead
+
+    }
+  })
+
   player.addEventListener("error", onError);
 }
 
