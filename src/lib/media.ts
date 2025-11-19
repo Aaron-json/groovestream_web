@@ -182,6 +182,12 @@ async function loadMedia(newMedia: CurrentMedia) {
     _setMedia(newMedia);
     await videoElement.play();
   } catch (error: any) {
+    if (error.name === "AbortError") {
+      console.log(error);
+      // user pauses before playback starts
+      _setPlaybackState("paused");
+      return;
+    }
     unloadMedia();
     throw error;
   }
