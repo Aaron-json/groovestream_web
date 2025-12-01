@@ -1,5 +1,5 @@
-import axiosClient from "../axiosClient";
-import { Playlist, Audiofile, AudiofileDeliverable } from "../types/media";
+import axiosClient, { PRIMARY_API_URL } from "../axiosClient";
+import { Playlist, Audiofile, AudioDeliverable } from "../types/media";
 import { PlaylistInvite } from "../types/invites";
 import axios, { AxiosRequestConfig } from "axios";
 import { User } from "../types/user";
@@ -104,12 +104,23 @@ export async function deleteAudioFile(audioFileID: Audiofile["id"]) {
 }
 
 export async function getDeliverables(audiofileId: Audiofile["id"]) {
-  const response = await axiosClient.get<AudiofileDeliverable[]>(
+  const response = await axiosClient.get<AudioDeliverable[]>(
     `/audiofiles/${audiofileId}/deliverables`,
   );
   return response.data;
 }
 
+export type DeliverableTokenResponse = {
+  token: string;
+};
+export async function getDeliverableToken(deliverableId: AudioDeliverable["id"]) {
+  const response = await axiosClient.get<DeliverableTokenResponse>(
+    `/audiofiles/deliverables/${deliverableId}/token`,
+  );
+  return response.data;
+}
+
+// Requests a signed url to the object
 export async function getObjectSignedUrl(objectId: string) {
   let url = `/audiofiles/object/${objectId}/url`;
 
@@ -120,9 +131,11 @@ export async function getObjectSignedUrl(objectId: string) {
   return response.data;
 }
 
-export async function getObjectUrl(objectId: string) {
-  let url = `/audiofiles/object/${objectId}`;
-  return url
+// Returns an HTTP url to get the object. Authorization headers
+// must be added manually.
+export function getObjectUrl(objectId: string) {
+  let url = `${PRIMARY_API_URL}/audiofiles/object/${objectId}`;
+  return url;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

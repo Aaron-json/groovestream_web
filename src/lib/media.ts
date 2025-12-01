@@ -4,10 +4,11 @@ import { MediaQueryKey } from "@/hooks/media";
 import {
   addListeningHistory,
   getDeliverables,
-  getObjectSignedUrl,
+  getDeliverableToken,
 } from "@/api/requests/media";
 import { toast } from "sonner";
 import shaka from "shaka-player";
+import { CDN_URL } from "@/api/axiosClient";
 
 export type MediaListSlice = {
   mediaLists: Record<string, Audiofile[]>;
@@ -45,6 +46,8 @@ videoElement.volume = DEFAULT_VOLUME;
 document.body.appendChild(videoElement);
 
 let player: shaka.Player | undefined = undefined;
+// token for the current playing deliverable
+let deliverableToken: string | undefined = undefined;
 
 interface LoadResult {
   duration: number;
@@ -59,21 +62,29 @@ async function loadManifest(
   let deliverables = await getDeliverables(audiofile_id);
 
   // prefer dash if exists
-  let manifestUrl: string | undefined;
-  manifestUrl = deliverables.find((d) => d.dash_manifest_id)?.dash_manifest_id;
+  let manifestIdx: number | undefined;
+  let manifest: string | undefined;
 
-  if (!manifestUrl) {
+  manifestIdx = deliverables.findIndex((d) => d.dash_manifest_id);
+  manifest = deliverables[manifestIdx].dash_manifest_id;
+
+  if (manifestIdx === -1) {
     // no dash try hls
-    manifestUrl = deliverables.find((d) => d.hls_manifest_id)?.hls_manifest_id;
+    manifestIdx = deliverables.findIndex((d) => d.hls_manifest_id);
+    manifest = deliverables[manifestIdx].hls_manifest_id;
   }
 
-  if (!manifestUrl) {
+  if (!manifest || manifestIdx === undefined) {
     throw new Error(
       `No DASH or HLS manifest found for audiofile_id: ${audiofile_id}`,
     );
   }
 
-  await player.load(manifestUrl);
+  // must be called before load to set the token
+  const token = await getDeliverableToken(deliverables[manifestIdx].id);
+  deliverableToken = token.token;
+
+  await player.load(manifest);
   const duration = videoElement.duration;
 
   return { duration };
@@ -183,7 +194,6 @@ async function loadMedia(newMedia: CurrentMedia) {
     await videoElement.play();
   } catch (error: any) {
     if (error.name === "AbortError") {
-      console.log(error);
       // user pauses before playback starts
       _setPlaybackState("paused");
       return;
@@ -374,8 +384,9 @@ export async function initPlayer(onError: ((error: any) => void) | null) {
     ) {
       const original_url = request.uris[0];
       const object_name = original_url.slice(original_url.lastIndexOf("/") + 1);
-      const signed_url = await getObjectSignedUrl(object_name);
-      request.uris[0] = signed_url;
+      const cdn_url = CDN_URL + `/${object_name}`;
+      request.headers["Authorization"] = `Bearer ${deliverableToken}`;
+      request.uris[0] = cdn_url;
     }
   });
 

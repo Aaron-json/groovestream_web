@@ -18,7 +18,7 @@ export type Audiofile = {
 
 type AudioContainer = "fm4a";
 type AudioCodec = "aac" | "flac";
-export type AudiofileDeliverable = {
+export type AudioDeliverable = {
   id: string;
   audiofile_id: string;
   container: AudioContainer;
