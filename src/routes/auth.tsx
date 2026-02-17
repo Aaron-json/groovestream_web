@@ -19,8 +19,7 @@ export const Route = createFileRoute("/auth")({
 
 export default function RouteComponent() {
   return (
-    <div className="flex flex-col lg:flex-row w-full min-h-screen">
-      {/* Left side - Hero */}
+    <div className="flex flex-col lg:flex-row w-full h-full">
       <div className="flex flex-col justify-center px-6 py-12 lg:px-16 lg:py-20 bg-secondary/40 lg:flex-1">
         <div className="max-w-xl mx-auto lg:mx-0">
           <div className="mb-8">
@@ -85,7 +84,6 @@ export default function RouteComponent() {
         </div>
       </div>
 
-      {/* Right side - Auth */}
       <div className="flex items-center justify-center px-6 py-12 lg:py-20 bg-background lg:flex-1">
         <div className="w-full max-w-md">
           <Card className="shadow-lg border-primary/10">
@@ -99,9 +97,9 @@ export default function RouteComponent() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Button
-                variant="outline"
+                variant="default"
                 size="lg"
-                className="w-full flex items-center justify-center gap-3 h-12 transition-colors"
+                className="w-full flex items-center justify-center gap-3 h-10"
                 onClick={() => {
                   signInGoogle();
                 }}
