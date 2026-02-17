@@ -50,7 +50,7 @@ import { useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Playlist } from "@/api/types/media";
 import { queryClient } from "@/lib/query";
-import { useMediaStore } from "@/lib/media";
+import { useMediaStateStore } from "@/lib/media/stores/state";
 import { useShallow } from "zustand/react/shallow";
 
 export const Route = createFileRoute(
@@ -71,14 +71,15 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
-  const { media, playbackState, playPauseToggle, setMedia } = useMediaStore(
-    useShallow((state) => ({
-      media: state.media,
-      playbackState: state.playbackState,
-      playPauseToggle: state.playPauseToggle,
-      setMedia: state.setMedia,
-    })),
-  );
+  const { media, playbackState, playPauseToggle, setMedia } =
+    useMediaStateStore(
+      useShallow((state) => ({
+        media: state.media,
+        playbackState: state.playbackState,
+        playPauseToggle: state.playPauseToggle,
+        setMedia: state.setMedia,
+      })),
+    );
 
   const playlistIndexMatch = useMatch({
     from: "/_authenticated/library/playlists/$playlistId/",

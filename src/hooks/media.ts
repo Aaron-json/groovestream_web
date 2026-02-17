@@ -12,7 +12,9 @@ import { MediaTask, NewMediaTask, TaskType, useTaskStore } from "@/lib/tasks";
 import { Playlist, Audiofile } from "@/api/types/media";
 import { toast } from "sonner";
 import { queryClient } from "@/lib/query";
-import { useMediaListStore, useMediaStore } from "@/lib/media";
+import { useMediaListStore } from "@/lib/media/stores/media-list";
+
+import { useMediaStateStore } from "@/lib/media/stores/state";
 
 export type MediaQueryKey = string[];
 
@@ -155,8 +157,8 @@ export function useUploadAudioFile() {
 export function useDeleteAudioFile() {
   const removeTask = useTaskStore((state) => state.removeTask);
   const setTask = useTaskStore((state) => state.setTask);
-  const media = useMediaStore((state) => state.media);
-  const unloadMedia = useMediaStore((state) => state.unloadMedia);
+  const media = useMediaStateStore((state) => state.media);
+  const unloadMedia = useMediaStateStore((state) => state.unloadMedia);
 
   return async function (audiofile: Audiofile) {
     const playlist_key = getPlaylistMediaStoreKey(audiofile.playlist_id);
@@ -188,8 +190,8 @@ export function useDeletePlaylist() {
   const removeTask = useTaskStore((state) => state.removeTask);
   const setTask = useTaskStore((state) => state.setTask);
   const removeMediaList = useMediaListStore((state) => state.removeMediaList);
-  const media = useMediaStore((state) => state.media);
-  const unloadMedia = useMediaStore((state) => state.unloadMedia);
+  const media = useMediaStateStore((state) => state.media);
+  const unloadMedia = useMediaStateStore((state) => state.unloadMedia);
 
   return async function (playlist: Playlist) {
     toast(`Deleting playlist "${playlist.name}"`, {

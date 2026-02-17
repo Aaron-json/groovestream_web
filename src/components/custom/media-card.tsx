@@ -8,8 +8,8 @@ import { isAudiofile } from "@/api/types/media";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { MediaQueryKey } from "@/hooks/media";
-import { useMediaStore, formatDuration } from "@/lib/media";
-
+import { useMediaStateStore } from "@/lib/media/stores/state";
+import { formatDuration } from "@/lib/media/utils";
 export type MediaCardProps = {
   media: Media;
   storeKey?: string;
@@ -30,7 +30,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
     setMedia,
     playPauseToggle,
     playbackState,
-  } = useMediaStore();
+  } = useMediaStateStore();
   const navigate = useNavigate();
 
   const isAudio = isAudiofile(media);
@@ -81,15 +81,15 @@ const MediaCard: React.FC<MediaCardProps> = ({
   return (
     <Card
       onClick={handleCardClick}
-      className="w-[9rem] cursor-pointer hover:bg-accent/50 transition-colors duration-200 border-border"
+      className="w-[9rem] cursor-pointer border-border"
     >
       <CardContent className="p-0">
         <div className="flex flex-col">
           <AspectRatio
             ratio={1}
-            className="bg-muted relative group overflow-hidden rounded-t-md"
+            className="bg-secondary relative group overflow-hidden rounded-t-md"
           >
-            <div className="absolute inset-0 flex items-center justify-center bg-muted">
+            <div className="absolute inset-0 flex items-center justify-center bg-secondary">
               <MediaIcon className="h-10 w-10 text-muted-foreground" />
             </div>
 

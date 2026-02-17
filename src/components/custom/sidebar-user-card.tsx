@@ -43,7 +43,7 @@ const Trigger = React.forwardRef<
     <div
       ref={ref}
       {...props}
-      className="flex p-2 gap-2 text-sm leading-none items-center cursor-pointer hover:bg-secondary rounded-lg"
+      className="flex p-2 gap-2 text-sm leading-none items-center cursor-pointer hover:bg-secondary rounded-lg transition-colors"
     >
       <CustomAvatar
         user={userData}

@@ -11,22 +11,24 @@ import {
   Music2,
   LoaderCircle,
 } from "lucide-react";
-import { useMediaStore, formatDuration } from "@/lib/media";
+import { useMediaStateStore } from "@/lib/media/stores/state";
+import { formatDuration } from "@/lib/media/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useShallow } from "zustand/react/shallow";
 
 export default function MediaBar() {
   const isMobile = useIsMobile();
 
-  const { media, playbackState, next, prev, playPauseToggle } = useMediaStore(
-    useShallow((state) => ({
-      media: state.media,
-      playbackState: state.playbackState,
-      next: state.next,
-      prev: state.prev,
-      playPauseToggle: state.playPauseToggle,
-    })),
-  );
+  const { media, playbackState, next, prev, playPauseToggle } =
+    useMediaStateStore(
+      useShallow((state) => ({
+        media: state.media,
+        playbackState: state.playbackState,
+        next: state.next,
+        prev: state.prev,
+        playPauseToggle: state.playPauseToggle,
+      })),
+    );
 
   const audiofile = media?.audiofile;
 
@@ -182,7 +184,7 @@ function TrackInfo({ title, artist }: TrackInfoProps) {
 }
 
 function Seeker() {
-  const { media, playbackState, setSeek, getSeek } = useMediaStore(
+  const { media, playbackState, setSeek, getSeek } = useMediaStateStore(
     useShallow((state) => ({
       media: state.media,
       playbackState: state.playbackState,
@@ -279,7 +281,7 @@ function ControlButton({
 }
 
 function VolumeControl() {
-  const { volume, setVolume, mute, setMute } = useMediaStore(
+  const { volume, setVolume, mute, setMute } = useMediaStateStore(
     useShallow((state) => ({
       volume: state.volume,
       setVolume: state.setVolume,

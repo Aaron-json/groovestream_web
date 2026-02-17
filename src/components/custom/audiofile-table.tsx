@@ -41,9 +41,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { Audiofile } from "@/api/types/media";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { formatDuration } from "@/lib/media";
+import { formatDuration } from "@/lib/media/utils";
 import { MediaQueryKey, useDeleteAudioFile } from "@/hooks/media";
-import { useMediaStore } from "@/lib/media";
+import { useMediaStateStore } from "@/lib/media/stores/state";
 
 type AudiofileTableProps = {
   audiofiles: Audiofile[];
@@ -66,7 +66,7 @@ const PlaybackCell = ({
   index: number;
   onPlay: (index: number, file: Audiofile) => void;
 }) => {
-  const { media, playbackState } = useMediaStore(
+  const { media, playbackState } = useMediaStateStore(
     useShallow((state) => ({
       media: state.media,
       playbackState: state.playbackState,
@@ -119,7 +119,7 @@ export default function AudiofileTable({
   const deleteAudioFile = useDeleteAudioFile();
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const { media, setMedia, playPauseToggle } = useMediaStore(
+  const { media, setMedia, playPauseToggle } = useMediaStateStore(
     useShallow((state) => ({
       media: state.media,
       setMedia: state.setMedia,
@@ -191,7 +191,7 @@ export default function AudiofileTable({
         className={`flex flex-col w-full rounded-lg border bg-card ${className}`}
       >
         {showSearch && (
-          <div className="flex items-center gap-3 p-4 border-b bg-muted/30">
+          <div className="flex items-center gap-3 p-4 border-b bg-card">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -210,7 +210,7 @@ export default function AudiofileTable({
         )}
 
         {!isMobile && rows.length > 0 && (
-          <div className="flex items-center px-4 h-10 border-b bg-muted/50 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <div className="flex items-center px-4 h-10 border-b bg-secondary/50 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             <div className="w-12 text-center">#</div>
             <div className="flex-1 px-2">Title</div>
             <div className="flex-1 px-2">Artist</div>
@@ -249,9 +249,7 @@ export default function AudiofileTable({
                   >
                     {isMobile ? (
                       <div
-                        className={`flex items-center gap-3 px-4 py-2 h-full border-b transition-colors ${
-                          isCurrentTrack ? "bg-accent/40" : "active:bg-muted/50"
-                        }`}
+                        className={`flex items-center gap-3 px-4 py-2 h-full border-b transition-colors hover:bg-seconary/30`}
                         onClick={() =>
                           handlePlayTrack(virtualRow.index, audiofile)
                         }
@@ -301,9 +299,7 @@ export default function AudiofileTable({
                       </div>
                     ) : (
                       <div
-                        className={`flex items-center h-full border-b px-4 text-sm transition-colors cursor-pointer group ${
-                          isCurrentTrack ? "bg-accent/40" : "hover:bg-muted/30"
-                        }`}
+                        className={`flex items-center h-full border-b px-4 text-sm transition-colors cursor-pointer group hover:bg-secondary/30`}
                         onClick={() =>
                           handlePlayTrack(virtualRow.index, audiofile)
                         }
