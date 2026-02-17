@@ -113,7 +113,9 @@ export async function getDeliverables(audiofileId: Audiofile["id"]) {
 export type DeliverableTokenResponse = {
   token: string;
 };
-export async function getDeliverableToken(deliverableId: AudioDeliverable["id"]) {
+export async function getDeliverableToken(
+  deliverableId: AudioDeliverable["id"],
+) {
   const response = await axiosClient.get<DeliverableTokenResponse>(
     `/audiofiles/deliverables/${deliverableId}/token`,
   );
@@ -215,7 +217,9 @@ export async function rejectPlaylistInvite(
 }
 
 export async function leavePlaylist(playlistID: Playlist["id"]) {
-  const response = await axiosClient.delete(`/playlist-members/${playlistID}`);
+  const response = await axiosClient.delete(
+    `/playlists/${playlistID}/members/me`,
+  );
   return response.data;
 }
 export async function removePlaylistMember(
@@ -223,7 +227,7 @@ export async function removePlaylistMember(
   memberID: User["id"],
 ) {
   const response = await axiosClient.delete(
-    `/playlist-members/${playlistID}/${memberID}`,
+    `/playlists/${playlistID}/members/${memberID}`,
   );
   return response.data;
 }
