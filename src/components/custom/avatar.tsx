@@ -1,6 +1,7 @@
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -34,33 +35,38 @@ const AvatarDropdown = () => {
   if (userDataErr) {
     return <div className="h-10 w-10 rounded-full" />;
   }
+  // NOTE: fix the whole avatar thing happening here
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-10 w-10 rounded-full">
-          <ShadAvatar className="h-10 w-10 border">
-            <AvatarImage
-              src={"hello"}
-              alt={`${userData.username}'s profile`}
-            ></AvatarImage>
-            <AvatarFallback>
-              {userData.username.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </ShadAvatar>
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" className="h-10 w-10 rounded-full">
+            <ShadAvatar className="h-10 w-10 border">
+              <AvatarImage
+                src={"hello"}
+                alt={`${userData.username}'s profile`}
+              ></AvatarImage>
+              <AvatarFallback>
+                {userData.username.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </ShadAvatar>
+          </Button>
+        }
+      />
       <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuLabel>
-          <div className="flex flex-col leading-tight">
-            <p>{userData.username}</p>
-            {email && <p className="text-muted-foreground">{email}</p>}
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={signOut}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>
+            <div className="flex flex-col leading-tight">
+              <p>{userData.username}</p>
+              {email && <p className="text-muted-foreground">{email}</p>}
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={signOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Log out</span>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -9,6 +9,7 @@ import { getUser } from "./api/requests/user";
 import { queryClient } from "./lib/query";
 import { AxiosError } from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
+import { TooltipProvider } from "./components/ui/tooltip";
 
 // Create a root router instance
 export const router = createRouter({
@@ -89,7 +90,9 @@ if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <QueryClientProvider client={queryClient}>
-      <App />
+      <TooltipProvider>
+        <App />
+      </TooltipProvider>
     </QueryClientProvider>,
   );
 }

@@ -17,12 +17,13 @@ type CreatePlaylistValues = {
 };
 
 type CreatePlaylistModalProps = {
-  trigger?: React.ReactNode;
+  trigger?: React.ReactElement;
 };
 
 export default function CreatePlaylistModal(props: CreatePlaylistModalProps) {
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
+
   const trigger = props.trigger || (
     <Button variant="secondary">
       <Plus className="h-4 w-4 mr-2" />
@@ -33,7 +34,7 @@ export default function CreatePlaylistModal(props: CreatePlaylistModalProps) {
   if (!isMobile) {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogTrigger render={trigger} />
         <DialogContent className="flex items-center justify-center">
           <CreatePlaylistForm onFinish={() => setOpen(false)} />
         </DialogContent>

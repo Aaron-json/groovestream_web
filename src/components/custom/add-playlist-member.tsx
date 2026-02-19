@@ -20,7 +20,7 @@ import { Playlist } from "@/api/types/media";
 
 type AddPlaylistMemberProps = {
   playlistId: Playlist["id"];
-  trigger?: React.ReactNode;
+  trigger?: React.ReactElement;
   open?: boolean; // For controlled mode
   onOpenChange?: (open: boolean) => void; // For controlled mode
   defaultOpen?: boolean; // For uncontrolled mode initial state
@@ -30,6 +30,8 @@ type AddPlaylistMemberValues = {
   username: string;
 };
 
+// NOTE: look into using shadcn forms and reconsider form usage here.
+// Specifically the whole reset logic after success
 export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
   const { register, handleSubmit, formState, setError, reset } =
     useForm<AddPlaylistMemberValues>({
@@ -96,9 +98,11 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
         If the dialog IS externally controlled, no trigger is rendered by this component itself.
       */}
       {!isExternallyControlled && (
-        <DialogTrigger asChild>
-          {props.trigger !== undefined ? props.trigger : defaultInternalTrigger}
-        </DialogTrigger>
+        <DialogTrigger
+          render={
+            props.trigger !== undefined ? props.trigger : defaultInternalTrigger
+          }
+        />
       )}
       <DialogContent>
         <DialogHeader>
@@ -147,9 +151,7 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
           </div>
         </form>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">Close</Button>
-          </DialogClose>
+          <DialogClose render={<Button variant="ghost">Close</Button>} />
           <Button
             type="submit"
             variant="default"

@@ -28,15 +28,18 @@ export default function TasksDropdown() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <ClipboardList className="h-5 w-5" />
-          {hasAnyTasks && (
-            <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full" />
-          )}
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon" className="relative">
+            <ClipboardList className="h-5 w-5" />
+            {hasAnyTasks && (
+              <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full" />
+            )}
+          </Button>
+        }
+      />
       <DropdownMenuContent align="end" className="w-80">
+        {/** TODO: remove non dropdown components from here **/}
         <div className="flex items-center justify-between p-2">
           <DropdownMenuLabel className="p-0">Tasks</DropdownMenuLabel>
           <Button

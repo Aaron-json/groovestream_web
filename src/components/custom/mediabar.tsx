@@ -193,7 +193,7 @@ function Seeker() {
     })),
   );
 
-  const [displaySeek, setDisplaySeek] = useState(() => [getSeek()]);
+  const [displaySeek, setDisplaySeek] = useState(() => getSeek());
   const [isSeeking, setIsSeeking] = useState(false);
 
   const audiofile = media?.audiofile;
@@ -203,7 +203,7 @@ function Seeker() {
     if (isSeeking || playbackState !== "playing") return;
 
     const interval = setInterval(() => {
-      setDisplaySeek([Math.floor(getSeek())]);
+      setDisplaySeek(Math.floor(getSeek()));
     }, 300);
 
     return () => clearInterval(interval);
@@ -217,13 +217,15 @@ function Seeker() {
     setIsSeeking(false);
   }, []);
 
-  const handleSeekChange = useCallback((value: number[]) => {
-    setDisplaySeek(value);
+  const handleSeekChange = useCallback((value: number | readonly number[]) => {
+    const newVal: number = Array.isArray(value) ? value[0] : value;
+    setDisplaySeek(newVal);
   }, []);
 
   const handleSeekCommit = useCallback(
-    (value: number[]) => {
-      setSeek(value[0]);
+    (value: number | readonly number[]) => {
+      const newVal: number = Array.isArray(value) ? value[0] : value;
+      setSeek(newVal);
     },
     [setSeek],
   );
@@ -231,7 +233,7 @@ function Seeker() {
   return (
     <div className="flex items-center gap-2 w-full text-xs">
       <span className="text-muted-foreground min-w-[2.5rem] font-mono">
-        {formatDuration(displaySeek[0])}
+        {formatDuration(displaySeek)}
       </span>
 
       <Slider
@@ -243,7 +245,7 @@ function Seeker() {
         onPointerDown={handleSeekStart}
         onPointerUp={handleSeekEnd}
         onValueChange={handleSeekChange}
-        onValueCommit={handleSeekCommit}
+        onValueCommitted={handleSeekCommit}
         aria-label="Seek position"
       />
 
@@ -290,18 +292,21 @@ function VolumeControl() {
     })),
   );
 
-  const [localVolume, setLocalVolume] = useState([volume]);
+  const [localVolume, setLocalVolume] = useState(volume);
 
   useEffect(() => {
-    setLocalVolume([volume]);
+    setLocalVolume(volume);
   }, [volume]);
 
   const handleVolumeChange = useCallback(
-    (value: number[]) => {
-      setLocalVolume(value);
-      setVolume(value[0]);
+    (value: number | readonly number[]) => {
+      const newVal = Array.isArray(value) ? value[0] : value;
+      // NOTE: check that volume propagation works and reduces
+      // unnnecessary state changes
+      // setLocalVolume(newVal);
+      setVolume(newVal);
     },
-    [setVolume],
+    [setVolume, setLocalVolume],
   );
 
   const toggleMute = useCallback(() => {

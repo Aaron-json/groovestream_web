@@ -274,15 +274,17 @@ export default function AudiofileTable({
                         </div>
 
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                            >
-                              <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          </DropdownMenuTrigger>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
+                                <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            }
+                          />
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
@@ -365,16 +367,18 @@ function DeleteDialog({
   const trackTitle = audiofile.title || audiofile.filename;
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        }
+      />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Audio File</AlertDialogTitle>

@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuSeparator,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -242,42 +243,46 @@ function RouteComponent() {
             )}
 
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="outline" size="sm">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                }
+              />
               <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setDialogState((prev) => ({ ...prev, addMember: true }));
-                  }}
-                >
-                  <Users className="mr-1 h-4 w-4" />
-                  Add Members
-                </DropdownMenuItem>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setDialogState((prev) => ({ ...prev, addMember: true }));
+                    }}
+                  >
+                    <Users className="mr-1 h-4 w-4" />
+                    Add Members
+                  </DropdownMenuItem>
 
-                <DropdownMenuItem onClick={handleLeavePlaylist}>
-                  <LogOut className="mr-1 h-4 w-4" />
-                  Leave Playlist
-                </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLeavePlaylist}>
+                    <LogOut className="mr-1 h-4 w-4" />
+                    Leave Playlist
+                  </DropdownMenuItem>
 
-                <DropdownMenuSeparator />
+                  <DropdownMenuSeparator />
 
-                <DropdownMenuItem
-                  className="bg-destructive text-destructive-foreground focus:bg-destructive/60"
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setDialogState((prev) => ({
-                      ...prev,
-                      deletePlaylist: true,
-                    }));
-                  }}
-                >
-                  <Trash2 className="mr-1 h-4 w-4" />
-                  Delete Playlist
-                </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="bg-destructive text-destructive-foreground focus:bg-destructive/60"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setDialogState((prev) => ({
+                        ...prev,
+                        deletePlaylist: true,
+                      }));
+                    }}
+                  >
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Delete Playlist
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
