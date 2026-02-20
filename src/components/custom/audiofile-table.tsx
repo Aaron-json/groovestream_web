@@ -7,19 +7,28 @@ import {
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
-  Trash2,
-  Search,
-  Play,
-  Pause,
-  Music2,
-  MoreVertical,
-} from "lucide-react";
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  flexRender,
+  ColumnDef,
+  FilterFn,
+} from "@tanstack/react-table";
+import { Trash2, Search, Play, Pause, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +38,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
@@ -37,7 +45,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { Audiofile } from "@/api/types/media";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -45,7 +52,35 @@ import { formatDuration } from "@/lib/media/utils";
 import { MediaQueryKey, useDeleteAudioFile } from "@/hooks/media";
 import { useMediaStateStore } from "@/lib/media/stores/state";
 
-type AudiofileTableProps = {
+declare module "@tanstack/react-table" {
+  interface ColumnMeta<TData, TValue> {
+    className?: string;
+  }
+}
+
+const globalFilterFn: FilterFn<Audiofile> = (row, _, filterValue) => {
+  const search = String(filterValue).toLowerCase();
+  const file = row.original;
+  return (
+    file.title?.toLowerCase().includes(search) ||
+    file.filename?.toLowerCase().includes(search) ||
+    file.album?.toLowerCase().includes(search) ||
+    file.artists?.some((a) => a.toLowerCase().includes(search)) ||
+    false
+  );
+};
+
+export default function AudiofileTable({
+  audiofiles,
+  storeKey,
+  queryKey,
+  skeleton,
+  onChange,
+  refetch,
+  className,
+  showSearch = true,
+  showCount = true,
+}: {
   audiofiles: Audiofile[];
   storeKey: string;
   queryKey: MediaQueryKey;
@@ -55,336 +90,311 @@ type AudiofileTableProps = {
   className?: string;
   showSearch?: boolean;
   showCount?: boolean;
-};
-
-const PlaybackCell = ({
-  audiofile,
-  index,
-  onPlay,
-}: {
-  audiofile: Audiofile;
-  index: number;
-  onPlay: (index: number, file: Audiofile) => void;
-}) => {
-  const { media, playbackState } = useMediaStateStore(
-    useShallow((state) => ({
-      media: state.media,
-      playbackState: state.playbackState,
-    })),
-  );
-
-  const isCurrentTrack = media?.audiofile?.id === audiofile.id;
-  const isPlaying = isCurrentTrack && playbackState === "playing";
-
-  return (
-    <div
-      className="relative flex items-center justify-center h-full w-10 cursor-pointer group"
-      onClick={(e) => {
-        e.stopPropagation();
-        onPlay(index, audiofile);
-      }}
-    >
-      {isCurrentTrack ? (
-        isPlaying ? (
-          <Pause className="h-4 w-4 text-primary" />
-        ) : (
-          <Play className="h-4 w-4 text-primary" />
-        )
-      ) : (
-        <>
-          <span className="text-sm text-muted-foreground group-hover:opacity-0 transition-opacity">
-            {index + 1}
-          </span>
-          <Play className="absolute h-4 w-4 text-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-        </>
-      )}
-    </div>
-  );
-};
-
-export default function AudiofileTable({
-  audiofiles,
-  storeKey,
-  queryKey,
-  skeleton = false,
-  onChange,
-  refetch,
-  className = "",
-  showSearch = true,
-  showCount = true,
-}: AudiofileTableProps) {
+}) {
   const isMobile = useIsMobile();
-  const [globalFilter, setGlobalFilter] = useState("");
-  const deferredFilter = useDeferredValue(globalFilter);
+  const [filter, setFilter] = useState("");
+  const deferredFilter = useDeferredValue(filter);
   const deleteAudioFile = useDeleteAudioFile();
-  const parentRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const { media, setMedia, playPauseToggle } = useMediaStateStore(
-    useShallow((state) => ({
-      media: state.media,
-      setMedia: state.setMedia,
-      playPauseToggle: state.playPauseToggle,
-    })),
-  );
+  const { media, setMedia, playPauseToggle, playbackState } =
+    useMediaStateStore(
+      useShallow((state) => ({
+        media: state.media,
+        setMedia: state.setMedia,
+        playPauseToggle: state.playPauseToggle,
+        playbackState: state.playbackState,
+      })),
+    );
 
-  const handlePlayTrack = useCallback(
-    async (index: number, audiofile: Audiofile) => {
+  const handlePlay = useCallback(
+    async (index: number, file: Audiofile) => {
       try {
-        if (media?.audiofile?.id === audiofile.id) {
-          playPauseToggle();
-        } else {
-          await setMedia(storeKey, queryKey, index);
-        }
-      } catch (error: any) {
-        toast.error("Playback Error", {
-          description: error?.message || "Unable to play track",
-        });
+        if (media?.audiofile?.id === file.id) playPauseToggle();
+        else await setMedia(storeKey, queryKey, index);
+      } catch (err: any) {
+        toast.error("Playback Error", { description: err?.message });
       }
     },
     [media, playPauseToggle, setMedia, storeKey, queryKey],
   );
 
-  const handleDeleteTrack = useCallback(
-    async (audiofile: Audiofile) => {
+  const handleDelete = useCallback(
+    async (file: Audiofile) => {
       try {
-        await deleteAudioFile(audiofile);
+        await deleteAudioFile(file);
         onChange?.();
         refetch?.();
         toast.success("Track deleted");
-      } catch (error: any) {
-        toast.error("Delete Error", {
-          description: error?.message || "Failed to delete track",
-        });
+      } catch (err: any) {
+        toast.error("Delete Error", { description: err?.message });
       }
     },
     [deleteAudioFile, onChange, refetch],
   );
 
-  const filteredData = useMemo(() => {
-    if (!deferredFilter) return audiofiles;
-    const filter = deferredFilter.toLowerCase();
-    return audiofiles.filter(
-      (file) =>
-        file.title?.toLowerCase().includes(filter) ||
-        file.filename?.toLowerCase().includes(filter) ||
-        file.artists?.some((artist) => artist.toLowerCase().includes(filter)) ||
-        file.album?.toLowerCase().includes(filter),
-    );
-  }, [audiofiles, deferredFilter]);
+  const columns = useMemo<ColumnDef<Audiofile>[]>(() => {
+    const playCell = ({ row }: any) => {
+      const file = row.original;
+      const isActive = media?.audiofile?.id === file.id;
+      const isPlaying = isActive && playbackState === "playing";
 
-  const rows = filteredData;
+      return (
+        <div className="group relative flex h-8 w-8 items-center justify-center text-muted-foreground">
+          {isActive ? (
+            isPlaying ? (
+              <Pause className="h-4 w-4 text-primary" />
+            ) : (
+              <Play className="h-4 w-4 text-primary" />
+            )
+          ) : (
+            <>
+              <span className="text-sm group-hover:opacity-0">
+                {row.index + 1}
+              </span>
+              <Play className="absolute h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 text-foreground" />
+            </>
+          )}
+        </div>
+      );
+    };
 
-  const rowVirtualizer = useVirtualizer({
+    if (isMobile) {
+      return [
+        {
+          id: "mobile",
+          cell: ({ row }) => (
+            <div className="flex items-center gap-3">
+              {playCell({ row })}
+              <div className="flex-1 grid gap-0.5 min-w-0">
+                <span className="truncate text-sm font-medium">
+                  {row.original.title || row.original.filename}
+                </span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {row.original.artists?.join(", ") || "Unknown Artist"}
+                </span>
+              </div>
+              <RowActions
+                file={row.original}
+                onDelete={() => handleDelete(row.original)}
+              />
+            </div>
+          ),
+        },
+      ];
+    }
+
+    return [
+      { id: "play", meta: { className: "w-12 text-center" }, cell: playCell },
+      {
+        accessorFn: (row) => row.title || row.filename,
+        header: "Title",
+        cell: ({ getValue, row }) => (
+          <span
+            className={`truncate font-medium ${media?.audiofile?.id === row.original.id ? "text-primary" : ""}`}
+          >
+            {getValue<string>()}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "artists",
+        header: "Artist",
+        cell: ({ getValue }) => (
+          <span className="truncate text-muted-foreground">
+            {getValue<string[]>()?.join(", ") || "Unknown"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "album",
+        header: "Album",
+        cell: ({ getValue }) => (
+          <span className="truncate text-muted-foreground">
+            {getValue<string>() || "-"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "duration",
+        header: () => <div className="text-right">Duration</div>,
+        meta: { className: "w-24 text-right" },
+        cell: ({ getValue }) => (
+          <span className="font-mono text-muted-foreground">
+            {formatDuration(getValue<number>())}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        meta: { className: "w-12 text-right pr-4" },
+        cell: ({ row }) => (
+          <RowActions
+            file={row.original}
+            onDelete={() => handleDelete(row.original)}
+          />
+        ),
+      },
+    ];
+  }, [isMobile, handlePlay, handleDelete, media?.audiofile?.id, playbackState]);
+
+  const table = useReactTable({
+    data: audiofiles,
+    columns,
+    state: { globalFilter: deferredFilter },
+    onGlobalFilterChange: setFilter,
+    globalFilterFn,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
+  const { rows } = table.getRowModel();
+
+  const virtualizer = useVirtualizer({
     count: rows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => (isMobile ? 72 : 56),
+    getScrollElement: () => containerRef.current,
+    estimateSize: () => (isMobile ? 60 : 52),
     overscan: 5,
   });
 
-  if (skeleton) {
-    return <AudiofileTableSkeleton isMobile={isMobile} className={className} />;
-  }
+  const virtualRows = virtualizer.getVirtualItems();
+  const paddingTop = virtualRows[0]?.start || 0;
+  const paddingBottom = virtualRows.length
+    ? virtualizer.getTotalSize() - virtualRows[virtualRows.length - 1].end
+    : 0;
+
+  if (skeleton) return <TableSkeleton isMobile={isMobile} />;
 
   return (
-    <TooltipProvider>
-      <div
-        className={`flex flex-col w-full rounded-lg border bg-card ${className}`}
-      >
-        {showSearch && (
-          <div className="flex items-center gap-3 p-4 border-b bg-card">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search tracks, artists..."
-                value={globalFilter}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                className="pl-9 bg-background"
-              />
-            </div>
-            {showCount && (
-              <div className="text-sm text-muted-foreground hidden sm:block">
-                {rows.length} tracks
-              </div>
-            )}
+    <div className={`rounded-md border ${className || ""}`}>
+      {showSearch && (
+        <div className="flex items-center gap-3 border-b p-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search tracks..."
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="pl-9"
+            />
           </div>
-        )}
-
-        {!isMobile && rows.length > 0 && (
-          <div className="flex items-center px-4 h-10 border-b bg-secondary/50 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <div className="w-12 text-center">#</div>
-            <div className="flex-1 px-2">Title</div>
-            <div className="flex-1 px-2">Artist</div>
-            <div className="flex-1 px-2">Album</div>
-            <div className="w-20 text-right px-2">Duration</div>
-            <div className="w-12"></div>
-          </div>
-        )}
-
-        <div ref={parentRef} className="flex-1 overflow-auto">
-          {rows.length === 0 ? (
-            <EmptyState globalFilter={globalFilter} />
-          ) : (
-            <div
-              style={{
-                height: `${rowVirtualizer.getTotalSize()}px`,
-                width: "100%",
-                position: "relative",
-              }}
-            >
-              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                const audiofile = rows[virtualRow.index];
-                const isCurrentTrack = media?.audiofile?.id === audiofile.id;
-
-                return (
-                  <div
-                    key={audiofile.id || virtualRow.index}
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: `${virtualRow.size}px`,
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
-                  >
-                    {isMobile ? (
-                      <div
-                        className={`flex items-center gap-3 px-4 py-2 h-full border-b transition-colors hover:bg-seconary/30`}
-                        onClick={() =>
-                          handlePlayTrack(virtualRow.index, audiofile)
-                        }
-                      >
-                        <div className="flex-shrink-0">
-                          <PlaybackCell
-                            audiofile={audiofile}
-                            index={virtualRow.index}
-                            onPlay={handlePlayTrack}
-                          />
-                        </div>
-
-                        <div className="flex-1 min-w-0 flex flex-col justify-center">
-                          <p
-                            className={`truncate font-medium text-sm ${isCurrentTrack ? "text-primary" : "text-foreground"}`}
-                          >
-                            {audiofile.title || audiofile.filename}
-                          </p>
-                          <p className="truncate text-xs text-muted-foreground">
-                            {audiofile.artists?.join(", ") || "Unknown Artist"}
-                          </p>
-                        </div>
-
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                              >
-                                <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                              </Button>
-                            }
-                          />
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteTrack(audiofile);
-                              }}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    ) : (
-                      <div
-                        className={`flex items-center h-full border-b px-4 text-sm transition-colors cursor-pointer group hover:bg-secondary/30`}
-                        onClick={() =>
-                          handlePlayTrack(virtualRow.index, audiofile)
-                        }
-                      >
-                        <div className="w-12 flex justify-center">
-                          <PlaybackCell
-                            audiofile={audiofile}
-                            index={virtualRow.index}
-                            onPlay={handlePlayTrack}
-                          />
-                        </div>
-
-                        <div className="flex-1 px-2 min-w-0">
-                          <div
-                            className={`truncate font-medium ${isCurrentTrack ? "text-primary" : "text-foreground"}`}
-                          >
-                            {audiofile.title || audiofile.filename}
-                          </div>
-                        </div>
-
-                        <div className="flex-1 px-2 min-w-0">
-                          <div className="truncate text-muted-foreground">
-                            {audiofile.artists?.join(", ") || "Unknown"}
-                          </div>
-                        </div>
-
-                        <div className="flex-1 px-2 min-w-0">
-                          <div className="truncate text-muted-foreground">
-                            {audiofile.album || "-"}
-                          </div>
-                        </div>
-
-                        <div className="w-20 px-2 text-right font-mono text-muted-foreground">
-                          {formatDuration(audiofile.duration)}
-                        </div>
-
-                        <div className="w-12 flex justify-end">
-                          <DeleteDialog
-                            audiofile={audiofile}
-                            onConfirm={() => handleDeleteTrack(audiofile)}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+          {showCount && (
+            <span className="hidden text-sm text-muted-foreground sm:inline-block">
+              {rows.length} tracks
+            </span>
           )}
         </div>
+      )}
+
+      <div ref={containerRef} className="max-h-[600px] overflow-auto">
+        {rows.length === 0 ? (
+          <div className="py-12 text-center text-muted-foreground">
+            No tracks found.
+          </div>
+        ) : (
+          <Table>
+            {!isMobile && (
+              <TableHeader className="sticky top-0 bg-background z-10">
+                {table.getHeaderGroups().map((group) => (
+                  <TableRow key={group.id}>
+                    {group.headers.map((h) => (
+                      <TableHead
+                        key={h.id}
+                        className={h.column.columnDef.meta?.className}
+                      >
+                        {flexRender(h.column.columnDef.header, h.getContext())}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+            )}
+            <TableBody>
+              {paddingTop > 0 && (
+                <tr>
+                  <td style={{ height: paddingTop }} />
+                </tr>
+              )}
+
+              {virtualRows.map((vRow) => {
+                const row = rows[vRow.index];
+                return (
+                  <TableRow
+                    key={row.id}
+                    onClick={() => handlePlay(vRow.index, row.original)}
+                    className="cursor-pointer"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className={cell.column.columnDef.meta?.className}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })}
+
+              {paddingBottom > 0 && (
+                <tr>
+                  <td style={{ height: paddingBottom }} />
+                </tr>
+              )}
+            </TableBody>
+          </Table>
+        )}
       </div>
-    </TooltipProvider>
+    </div>
   );
 }
 
-function DeleteDialog({
-  audiofile,
-  onConfirm,
+// Extracted Action Menu to reduce column bloat
+function RowActions({
+  file,
+  onDelete,
 }: {
-  audiofile: Audiofile;
-  onConfirm: () => void;
+  file: Audiofile;
+  onDelete: () => void;
 }) {
-  const trackTitle = audiofile.title || audiofile.filename;
+  const [open, setOpen] = useState(false);
+
   return (
-    <AlertDialog>
-      <AlertDialogTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => e.stopPropagation()}
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(true);
+            }}
+            className="text-destructive"
           >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        }
-      />
+            <Trash2 className="mr-2 h-4 w-4" /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Audio File</AlertDialogTitle>
+          <AlertDialogTitle>Delete Track?</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete <strong>"{trackTitle}"</strong>?
-            This action cannot be undone.
+            This will permanently remove "{file.title || file.filename}".
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -392,13 +402,13 @@ function DeleteDialog({
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            variant="destructive"
             onClick={(e) => {
               e.stopPropagation();
-              onConfirm();
+              onDelete();
             }}
           >
-            Delete File
+            Delete
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -406,40 +416,21 @@ function DeleteDialog({
   );
 }
 
-function EmptyState({ globalFilter }: { globalFilter: string }) {
+function TableSkeleton({ isMobile }: { isMobile: boolean }) {
   return (
-    <div className="flex flex-col items-center justify-center text-muted-foreground p-10 min-h-[200px]">
-      <Music2 className="h-10 w-10 mb-4 opacity-20" />
-      <p className="font-medium">
-        {globalFilter ? "No results found" : "No tracks available"}
-      </p>
-    </div>
-  );
-}
-
-function AudiofileTableSkeleton({
-  isMobile,
-  className = "",
-}: {
-  isMobile: boolean;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`w-full rounded-lg border bg-card animate-pulse ${className}`}
-    >
-      <div className="p-4 border-b">
-        <Skeleton className="h-10 w-full" />
+    <div className="rounded-md border">
+      <div className="border-b p-3">
+        <Skeleton className="h-9 w-full" />
       </div>
       <div className="p-4 space-y-4">
-        {Array.from({ length: 8 }).map((_, i) => (
+        {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded" />
-            <div className="flex-1 space-y-2">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <div className="grid gap-2 flex-1">
               <Skeleton className="h-4 w-1/3" />
-              <Skeleton className="h-3 w-1/4" />
+              {isMobile && <Skeleton className="h-3 w-1/4" />}
             </div>
-            {!isMobile && <Skeleton className="h-4 w-20" />}
+            {!isMobile && <Skeleton className="h-4 w-24" />}
           </div>
         ))}
       </div>

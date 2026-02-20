@@ -46,8 +46,9 @@ export default function AppSidebar() {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
+                  {/* TODO: use button or something as link */}
                   <Link
-                    className="flex items-center gap-2 px-4 py-2 hover:bg-muted transition-colors duration-100 rounded-md"
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-muted transition-colors duration-100"
                     to={item.url}
                     onClick={onMobileClick}
                   >

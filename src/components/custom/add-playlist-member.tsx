@@ -114,14 +114,14 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
 
         {formState.isSubmitSuccessful && !formState.errors.root && (
           <div className="mt-4 flex items-center rounded-md border border-green-500 bg-green-50 p-3 text-sm text-green-700">
-            <Check className="mr-2 h-5 w-5 flex-shrink-0" />
+            <Check className="mr-2 h-5 w-5 shrink-0" />
             Invite sent successfully to{" "}
             {formState.defaultValues?.username || "user"}.
           </div>
         )}
         {formState.errors.root?.message && (
           <div className="mt-4 flex items-center rounded-md border border-red-500 bg-red-50 p-3 text-sm text-red-700">
-            <AlertTriangle className="mr-2 h-5 w-5 flex-shrink-0" />
+            <AlertTriangle className="mr-2 h-5 w-5 shrink-0" />
             {formState.errors.root.message}
           </div>
         )}

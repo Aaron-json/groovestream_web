@@ -106,7 +106,7 @@ export function CreatePlaylistForm({ onFinish }: CreatePlaylistFormProps) {
           </div>
         )}
         {formState.errors.root && (
-          <div className="flex items-center bg-destructive text-destructive-foreground rounded-md border p-2">
+          <div className="flex items-center bg-destructive text-destructive rounded-md border p-2">
             <AlertCircle className="mr-2 h-3 w-3" />
             <span className="text-sm">{formState.errors.root.message}</span>
           </div>

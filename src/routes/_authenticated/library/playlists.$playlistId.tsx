@@ -270,7 +270,7 @@ function RouteComponent() {
                   <DropdownMenuSeparator />
 
                   <DropdownMenuItem
-                    className="bg-destructive text-destructive-foreground focus:bg-destructive/60"
+                    variant="destructive"
                     onSelect={(e) => {
                       e.preventDefault();
                       setDialogState((prev) => ({
@@ -316,7 +316,7 @@ function RouteComponent() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              variant="destructive"
               onClick={() => handleDeletePlaylist(playlist)}
             >
               Delete Playlist

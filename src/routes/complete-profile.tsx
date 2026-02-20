@@ -140,7 +140,6 @@ function RouteComponent() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  {/* Input with icon */}
                   <div className="relative flex-1">
                     <Input
                       id="username"
@@ -202,17 +201,14 @@ function RouteComponent() {
                   </p>
                 </div>
               </div>
-              {/* ✅ Fixed-height container so layout doesn’t jump */}
               <div className="flex items-center"></div>
 
-              {/* Root errors */}
               <div className="flex items-start justify-center">
                 {errors.root && (
                   <p className="text-sm text-red-500">{errors.root.message}</p>
                 )}
               </div>
 
-              {/* Action buttons */}
               <div className="flex justify-center">
                 <Button
                   type="submit"

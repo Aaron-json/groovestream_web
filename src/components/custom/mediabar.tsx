@@ -49,7 +49,7 @@ export default function MediaBar() {
     : "Unknown artist";
 
   return (
-    <div className="bg-card border border-border shadow-sm rounded-lg">
+    <div className="bg-card border rounded">
       {isMobile ? (
         <MobileLayout
           trackTitle={trackTitle}
@@ -144,12 +144,12 @@ function DesktopLayout({
               aria-label="Next track"
             />
           </div>
-          <div className="w-full max-w-[32rem]">
+          <div className="w-full max-w-lg">
             <Seeker />
           </div>
         </div>
 
-        <div className="col-span-3 flex items-center justify-end">
+        <div className="col-span-3 flex items-center justify-center">
           <VolumeControl />
         </div>
       </div>
@@ -232,13 +232,14 @@ function Seeker() {
 
   return (
     <div className="flex items-center gap-2 w-full text-xs">
-      <span className="text-muted-foreground min-w-[2.5rem] font-mono">
+      <span className="text-muted-foreground min-w-10 font-mono">
         {formatDuration(displaySeek)}
       </span>
 
       <Slider
         className="flex-1"
         max={duration}
+        disabled={duration === 0}
         min={0}
         step={1}
         value={displaySeek}
@@ -249,7 +250,7 @@ function Seeker() {
         aria-label="Seek position"
       />
 
-      <span className="text-muted-foreground min-w-[2.5rem] text-right font-mono">
+      <span className="text-muted-foreground min-w-10 text-right font-mono">
         {formatDuration(duration)}
       </span>
     </div>
@@ -301,9 +302,6 @@ function VolumeControl() {
   const handleVolumeChange = useCallback(
     (value: number | readonly number[]) => {
       const newVal = Array.isArray(value) ? value[0] : value;
-      // NOTE: check that volume propagation works and reduces
-      // unnnecessary state changes
-      // setLocalVolume(newVal);
       setVolume(newVal);
     },
     [setVolume, setLocalVolume],
@@ -316,7 +314,7 @@ function VolumeControl() {
   const VolumeIcon = mute ? VolumeX : Volume2;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-1 max-w-40 items-center gap-2">
       <ControlButton
         icon={<VolumeIcon className="h-5 w-5" />}
         onClick={toggleMute}

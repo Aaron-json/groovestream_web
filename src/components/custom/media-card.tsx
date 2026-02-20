@@ -79,15 +79,12 @@ const MediaCard: React.FC<MediaCardProps> = ({
   const PlayIcon = isCurrentlyPlaying ? Pause : Play;
 
   return (
-    <Card
-      onClick={handleCardClick}
-      className="w-[9rem] cursor-pointer border-border"
-    >
-      <CardContent className="p-0">
+    <Card onClick={handleCardClick} className="w-36 cursor-pointer">
+      <CardContent className="p-0 group">
         <div className="flex flex-col">
           <AspectRatio
             ratio={1}
-            className="bg-secondary relative group overflow-hidden rounded-t-md"
+            className="relative group overflow-hidden rounded"
           >
             <div className="absolute inset-0 flex items-center justify-center bg-secondary">
               <MediaIcon className="h-10 w-10 text-muted-foreground" />
@@ -111,7 +108,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
               {isAudio ? media.title || media.filename : media.name}
             </h3>
 
-            <div className="flex items-center justify-between text-xs text-muted-foreground min-h-[1.125rem]">
+            <div className="flex items-center justify-between text-xs text-muted-foreground min-h-4.5">
               <span className="truncate">
                 {isAudio
                   ? media.artists?.join(", ") || "Unknown Artist"
@@ -133,9 +130,9 @@ const MediaCard: React.FC<MediaCardProps> = ({
 
 export function MediaCardSkeleton() {
   return (
-    <div className="w-[9rem]">
+    <div className="w-36">
       <div className="space-y-3">
-        <Skeleton className="aspect-square w-full rounded-md" />
+        <Skeleton className="aspect-square w-full" />
         <div className="space-y-2 px-1">
           <Skeleton className="h-4 w-full" />
           <div className="flex items-center justify-between">

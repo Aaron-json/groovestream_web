@@ -29,7 +29,10 @@ function validateFile(file: File) {
     return { valid: false, error: "Unsupported format" };
   }
   if (file.size > MAX_FILE_SIZE) {
-    return { valid: false, error: `File too large (max ${formatBytes(MAX_FILE_SIZE)})` };
+    return {
+      valid: false,
+      error: `File too large (max ${formatBytes(MAX_FILE_SIZE)})`,
+    };
   }
   return { valid: true };
 }
@@ -42,37 +45,40 @@ export default function RouteComponent() {
   const { playlistId } = Route.useParams();
   const { data: playlist } = usePlaylistInfo(playlistId);
 
-  const handleFiles = useCallback((newFiles: File[]) => {
-    const validFiles: File[] = [];
+  const handleFiles = useCallback(
+    (newFiles: File[]) => {
+      const validFiles: File[] = [];
 
-    for (const file of newFiles) {
-      // TODO: find a better way to check for duplicates
-      // if (files.some(existingFile => existingFile.name === file.name)) {
-      //   toast.error(`"${file.name}" already selected`);
-      //   continue;
-      // }
+      for (const file of newFiles) {
+        // TODO: find a better way to check for duplicates
+        // if (files.some(existingFile => existingFile.name === file.name)) {
+        //   toast.error(`"${file.name}" already selected`);
+        //   continue;
+        // }
 
-      if (files.length + validFiles.length >= MAX_FILES) {
-        toast.error(`Maximum ${MAX_FILES} files allowed`);
-        break;
+        if (files.length + validFiles.length >= MAX_FILES) {
+          toast.error(`Maximum ${MAX_FILES} files allowed`);
+          break;
+        }
+
+        const validation = validateFile(file);
+        if (!validation.valid) {
+          toast.error(`"${file.name}": ${validation.error}`);
+          continue;
+        }
+
+        validFiles.push(file);
       }
 
-      const validation = validateFile(file);
-      if (!validation.valid) {
-        toast.error(`"${file.name}": ${validation.error}`);
-        continue;
+      if (validFiles.length > 0) {
+        setFiles((prev) => [...prev, ...validFiles]);
       }
-
-      validFiles.push(file);
-    }
-
-    if (validFiles.length > 0) {
-      setFiles(prev => [...prev, ...validFiles]);
-    }
-  }, [files]);
+    },
+    [files],
+  );
 
   const removeFile = useCallback((index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const handleUpload = useCallback(async () => {
@@ -127,32 +133,39 @@ function FileDropZone({ onFiles }: FileDropZoneProps) {
     e.stopPropagation();
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(false);
 
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      onFiles(files);
-    }
-  }, [onFiles]);
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) {
+        onFiles(files);
+      }
+    },
+    [onFiles],
+  );
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      onFiles(Array.from(files));
-    }
-    e.target.value = "";
-  }, [onFiles]);
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        onFiles(Array.from(files));
+      }
+      e.target.value = "";
+    },
+    [onFiles],
+  );
 
   return (
     <div
       className={`
         border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all
-        ${isDragOver
-          ? "border-primary bg-primary/5 scale-[1.02]"
-          : "border-border hover:border-primary/50 hover:bg-muted/50"
+        ${
+          isDragOver
+            ? "border-primary bg-primary/5 scale-[1.02]"
+            : "border-border hover:border-primary/50 hover:bg-muted/50"
         }
       `}
       onDragEnter={handleDragEnter}
@@ -165,16 +178,20 @@ function FileDropZone({ onFiles }: FileDropZoneProps) {
         ref={fileInputRef}
         type="file"
         multiple
-        accept={SUPPORTED_FILE_TYPES.map(type => `audio/${type}`).join(",")}
+        accept={SUPPORTED_FILE_TYPES.map((type) => `audio/${type}`).join(",")}
         onChange={handleFileSelect}
         className="hidden"
       />
 
       <div className="space-y-4">
-        <div className={`mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center ${
-          isDragOver ? "bg-primary/10" : ""
-        }`}>
-          <Plus className={`h-8 w-8 ${isDragOver ? "text-primary" : "text-muted-foreground"}`} />
+        <div
+          className={`mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center ${
+            isDragOver ? "bg-primary/10" : ""
+          }`}
+        >
+          <Plus
+            className={`h-8 w-8 ${isDragOver ? "text-foreground" : "text-muted-foreground"}`}
+          />
         </div>
 
         <div>
@@ -188,9 +205,8 @@ function FileDropZone({ onFiles }: FileDropZoneProps) {
         </div>
 
         <p className="text-sm text-muted-foreground">
-          {SUPPORTED_FILE_TYPES.map(t => t.toUpperCase()).join(", ")} •
-          Max {formatBytes(MAX_FILE_SIZE)} each •
-          Up to {MAX_FILES} files
+          {SUPPORTED_FILE_TYPES.map((t) => t.toUpperCase()).join(", ")} • Max{" "}
+          {formatBytes(MAX_FILE_SIZE)} each • Up to {MAX_FILES} files
         </p>
       </div>
     </div>
@@ -207,13 +223,16 @@ interface FilesListProps {
 function FilesList({ files, onRemove, onUpload, onAddMore }: FilesListProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAddFiles = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFiles = e.target.files;
-    if (newFiles && newFiles.length > 0) {
-      onAddMore(Array.from(newFiles));
-    }
-    e.target.value = "";
-  }, [onAddMore]);
+  const handleAddFiles = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newFiles = e.target.files;
+      if (newFiles && newFiles.length > 0) {
+        onAddMore(Array.from(newFiles));
+      }
+      e.target.value = "";
+    },
+    [onAddMore],
+  );
 
   const canAddMore = files.length < MAX_FILES;
 
@@ -236,7 +255,9 @@ function FilesList({ files, onRemove, onUpload, onAddMore }: FilesListProps) {
                     ref={fileInputRef}
                     type="file"
                     multiple
-                    accept={SUPPORTED_FILE_TYPES.map(type => `audio/${type}`).join(",")}
+                    accept={SUPPORTED_FILE_TYPES.map(
+                      (type) => `audio/${type}`,
+                    ).join(",")}
                     onChange={handleAddFiles}
                     className="hidden"
                   />
@@ -281,9 +302,9 @@ function FilesList({ files, onRemove, onUpload, onAddMore }: FilesListProps) {
               </div>
 
               <Button
-                variant="ghost"
+                variant="destructive"
                 size="sm"
-                className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                className="h-8 w-8 p-0"
                 onClick={() => onRemove(index)}
               >
                 <X className="h-4 w-4" />

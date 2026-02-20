@@ -23,7 +23,7 @@ export default function MediaList({
   return (
     <div className="flex flex-col w-full p-1 gap-1">
       {title && (
-        <h2 className="text-lg font-semibold text-primary mb-2">{title}</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-2">{title}</h2>
       )}
       <div className="flex flex-wrap gap-4 px-2">
         {media.map((audiofile, index) => (

@@ -55,7 +55,7 @@ const Trigger = React.forwardRef<
         <p className="truncate">{userData?.username}</p>
         {email && <p className="text-muted-foreground">{email}</p>}
       </div>
-      <div className="flex flex-col flex-shrink-0 items-center justify-center">
+      <div className="flex flex-col shrink-0 items-center justify-center">
         <ChevronUp className="h-3 w-3" />
         <ChevronDown className="h-3 w-3" />
       </div>

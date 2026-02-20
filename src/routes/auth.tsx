@@ -37,7 +37,7 @@ export default function RouteComponent() {
 
           <div className="space-y-5">
             <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary border border-primary/20 flex items-center justify-center">
+              <div className="shrink-0 w-10 h-10 rounded-lg bg-secondary border border-primary flex items-center justify-center">
                 <MusicIcon className="w-5 h-5 text-muted-foreground" />
               </div>
               <div>
@@ -52,7 +52,7 @@ export default function RouteComponent() {
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary border border-primary/20 flex items-center justify-center">
+              <div className="shrink-0 w-10 h-10 rounded-lg bg-secondary border border-primary flex items-center justify-center">
                 <UsersIcon className="w-5 h-5 text-muted-foreground" />
               </div>
               <div>
@@ -67,7 +67,7 @@ export default function RouteComponent() {
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary border border-primary/20 flex items-center justify-center">
+              <div className="shrink-0 w-10 h-10 rounded-lg bg-secondary border border-primary flex items-center justify-center">
                 <CloudUpload className="w-5 h-5 text-muted-foreground" />
               </div>
               <div>
