@@ -18,13 +18,13 @@ export type MediaCardProps = {
   index?: number;
 };
 
-const MediaCard: React.FC<MediaCardProps> = ({
+const MediaCard = ({
   media,
   onClick,
   storeKey,
   queryKey,
   index,
-}) => {
+}: MediaCardProps) => {
   const {
     media: currentMedia,
     setMedia,
@@ -39,7 +39,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
     currentMedia?.audiofile?.id === media.id &&
     playbackState === "playing";
 
-  const handleCardClick = async (_: React.MouseEvent<HTMLDivElement>) => {
+  const handleCardClick = async () => {
     if (onClick) {
       onClick();
       return;
@@ -63,15 +63,24 @@ const MediaCard: React.FC<MediaCardProps> = ({
     }
   };
 
-  const handlePlayPause = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handlePlayPause = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    // This stops error from propagating to the card if only the
+    // play/pause button is clicked
     e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
 
     if (!isAudio) return;
 
     if (currentMedia?.audiofile?.id === media.id) {
       playPauseToggle();
     } else if (storeKey && queryKey) {
-      setMedia(storeKey, queryKey, index);
+      try {
+        await setMedia(storeKey, queryKey, index);
+      } catch (error: any) {
+        toast.error("Error loading media", {
+          description: error?.message || "Unable to load media file",
+        });
+      }
     }
   };
 
@@ -82,10 +91,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
     <Card onClick={handleCardClick} className="w-36 cursor-pointer">
       <CardContent className="p-0 group">
         <div className="flex flex-col">
-          <AspectRatio
-            ratio={1}
-            className="relative group overflow-hidden rounded"
-          >
+          <AspectRatio ratio={1} className="relative overflow-hidden rounded">
             <div className="absolute inset-0 flex items-center justify-center bg-secondary">
               <MediaIcon className="h-10 w-10 text-muted-foreground" />
             </div>
@@ -93,7 +99,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
             {isAudio && (
               <Button
                 size="sm"
-                variant="secondary"
+                variant="ghost"
                 className="absolute bottom-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm"
                 onClick={handlePlayPause}
                 aria-label={isCurrentlyPlaying ? "Pause" : "Play"}

@@ -190,7 +190,7 @@ function FileDropZone({ onFiles }: FileDropZoneProps) {
           }`}
         >
           <Plus
-            className={`h-8 w-8 ${isDragOver ? "text-foreground" : "text-muted-foreground"}`}
+            className={`h-8 w-8 ${isDragOver ? "text-primary" : "text-muted-foreground"}`}
           />
         </div>
 

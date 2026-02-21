@@ -250,11 +250,10 @@ function RouteComponent() {
                   </Button>
                 }
               />
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="start" className="w-42">
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault();
+                    onClick={() => {
                       setDialogState((prev) => ({ ...prev, addMember: true }));
                     }}
                   >
@@ -271,8 +270,7 @@ function RouteComponent() {
 
                   <DropdownMenuItem
                     variant="destructive"
-                    onSelect={(e) => {
-                      e.preventDefault();
+                    onClick={() => {
                       setDialogState((prev) => ({
                         ...prev,
                         deletePlaylist: true,

@@ -379,11 +379,11 @@ function RowActions({
         />
         <DropdownMenuContent align="end">
           <DropdownMenuItem
+            variant="destructive"
             onClick={(e) => {
               e.stopPropagation();
               setOpen(true);
             }}
-            className="text-destructive"
           >
             <Trash2 className="mr-2 h-4 w-4" /> Delete
           </DropdownMenuItem>
@@ -392,7 +392,7 @@ function RowActions({
 
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Track?</AlertDialogTitle>
+          <AlertDialogTitle>Delete Track</AlertDialogTitle>
           <AlertDialogDescription>
             This will permanently remove "{file.title || file.filename}".
           </AlertDialogDescription>

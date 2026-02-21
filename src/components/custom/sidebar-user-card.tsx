@@ -26,11 +26,7 @@ export default function SidebarUserCard() {
   );
 }
 
-// NOTE: check how it looks in the end
-const Trigger = React.forwardRef<
-  HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement>
->((props, ref) => {
+const Trigger = (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => {
   const { data: userData } = useQuery({ queryKey: ["user"], queryFn: getUser });
   const { sessionRef } = useAuth();
 
@@ -41,26 +37,25 @@ const Trigger = React.forwardRef<
 
   return (
     <Button
-      ref={ref}
       {...props}
       variant="ghost"
-      className="w-full  h-auto p-2 flex items-center justify-start gap-2"
+      className="w-full h-auto p-2 flex items-center justify-start gap-2"
     >
       <CustomAvatar
         user={userData}
         picture_url={url}
         className="border rounded-full aspect-square h-8 w-8 shrink-0"
       />
-      <div className="flex-1 flex flex-col justify-center truncate">
+      <div className="flex min-w-0 flex-1 flex-col justify-center text-left">
         <p className="truncate">{userData?.username}</p>
-        {email && <p className="text-muted-foreground">{email}</p>}
+        {email && <p className="text-muted-foreground truncate">{email}</p>}
       </div>
-      <div className="flex flex-col shrink-0 items-center justify-center">
+      <div className="flex flex-col shrink-0 items-center justify-center text-muted-foreground">
         <ChevronUp className="h-3 w-3" />
         <ChevronDown className="h-3 w-3" />
       </div>
     </Button>
   );
-});
+};
 
 Trigger.displayName = "Trigger";

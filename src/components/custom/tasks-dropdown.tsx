@@ -5,6 +5,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, ListMusic, RefreshCw } from "lucide-react";
@@ -40,33 +41,35 @@ export default function TasksDropdown() {
       />
       <DropdownMenuContent align="end" className="w-80">
         {/** TODO: remove non dropdown components from here **/}
-        <div className="flex items-center justify-between p-2">
-          <DropdownMenuLabel className="p-0">Tasks</DropdownMenuLabel>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              refetchCloudTasks();
-            }}
-          >
-            <RefreshCw />
-          </Button>
-        </div>
-
-        <DropdownMenuSeparator />
-
-        {!hasAnyTasks ? (
-          <div className="px-3 py-6 text-center">
-            <p className="text-sm text-muted-foreground">No active tasks</p>
+        <DropdownMenuGroup>
+          <div className="flex items-center justify-between p-2">
+            <DropdownMenuLabel className="p-0">Tasks</DropdownMenuLabel>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                refetchCloudTasks();
+              }}
+            >
+              <RefreshCw />
+            </Button>
           </div>
-        ) : (
-          <>
-            <LocalTasks tasks={localTasks} />
-            <CloudTasks tasks={cloudTasks} />
-          </>
-        )}
+
+          <DropdownMenuSeparator />
+
+          {!hasAnyTasks ? (
+            <div className="px-3 py-6 text-center">
+              <p className="text-sm text-muted-foreground">No active tasks</p>
+            </div>
+          ) : (
+            <>
+              <LocalTasks tasks={localTasks} />
+              <CloudTasks tasks={cloudTasks} />
+            </>
+          )}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
