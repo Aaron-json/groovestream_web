@@ -13,7 +13,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import TextLogo from "@/components/custom/textlogo";
+import { TextLogo } from "@/components/custom/textlogo";
 import { useEffect, useState } from "react";
 import { useMediaStateStore } from "@/lib/media/stores/state";
 import WebAudioPlayer from "@/lib/media/player/web";

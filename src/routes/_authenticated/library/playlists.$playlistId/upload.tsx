@@ -4,6 +4,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { usePlaylistInfo, useUploadAudioFile } from "@/hooks/media";
 import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 const MAX_FILES = 5;
 const MAX_FILE_SIZE = 1024 * 1024 * 20; // 20MB
@@ -159,57 +161,61 @@ function FileDropZone({ onFiles }: FileDropZoneProps) {
   );
 
   return (
-    <div
-      className={`
-        border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all
-        ${
-          isDragOver
-            ? "border-primary bg-primary/5 scale-[1.02]"
-            : "border-border hover:border-primary/50 hover:bg-muted/50"
-        }
-      `}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-      onClick={() => fileInputRef.current?.click()}
-    >
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept={SUPPORTED_FILE_TYPES.map((type) => `audio/${type}`).join(",")}
-        onChange={handleFileSelect}
-        className="hidden"
-      />
-
-      <div className="space-y-4">
+    <Card>
+      <CardContent>
         <div
-          className={`mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center ${
-            isDragOver ? "bg-primary/10" : ""
-          }`}
+          className={cn(
+            `
+        border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all`,
+            isDragOver ? "border-primary bg-primary/5 scale-[1.02]" : null,
+            !isDragOver ? "hover:border-primary/50 hover:bg-primary/5" : null,
+          )}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
         >
-          <Plus
-            className={`h-8 w-8 ${isDragOver ? "text-primary" : "text-muted-foreground"}`}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={SUPPORTED_FILE_TYPES.map((type) => `audio/${type}`).join(
+              ",",
+            )}
+            onChange={handleFileSelect}
+            className="hidden"
           />
-        </div>
 
-        <div>
-          <h3 className="text-lg font-medium mb-1">
-            {isDragOver ? "Drop files here" : "Upload audio files"}
-          </h3>
-          <p className="text-muted-foreground mb-4">
-            Drag and drop files here, or click to browse
-          </p>
-          <Button>Browse Files</Button>
-        </div>
+          <div className="space-y-4">
+            <div
+              className={`mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center ${
+                isDragOver ? "bg-primary/10" : ""
+              }`}
+            >
+              <Plus
+                className={`h-8 w-8 ${isDragOver ? "text-primary" : "text-muted-foreground"}`}
+              />
+            </div>
 
-        <p className="text-sm text-muted-foreground">
-          {SUPPORTED_FILE_TYPES.map((t) => t.toUpperCase()).join(", ")} • Max{" "}
-          {formatBytes(MAX_FILE_SIZE)} each • Up to {MAX_FILES} files
-        </p>
-      </div>
-    </div>
+            <div>
+              <h3 className="text-lg font-medium mb-1">
+                {isDragOver ? "Drop files here" : "Upload audio files"}
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Drag and drop files here, or click to browse
+              </p>
+              <Button>Browse Files</Button>
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              {SUPPORTED_FILE_TYPES.map((t) => t.toUpperCase()).join(", ")} •
+              Max {formatBytes(MAX_FILE_SIZE)} each • Up to {MAX_FILES} files
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

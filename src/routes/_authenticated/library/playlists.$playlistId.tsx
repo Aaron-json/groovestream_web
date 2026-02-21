@@ -53,6 +53,7 @@ import { Playlist } from "@/api/types/media";
 import { queryClient } from "@/lib/query";
 import { useMediaStateStore } from "@/lib/media/stores/state";
 import { useShallow } from "zustand/react/shallow";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId",
@@ -180,9 +181,12 @@ function RouteComponent() {
     <section className="h-full space-y-6">
       <div className="flex gap-4">
         {/* Playlist Cover */}
-        <div className="w-32 h-32 md:w-40 md:h-40 bg-muted rounded-lg flex items-center justify-center shrink-0">
+        <AspectRatio
+          ratio={1}
+          className="w-32 h-32 md:w-40 md:h-40 bg-secondary rounded-lg flex items-center justify-center shrink-0"
+        >
           <ListMusic className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground" />
-        </div>
+        </AspectRatio>
 
         {/* Playlist Info */}
         <div className="flex flex-col justify-end min-w-0 flex-1 space-y-2">

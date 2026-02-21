@@ -3,7 +3,7 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import "./index.css";
 import { routeTree } from "./routeTree.gen";
 import { useAuth } from "./lib/auth";
-import TextLogo from "./components/custom/textlogo";
+import { TextLogo } from "./components/custom/textlogo";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { getUser } from "./api/requests/user";
 import { queryClient } from "./lib/query";

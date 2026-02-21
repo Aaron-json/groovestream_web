@@ -40,7 +40,6 @@ export default function TasksDropdown() {
         }
       />
       <DropdownMenuContent align="end" className="w-80">
-        {/** TODO: remove non dropdown components from here **/}
         <DropdownMenuGroup>
           <div className="flex items-center justify-between p-2">
             <DropdownMenuLabel className="p-0">Tasks</DropdownMenuLabel>

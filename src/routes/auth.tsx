@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { FcGoogle } from "react-icons/fc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { signInGoogle } from "@/lib/auth";
-import TextLogo from "@/components/custom/textlogo";
+import { TextLogo } from "@/components/custom/textlogo";
 import { CloudUpload, MusicIcon, UsersIcon } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({

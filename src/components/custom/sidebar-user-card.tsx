@@ -1,12 +1,13 @@
 import React from "react";
 import { ChevronDown, ChevronUp, LogOut } from "lucide-react";
-import { CustomAvatar } from "./avatar";
+import { CustomAvatar, CustomAvatarSkeleton } from "./avatar";
 import { signOut, useAuth } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { getUser } from "@/api/requests/user";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -17,23 +18,32 @@ export default function SidebarUserCard() {
     <DropdownMenu>
       <DropdownMenuTrigger render={<Trigger />} />
       <DropdownMenuContent className="w-52">
-        <DropdownMenuItem onClick={signOut}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={signOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Log out</span>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
 const Trigger = (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => {
-  const { data: userData } = useQuery({ queryKey: ["user"], queryFn: getUser });
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ["user"],
+    queryFn: getUser,
+  });
   const { sessionRef } = useAuth();
 
   const url =
     sessionRef.current?.user.user_metadata?.avatar_url ||
     sessionRef.current?.user.user_metadata?.picture;
   const email = sessionRef.current?.user?.email;
+
+  if (userLoading) {
+    return <CustomAvatarSkeleton />;
+  }
 
   return (
     <Button
@@ -42,9 +52,9 @@ const Trigger = (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => {
       className="w-full h-auto p-2 flex items-center justify-start gap-2"
     >
       <CustomAvatar
-        user={userData}
+        username={userData?.username}
         picture_url={url}
-        className="border rounded-full aspect-square h-8 w-8 shrink-0"
+        className="border h-8 w-8 shrink-0"
       />
       <div className="flex min-w-0 flex-1 flex-col justify-center text-left">
         <p className="truncate">{userData?.username}</p>

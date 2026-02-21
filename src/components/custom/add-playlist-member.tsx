@@ -30,8 +30,6 @@ type AddPlaylistMemberValues = {
   username: string;
 };
 
-// TODO: look into using shadcn forms and reconsider form usage here.
-// Specifically the whole reset logic after success
 export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
   const { register, handleSubmit, formState, setError, reset } =
     useForm<AddPlaylistMemberValues>({

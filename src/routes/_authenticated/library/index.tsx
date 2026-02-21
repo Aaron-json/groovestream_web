@@ -134,19 +134,19 @@ function PageHeader() {
 
 function EmptyState() {
   return (
-    <div className="border-2 border-dashed rounded-lg p-12 text-center w-full max-w-2xl">
+    <div className="rounded-lg p-12 text-center w-full max-w-2xl">
       <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
         <Music2 className="h-8 w-8 text-muted-foreground" />
       </div>
       <h3 className="text-lg font-medium mb-2">No playlists yet</h3>
       <p className="text-muted-foreground mb-4">
-        Create your first playlist or accept an invite from friends
+        Create your own playlist or accept an invite from friends
       </p>
       <CreatePlaylistModal
         trigger={
           <Button variant="outline">
             <Plus className="h-4 w-4 mr-2" />
-            Create Your First Playlist
+            Create a playlist
           </Button>
         }
       />

@@ -47,7 +47,7 @@ function RouteComponent() {
 
   if (!audiofiles || audiofiles.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed rounded-lg">
+      <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg">
         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
           <Music2 className="h-8 w-8 text-muted-foreground" />
         </div>
