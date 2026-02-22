@@ -88,7 +88,7 @@ const MediaCard = ({
   const PlayIcon = isCurrentlyPlaying ? Pause : Play;
 
   return (
-    <Card onClick={handleCardClick} className="w-36 cursor-pointer">
+    <Card onClick={handleCardClick} className="w-36 cursor-pointer py-0 gap-0">
       <CardContent className="p-0 group">
         <div className="flex flex-col">
           <AspectRatio ratio={1} className="relative overflow-hidden rounded">
