@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, AlertCircle } from "lucide-react";
-import TextLogo from "@/components/custom/textlogo";
+import { TextLogo } from "@/components/custom/textlogo";
 import { createUserProfile, usernameExists } from "@/api/requests/user";
 import { queryClient } from "@/lib/query";
 
