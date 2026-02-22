@@ -4,7 +4,6 @@ import { MediaQueryKey } from "@/hooks/media";
 
 import { resolveDeliverable, trackHistory } from "../api";
 import { getNextAudioIndex } from "../utils";
-import { useMediaListStore } from "./media-list";
 import {
   CurrentMedia,
   MediaPlayer,
@@ -12,6 +11,8 @@ import {
   PlayerCallbacks,
 } from "../types";
 import { getDeliverableToken } from "@/api/requests/media";
+import { queryClient } from "@/lib/query";
+import { Audiofile } from "@/api/types/media";
 
 export type MediaSlice = {
   media: CurrentMedia | undefined;
@@ -23,11 +24,7 @@ export type MediaSlice = {
 
   // actions
   init: (player: () => MediaPlayer) => Promise<void>;
-  setMedia: (
-    storeKey: string,
-    queryKey: MediaQueryKey,
-    index?: number,
-  ) => Promise<void>;
+  setMedia: (queryKey: MediaQueryKey, index?: number) => Promise<void>;
   unloadMedia: () => void;
   play: () => Promise<void>;
   pause: () => void;
@@ -74,10 +71,10 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
     set({ player, _playerFactory: factory });
   },
 
-  setMedia: async (storeKey, queryKey, index = 0) => {
-    const { mediaLists } = useMediaListStore.getState();
+  setMedia: async (queryKey, index = 0) => {
     const currentMedia = get().media;
-    const audiofile = mediaLists[storeKey]?.[index];
+    const list = queryClient.getQueryData<Audiofile[]>(queryKey);
+    const audiofile = list?.[index];
     const player = get().player;
 
     if (!player || !audiofile) {
@@ -86,7 +83,7 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
 
     // if same song, replay
     if (
-      storeKey === currentMedia?.storeKey &&
+      queryKey === currentMedia?.queryKey &&
       audiofile.id === currentMedia?.audiofile.id
     ) {
       player.seek(0);
@@ -113,7 +110,7 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
       });
       await player.load(manifestUrl);
 
-      _setMediaState({ index, audiofile, storeKey, queryKey });
+      _setMediaState({ index, audiofile, queryKey });
       await player.play();
 
       trackHistory(audiofile.id);
@@ -201,14 +198,18 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
   _setMuteState: (m) => set({ mute: m }),
   _handleNextPrev: (action: "next" | "prev") => {
     const { media, unloadMedia, setMedia } = get();
-    const { mediaLists } = useMediaListStore.getState();
 
-    if (!media || !mediaLists[media.storeKey]) {
+    if (!media) {
       unloadMedia();
       return;
     }
 
-    const list = mediaLists[media.storeKey];
+    const list = queryClient.getQueryData<Audiofile[]>(media.queryKey);
+    if (!list) {
+      unloadMedia();
+      throw new Error("Media list not found");
+    }
+
     const nextIndex = getNextAudioIndex(
       list,
       media.audiofile.id,
@@ -216,7 +217,7 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
       media.index,
     );
 
-    setMedia(media.storeKey, media.queryKey, nextIndex).catch(() => {
+    setMedia(media.queryKey, nextIndex).catch(() => {
       unloadMedia();
       toast.error("Error changing track");
     });

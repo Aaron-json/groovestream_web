@@ -12,19 +12,12 @@ import { useMediaStateStore } from "@/lib/media/stores/state";
 import { formatDuration } from "@/lib/media/utils";
 export type MediaCardProps = {
   media: Media;
-  storeKey?: string;
   queryKey?: MediaQueryKey;
   onClick?: () => void;
   index?: number;
 };
 
-const MediaCard = ({
-  media,
-  onClick,
-  storeKey,
-  queryKey,
-  index,
-}: MediaCardProps) => {
+const MediaCard = ({ media, onClick, queryKey, index }: MediaCardProps) => {
   const {
     media: currentMedia,
     setMedia,
@@ -46,9 +39,9 @@ const MediaCard = ({
     }
 
     if (isAudio) {
-      if (storeKey && queryKey) {
+      if (queryKey) {
         try {
-          await setMedia(storeKey, queryKey, index);
+          await setMedia(queryKey, index);
         } catch (error: any) {
           toast.error("Error loading media", {
             description: error?.message || "Unable to load media file",
@@ -73,9 +66,9 @@ const MediaCard = ({
 
     if (currentMedia?.audiofile?.id === media.id) {
       playPauseToggle();
-    } else if (storeKey && queryKey) {
+    } else if (queryKey) {
       try {
-        await setMedia(storeKey, queryKey, index);
+        await setMedia(queryKey, index);
       } catch (error: any) {
         toast.error("Error loading media", {
           description: error?.message || "Unable to load media file",

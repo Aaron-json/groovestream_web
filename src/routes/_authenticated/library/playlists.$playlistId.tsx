@@ -103,7 +103,7 @@ function RouteComponent() {
 
   const router = useRouter();
   const deletePlaylistMutation = useDeletePlaylist();
-  const { storeKey, queryKey } = usePlaylistAudiofiles(playlistId);
+  const { queryKey } = usePlaylistAudiofiles(playlistId);
 
   const handleDeletePlaylist = useCallback(
     async (playlistToDelete: Playlist) => {
@@ -149,17 +149,17 @@ function RouteComponent() {
 
   const handlePlayback = useCallback(async () => {
     try {
-      if (media?.storeKey === storeKey) {
+      if (media?.queryKey === queryKey) {
         playPauseToggle();
       } else {
-        await setMedia(storeKey, queryKey);
+        await setMedia(queryKey);
       }
     } catch (error: any) {
       toast.error("Playback Error", {
         description: error?.message || "Unable to play playlist",
       });
     }
-  }, [media?.storeKey, storeKey, playPauseToggle, setMedia, queryKey]);
+  }, [playPauseToggle, setMedia, queryKey, media]);
 
   if (playlistLoading) {
     return <PlaylistSkeleton />;
@@ -173,7 +173,7 @@ function RouteComponent() {
     return <InfoCard text="Playlist not found." />;
   }
 
-  const isCurrentPlaylist = media?.storeKey === storeKey;
+  const isCurrentPlaylist = media?.queryKey === queryKey;
   const isPlaying = isCurrentPlaylist && playbackState === "playing";
   const isLoading = isCurrentPlaylist && playbackState === "loading";
 

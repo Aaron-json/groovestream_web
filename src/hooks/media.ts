@@ -12,17 +12,10 @@ import { MediaTask, NewMediaTask, TaskType, useTaskStore } from "@/lib/tasks";
 import { Playlist, Audiofile } from "@/api/types/media";
 import { toast } from "sonner";
 import { queryClient } from "@/lib/query";
-import { useMediaListStore } from "@/lib/media/stores/media-list";
 
 import { useMediaStateStore } from "@/lib/media/stores/state";
 
 export type MediaQueryKey = string[];
-
-// Utility function for places where a single string is expected and
-// not string[].
-function flattenQueryKey(cacheKey: MediaQueryKey) {
-  return cacheKey.join(":");
-}
 
 // store and cache keys
 // These keys are used to access / update data in the
@@ -57,47 +50,38 @@ export function usePlaylistInfo(playlistId: Playlist["id"]) {
 
 export function usePlaylistAudiofiles(playlistId: Playlist["id"]) {
   const queryKey = getPlaylistMediaStoreKey(playlistId);
-  const storeKey = flattenQueryKey(queryKey);
-  const setMediaList = useMediaListStore((state) => state.setMediaList);
   const query = useQuery({
     queryKey,
     queryFn: async () => {
       const data = await getPlaylistAudiofiles(playlistId);
-      setMediaList(storeKey, data);
       return data;
     },
   });
-  return { ...query, queryKey, storeKey } as const;
+  return { ...query, queryKey } as const;
 }
 
 export function useMostPlayed(limit = 10) {
-  const setMediaList = useMediaListStore((state) => state.setMediaList);
   const queryKey = MOST_PLAYED_STORE_KEY;
-  const storeKey = flattenQueryKey(queryKey);
   const query = useQuery({
     queryKey,
     queryFn: async () => {
       const data = await getMostPlayedAudioFiles(limit);
-      setMediaList(storeKey, data);
       return data;
     },
   });
-  return { ...query, queryKey, storeKey } as const;
+  return { ...query, queryKey } as const;
 }
 
 export function useListeningHistory(limit = 10, skip?: number) {
-  const setMediaList = useMediaListStore((state) => state.setMediaList);
   const queryKey = LISTENING_HISTORY_STORE_KEY;
-  const storeKey = flattenQueryKey(queryKey);
   const query = useQuery({
     queryKey,
     queryFn: async () => {
       const data = await getAudioFileHistory(limit, skip);
-      setMediaList(storeKey, data);
       return data;
     },
   });
-  return { ...query, queryKey, storeKey } as const;
+  return { ...query, queryKey } as const;
 }
 
 function genTaskId() {
@@ -189,7 +173,6 @@ export function useDeleteAudioFile() {
 export function useDeletePlaylist() {
   const removeTask = useTaskStore((state) => state.removeTask);
   const setTask = useTaskStore((state) => state.setTask);
-  const removeMediaList = useMediaListStore((state) => state.removeMediaList);
   const media = useMediaStateStore((state) => state.media);
   const unloadMedia = useMediaStateStore((state) => state.unloadMedia);
 
@@ -208,8 +191,6 @@ export function useDeletePlaylist() {
     try {
       await deletePlaylist(playlist.id);
       toast("Playlist deleted successfully");
-      const key = getPlaylistMediaStoreKey(playlist.id);
-      removeMediaList(flattenQueryKey(key));
 
       if (media?.audiofile.playlist_id === playlist.id) {
         unloadMedia();

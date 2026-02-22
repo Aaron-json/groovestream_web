@@ -18,19 +18,11 @@ function RouteComponent() {
     isLoading,
     error,
     refetch,
-    storeKey,
     queryKey,
   } = usePlaylistAudiofiles(playlistId);
 
   if (isLoading) {
-    return (
-      <AudiofileTable
-        skeleton
-        audiofiles={[]}
-        storeKey=""
-        queryKey={queryKey}
-      />
-    );
+    return <AudiofileTable skeleton audiofiles={[]} queryKey={queryKey} />;
   }
 
   if (error) {
@@ -66,7 +58,6 @@ function RouteComponent() {
   return (
     <AudiofileTable
       audiofiles={audiofiles}
-      storeKey={storeKey}
       queryKey={queryKey}
       onChange={() => queryClient.invalidateQueries()}
       refetch={refetch}

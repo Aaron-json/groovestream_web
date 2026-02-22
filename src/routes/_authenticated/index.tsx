@@ -21,7 +21,6 @@ function RouteComponent() {
     data: mostPlayed,
     isLoading: mostPlayedLoading,
     error: mostPlayedErr,
-    storeKey: mostPlayedStoreKey,
     queryKey: mostPlayedQueryKey,
   } = useMostPlayed(10);
 
@@ -29,7 +28,6 @@ function RouteComponent() {
     data: history,
     isLoading: historyLoading,
     error: historyErr,
-    storeKey: historyStoreKey,
     queryKey: historyQueryKey,
   } = useListeningHistory(6);
 
@@ -75,7 +73,6 @@ function RouteComponent() {
             <MediaList
               title="Most Played"
               media={mostPlayed}
-              storeKey={mostPlayedStoreKey}
               queryKey={mostPlayedQueryKey}
             />
           )}
@@ -84,7 +81,6 @@ function RouteComponent() {
             <MediaList
               title="Listening History"
               media={history}
-              storeKey={historyStoreKey}
               queryKey={historyQueryKey}
             />
           )}

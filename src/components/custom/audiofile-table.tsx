@@ -55,7 +55,7 @@ import { useMediaStateStore } from "@/lib/media/stores/state";
 import { cn } from "@/lib/utils";
 
 declare module "@tanstack/react-table" {
-  interface ColumnMeta<TData extends unknown, TValue> {
+  interface ColumnMeta<TData, TValue> {
     className?: string;
   }
 }
@@ -79,7 +79,6 @@ const ROW_HEIGHT_DESKTOP = 48;
 
 type AudiofileTableProps = {
   audiofiles: Audiofile[];
-  storeKey: string;
   queryKey: MediaQueryKey;
   skeleton?: boolean;
   onChange?: () => void;
@@ -91,7 +90,6 @@ type AudiofileTableProps = {
 
 function AudiofileTable({
   audiofiles,
-  storeKey,
   queryKey,
   skeleton,
   onChange,
@@ -117,18 +115,17 @@ function AudiofileTable({
     );
 
   const handlePlay = useCallback(
-    (index: number, file: Audiofile) => {
+    (file: Audiofile) => {
       if (media?.audiofile?.id === file.id) {
         playPauseToggle();
       } else {
-        // We cannot use the index from the table since the table might be
-        // filtered or sorted. View order might not match the stored order.
-        setMedia(storeKey, queryKey, index).catch((error) => {
+        const index = audiofiles.findIndex((f) => f.id === file.id);
+        setMedia(queryKey, index).catch((error) => {
           toast.error("Playback Error", { description: error.message });
         });
       }
     },
-    [media?.audiofile?.id, playPauseToggle, setMedia, storeKey, queryKey],
+    [audiofiles, media?.audiofile?.id, playPauseToggle, setMedia, queryKey],
   );
 
   const handleDelete = useCallback(
@@ -264,7 +261,7 @@ interface VirtualizedRowsProps {
     ReturnType<typeof useReactTable<Audiofile>>["getRowModel"]
   >["rows"];
   table: ReturnType<typeof useReactTable<Audiofile>>;
-  onPlay: (index: number, file: Audiofile) => void;
+  onPlay: (file: Audiofile) => void;
 }
 
 const VirtualizedRows = memo(function VirtualizedRows({
@@ -295,7 +292,7 @@ const VirtualizedRows = memo(function VirtualizedRows({
         return (
           <TableRow
             key={row.id}
-            onClick={() => onPlay(virtualRow.index, row.original)}
+            onClick={() => onPlay(row.original)}
             className="cursor-pointer group"
           >
             {row.getVisibleCells().map((cell) => (

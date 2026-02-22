@@ -5,7 +5,6 @@ export type PlaybackState = "unloaded" | "playing" | "loading" | "paused";
 
 export type CurrentMedia = {
   index?: number;
-  storeKey: string;
   queryKey: MediaQueryKey;
   audiofile: Audiofile;
 };

@@ -3,7 +3,6 @@ import MediaCard, { MediaCardSkeleton } from "./media-card";
 import { Audiofile, Playlist } from "@/api/types/media";
 
 export type MediaCardListProps = {
-  storeKey?: string;
   queryKey?: MediaQueryKey;
   title?: string;
   media: (Audiofile | Playlist)[];
@@ -14,7 +13,6 @@ export default function MediaList({
   title,
   media,
   loading,
-  storeKey,
   queryKey,
 }: MediaCardListProps) {
   if (loading) {
@@ -30,7 +28,6 @@ export default function MediaList({
           <MediaCard
             key={audiofile.id}
             media={audiofile}
-            storeKey={storeKey}
             queryKey={queryKey}
             index={index}
           />
