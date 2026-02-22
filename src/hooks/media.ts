@@ -21,7 +21,7 @@ export type MediaQueryKey = string[];
 // Utility function for places where a single string is expected and
 // not string[].
 function flattenQueryKey(cacheKey: MediaQueryKey) {
-  return cacheKey.join();
+  return cacheKey.join(":");
 }
 
 // store and cache keys
