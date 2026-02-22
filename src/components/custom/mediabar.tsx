@@ -304,12 +304,12 @@ function VolumeControl() {
       const newVal = Array.isArray(value) ? value[0] : value;
       setVolume(newVal);
     },
-    [setVolume, setLocalVolume],
+    [setVolume],
   );
 
   const toggleMute = useCallback(() => {
     setMute(!mute);
-  }, [mute, setMute]);
+  }, [setMute, mute]);
 
   const VolumeIcon = mute ? VolumeX : Volume2;
 

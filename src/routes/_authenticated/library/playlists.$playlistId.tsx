@@ -124,28 +124,31 @@ function RouteComponent() {
     [deletePlaylistMutation, router],
   );
 
-  const handleLeavePlaylist = useCallback(async () => {
-    try {
-      await leavePlaylist(playlistId);
-      toast.success("Successfully left the playlist");
-      queryClient.invalidateQueries({ queryKey: ["playlists"] });
-      router.navigate({
-        from: Route.fullPath,
-        to: "/library",
-      });
-    } catch (error: unknown) {
-      let message = "Could not leave the playlist. Please try again.";
-      if (isAxiosError<ResponseError>(error)) {
-        const errorCode = error.response?.data.error_code;
-        if (errorCode === "OWNER_CANNOT_LEAVE") {
-          message = "The owner of a playlist cannot leave it.";
+  const handleLeavePlaylist = useCallback(
+    async (playlistId: Playlist["id"]) => {
+      try {
+        await leavePlaylist(playlistId);
+        toast.success("Successfully left the playlist");
+        queryClient.invalidateQueries({ queryKey: ["playlists"] });
+        router.navigate({
+          from: Route.fullPath,
+          to: "/library",
+        });
+      } catch (error: unknown) {
+        let message = "Could not leave the playlist. Please try again.";
+        if (isAxiosError<ResponseError>(error)) {
+          const errorCode = error.response?.data.error_code;
+          if (errorCode === "OWNER_CANNOT_LEAVE") {
+            message = "The owner of a playlist cannot leave it.";
+          }
         }
+        toast.error("Error leaving playlist", {
+          description: message,
+        });
       }
-      toast.error("Error leaving playlist", {
-        description: message,
-      });
-    }
-  }, [playlistId, router]);
+    },
+    [router],
+  );
 
   const handlePlayback = useCallback(async () => {
     try {
@@ -265,7 +268,9 @@ function RouteComponent() {
                     Add Members
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem onClick={handleLeavePlaylist}>
+                  <DropdownMenuItem
+                    onClick={() => handleLeavePlaylist(playlistId)}
+                  >
                     <LogOut className="mr-1 h-4 w-4" />
                     Leave Playlist
                   </DropdownMenuItem>
