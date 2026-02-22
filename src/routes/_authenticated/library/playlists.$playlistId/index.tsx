@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { usePlaylistAudiofiles } from "@/hooks/media";
-import AudiofileTable from "@/components/custom/audiofile-table";
+import { AudiofileTable } from "@/components/custom/audiofile-table";
 import { queryClient } from "@/lib/query";
 import { Music2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";

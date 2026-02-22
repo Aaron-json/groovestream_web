@@ -178,7 +178,7 @@ function RouteComponent() {
   const isLoading = isCurrentPlaylist && playbackState === "loading";
 
   return (
-    <section className="h-full space-y-6">
+    <section className="flex h-full flex-col gap-6">
       <div className="flex gap-4">
         {/* Playlist Cover */}
         <AspectRatio
@@ -328,7 +328,9 @@ function RouteComponent() {
       </AlertDialog>
 
       {/* Page Content */}
-      <Outlet />
+      <div className="flex min-h-0 flex-1">
+        <Outlet />
+      </div>
     </section>
   );
 }
