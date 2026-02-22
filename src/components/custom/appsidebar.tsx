@@ -11,8 +11,9 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { TextLogo } from "./textlogo";
-import { Link } from "@tanstack/react-router";
+import { createLink, Link } from "@tanstack/react-router";
 import SidebarUserCard from "./sidebar-user-card";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   {
@@ -26,6 +27,21 @@ const navItems = [
     icon: LibraryIcon,
   },
 ];
+
+type CustomLinkProps = React.ComponentProps<typeof Link>;
+
+const CustomLink = (props: CustomLinkProps) => {
+  return (
+    <Button
+      variant="ghost"
+      size="lg"
+      className="w-full flex justify-start"
+      render={<Link {...props} />}
+    />
+  );
+};
+
+const CreatedCustomLink = createLink(CustomLink);
 
 export default function AppSidebar() {
   const { isMobile, setOpenMobile } = useSidebar();
@@ -46,14 +62,14 @@ export default function AppSidebar() {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <Link
-                    className="flex items-center gap-2 px-4 py-2 hover:bg-muted transition-colors duration-100"
+                  <CreatedCustomLink
+                    className="flex items-center rounded gap-2 px-4 py-2 hover:bg-muted transition-colors duration-100"
                     to={item.url}
                     onClick={onMobileClick}
                   >
                     <item.icon />
                     <span>{item.title}</span>
-                  </Link>
+                  </CreatedCustomLink>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
