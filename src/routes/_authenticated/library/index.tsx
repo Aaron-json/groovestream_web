@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   acceptPlaylistInvite,
   getPlaylistInvites,
-  getUserPlaylists,
   rejectPlaylistInvite,
 } from "@/api/requests/media";
 import MediaList, { MediaListSkeleton } from "@/components/custom/media-list";
@@ -15,6 +14,7 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Plus, Music2 } from "lucide-react";
+import { usePlaylistList } from "@/hooks/media";
 
 export const Route = createFileRoute("/_authenticated/library/")({
   component: RouteComponent,
@@ -26,10 +26,7 @@ function RouteComponent() {
     error: playlistsErr,
     isLoading: playlistsLoading,
     refetch: refetchPlaylists,
-  } = useQuery({
-    queryKey: ["playlists"],
-    queryFn: () => getUserPlaylists(),
-  });
+  } = usePlaylistList();
 
   const {
     data: playlistInvites,

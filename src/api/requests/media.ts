@@ -144,7 +144,8 @@ export function getObjectUrl(objectId: string) {
 // PLAYLIST
 /////////////////////////////////////////////////////////////////////////////////////
 export async function deletePlaylist(playlistID: Playlist["id"]) {
-  return await axiosClient.delete(`/playlists/${playlistID}`);
+  const response = await axiosClient.delete(`/playlists/${playlistID}`);
+  return response.data;
 }
 
 export async function createPlaylist(playlistName: string) {

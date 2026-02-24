@@ -2,8 +2,6 @@ import React from "react";
 import { ChevronDown, ChevronUp, LogOut } from "lucide-react";
 import { CustomAvatar, CustomAvatarSkeleton } from "./avatar";
 import { signOut, useAuth } from "@/lib/auth";
-import { useQuery } from "@tanstack/react-query";
-import { getUser } from "@/api/requests/user";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@/hooks/user";
 
 export default function SidebarUserCard() {
   return (
@@ -30,10 +29,7 @@ export default function SidebarUserCard() {
 }
 
 const Trigger = (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => {
-  const { data: userData, isLoading: userLoading } = useQuery({
-    queryKey: ["user"],
-    queryFn: getUser,
-  });
+  const { data: userData, isLoading: userLoading } = useUser();
   const { sessionRef } = useAuth();
 
   const url =

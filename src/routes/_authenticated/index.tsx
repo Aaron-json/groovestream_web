@@ -1,21 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMostPlayed, useListeningHistory } from "@/hooks/media";
 import MediaList, { MediaListSkeleton } from "@/components/custom/media-list";
-import { getUser } from "@/api/requests/user";
-import { useQuery } from "@tanstack/react-query";
 import { Music2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useUser } from "@/hooks/user";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const {
-    data: user,
-    isLoading: userLoading,
-    error: userErr,
-  } = useQuery({ queryKey: ["user"], queryFn: getUser });
+  const { data: user, isLoading: userLoading, error: userErr } = useUser();
 
   const {
     data: mostPlayed,

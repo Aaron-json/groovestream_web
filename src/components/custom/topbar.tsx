@@ -1,7 +1,5 @@
 import SidebarToggle from "./sidebar-toggle";
 import TasksDropdown from "./tasks-dropdown";
-import { useQuery } from "@tanstack/react-query";
-import { getUser } from "@/api/requests/user";
 import { signOut, useAuth } from "@/lib/auth";
 import {
   DropdownMenu,
@@ -15,13 +13,10 @@ import { DropdownMenuGroup } from "@/components/ui/dropdown-menu";
 import { CustomAvatar, CustomAvatarSkeleton } from "./avatar";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@/hooks/user";
 
 const AvatarDropdown = () => {
-  const { data: userData, isLoading: userDataLoading } = useQuery({
-    queryKey: ["user"],
-    queryFn: getUser,
-  });
-
+  const { data: userData, isLoading: userDataLoading } = useUser();
   const { sessionRef } = useAuth();
 
   const url =

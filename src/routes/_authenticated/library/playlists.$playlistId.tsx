@@ -1,4 +1,3 @@
-import { leavePlaylist } from "@/api/requests/media";
 import {
   createFileRoute,
   Outlet,
@@ -40,20 +39,20 @@ import {
 import AddPlaylistMember from "@/components/custom/add-playlist-member";
 import {
   useDeletePlaylist,
+  useLeavePlaylist,
   usePlaylistAudiofiles,
   usePlaylistInfo,
 } from "@/hooks/media";
 import InfoCard from "@/components/custom/info-card";
-import { ResponseError } from "@/api/types/errors";
-import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Playlist } from "@/api/types/media";
-import { queryClient } from "@/lib/query";
 import { useMediaStateStore } from "@/lib/media/stores/state";
 import { useShallow } from "zustand/react/shallow";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { queryClient } from "@/lib/query";
+import { User } from "@/api/types/user";
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId",
@@ -99,55 +98,50 @@ function RouteComponent() {
   const [dialogState, setDialogState] = useState({
     addMember: false,
     deletePlaylist: false,
+    leavePlaylist: false,
   });
 
   const router = useRouter();
-  const deletePlaylistMutation = useDeletePlaylist();
+  const { mutate: deletePlaylist } = useDeletePlaylist();
+  const { mutate: leavePlaylist } = useLeavePlaylist();
   const { queryKey } = usePlaylistAudiofiles(playlistId);
 
+  // we don't want to subscribe this component to this data since we only need
+  // the user id to conditionally render the "leave playlist" option.
+  // We also do't want to cause a network request because if we don't have the
+  // user data, we can just show the option and the server will reject it
+  // which avoid the extra request.
+  // This does create potential incosistencies, where the user may or may not see
+  // the option depending on whether or not the user data is in the cache. This is
+  // fine because the user data is currently loaded every time the page loads.
+  const user = queryClient.getQueryData<User>(["user"]);
+
   const handleDeletePlaylist = useCallback(
-    async (playlistToDelete: Playlist) => {
-      try {
-        await deletePlaylistMutation(playlistToDelete);
-        toast.success("Playlist deleted successfully");
-        queryClient.invalidateQueries({ queryKey: ["playlists"] });
-        router.navigate({
-          from: Route.fullPath,
-          to: "/library",
-        });
-      } catch (error) {
-        toast.error("Error deleting playlist", {
-          description: "Please try again.",
-        });
-      }
+    async (playlist: Playlist) => {
+      deletePlaylist(playlist, {
+        onSuccess: () => {
+          router.navigate({
+            from: Route.fullPath,
+            to: "/library",
+          });
+        },
+      });
     },
-    [deletePlaylistMutation, router],
+    [deletePlaylist, router],
   );
 
   const handleLeavePlaylist = useCallback(
-    async (playlistId: Playlist["id"]) => {
-      try {
-        await leavePlaylist(playlistId);
-        toast.success("Successfully left the playlist");
-        queryClient.invalidateQueries({ queryKey: ["playlists"] });
-        router.navigate({
-          from: Route.fullPath,
-          to: "/library",
-        });
-      } catch (error: unknown) {
-        let message = "Could not leave the playlist. Please try again.";
-        if (isAxiosError<ResponseError>(error)) {
-          const errorCode = error.response?.data.error_code;
-          if (errorCode === "OWNER_CANNOT_LEAVE") {
-            message = "The owner of a playlist cannot leave it.";
-          }
-        }
-        toast.error("Error leaving playlist", {
-          description: message,
-        });
-      }
+    async (playlist: Playlist) => {
+      leavePlaylist(playlist, {
+        onSuccess: () => {
+          router.navigate({
+            from: Route.fullPath,
+            to: "/library",
+          });
+        },
+      });
     },
-    [router],
+    [leavePlaylist, router],
   );
 
   const handlePlayback = useCallback(async () => {
@@ -257,38 +251,52 @@ function RouteComponent() {
                   </Button>
                 }
               />
-              <DropdownMenuContent align="start" className="w-42">
+              <DropdownMenuContent align="start" className="w-40">
                 <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setDialogState((prev) => ({ ...prev, addMember: true }));
-                    }}
-                  >
-                    <Users className="mr-1 h-4 w-4" />
-                    Add Members
-                  </DropdownMenuItem>
+                  {user?.id === playlist.owner_id && (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setDialogState((prev) => ({
+                          ...prev,
+                          addMember: true,
+                        }));
+                      }}
+                    >
+                      <Users className="mr-1 h-4 w-4" />
+                      Add Members
+                    </DropdownMenuItem>
+                  )}
 
-                  <DropdownMenuItem
-                    onClick={() => handleLeavePlaylist(playlistId)}
-                  >
-                    <LogOut className="mr-1 h-4 w-4" />
-                    Leave Playlist
-                  </DropdownMenuItem>
+                  {(!user || user.id !== playlist.owner_id) && (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setDialogState((prev) => ({
+                          ...prev,
+                          leavePlaylist: true,
+                        }));
+                      }}
+                    >
+                      <LogOut className="mr-1 h-4 w-4" />
+                      Leave Playlist
+                    </DropdownMenuItem>
+                  )}
 
                   <DropdownMenuSeparator />
 
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => {
-                      setDialogState((prev) => ({
-                        ...prev,
-                        deletePlaylist: true,
-                      }));
-                    }}
-                  >
-                    <Trash2 className="mr-1 h-4 w-4" />
-                    Delete Playlist
-                  </DropdownMenuItem>
+                  {user?.id === playlist.owner_id && (
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => {
+                        setDialogState((prev) => ({
+                          ...prev,
+                          deletePlaylist: true,
+                        }));
+                      }}
+                    >
+                      <Trash2 className="mr-1 h-4 w-4" />
+                      Delete Playlist
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -304,6 +312,30 @@ function RouteComponent() {
           setDialogState((prev) => ({ ...prev, addMember: open }))
         }
       />
+      <AlertDialog
+        open={dialogState.leavePlaylist}
+        onOpenChange={(open) =>
+          setDialogState((prev) => ({ ...prev, leavePlaylist: open }))
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave Playlist</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to leave <strong>"{playlist.name}"</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => handleLeavePlaylist(playlist)}
+            >
+              Leave Playlist
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={dialogState.deletePlaylist}
