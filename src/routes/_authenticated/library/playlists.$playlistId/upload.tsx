@@ -94,7 +94,7 @@ export default function RouteComponent() {
   }, [files, playlist, playlistId, uploadFunc, navigate]);
 
   return (
-    <div>
+    <div className="w-full">
       {files.length === 0 ? (
         <FileDropZone onFiles={handleFiles} />
       ) : (
@@ -243,7 +243,7 @@ function FilesList({ files, onRemove, onUpload, onAddMore }: FilesListProps) {
   const canAddMore = files.length < MAX_FILES;
 
   return (
-    <div className="space-y-4">
+    <div className="w-full space-y-4">
       <div className="bg-card border rounded-lg">
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
