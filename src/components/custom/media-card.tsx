@@ -57,10 +57,7 @@ const MediaCard = ({ media, onClick, queryKey, index }: MediaCardProps) => {
   };
 
   const handlePlayPause = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    // This stops error from propagating to the card if only the
-    // play/pause button is clicked
     e.stopPropagation();
-    e.nativeEvent.stopImmediatePropagation();
 
     if (!isAudio) return;
 
