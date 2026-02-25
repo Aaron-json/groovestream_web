@@ -15,9 +15,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     visualizer({
-      // could be multiple formats so we don't specify the extension
       filename: ".build/bundle-stats.md",
       template: "markdown",
+      sourcemap: true,
       gzipSize: true,
       brotliSize: true,
     }) as PluginOption,
