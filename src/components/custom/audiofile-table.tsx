@@ -501,6 +501,8 @@ function RowActions({ file, onDelete }: RowActionsProps) {
               variant="destructive"
               onClick={(e) => {
                 e.stopPropagation();
+
+                setConfirmOpen(false);
                 onDelete(file);
               }}
             >

@@ -356,7 +356,10 @@ function RouteComponent() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={() => handleDeletePlaylist(playlist)}
+              onClick={() => {
+                setDialogState((prev) => ({ ...prev, deletePlaylist: false }));
+                handleDeletePlaylist(playlist);
+              }}
             >
               Delete Playlist
             </AlertDialogAction>
