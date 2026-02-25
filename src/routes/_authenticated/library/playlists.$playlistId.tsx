@@ -368,7 +368,7 @@ function RouteComponent() {
       </AlertDialog>
 
       {/* Page Content */}
-      <div className="flex min-h-0 flex-1">
+      <div className="h-full min-h-0">
         <Outlet />
       </div>
     </section>

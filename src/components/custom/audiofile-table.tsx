@@ -174,12 +174,12 @@ function AudiofileTable({
   return (
     <div
       className={cn(
-        "flex min-h-0 flex-1 flex-col rounded-md border",
+        "flex max-h-full flex-col rounded-md border",
         className,
       )}
     >
       {showSearch && (
-        <div className="flex items-center gap-3 border-b p-3">
+        <div className="shrink-0 flex items-center gap-3 border-b p-3">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -197,7 +197,7 @@ function AudiofileTable({
         </div>
       )}
 
-      <div ref={containerRef} className="flex min-h-0 flex-1 overflow-auto">
+      <div ref={containerRef} className="flex-1 min-h-0 overflow-auto">
         {showEmpty ? (
           <div className="py-12 text-center text-sm text-muted-foreground">
             {filter ? "No tracks match your search." : "No tracks found."}
@@ -517,21 +517,23 @@ function RowActions({ file, onDelete }: RowActionsProps) {
 
 function TableSkeleton({ isMobile }: { isMobile: boolean }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col rounded-md border">
+    <div className="flex max-h-full flex-col rounded-md border">
       <div className="shrink-0 border-b p-3">
         <Skeleton className="h-8 w-full" />
       </div>
-      <div className="space-y-3 p-3">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3">
-            <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
-            <div className="min-w-0 flex-1 space-y-2">
-              <Skeleton className="h-4 w-3/4" />
-              {isMobile && <Skeleton className="h-3 w-1/2" />}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="space-y-3 p-3">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                {isMobile && <Skeleton className="h-3 w-1/2" />}
+              </div>
+              {!isMobile && <Skeleton className="h-4 w-16 shrink-0" />}
             </div>
-            {!isMobile && <Skeleton className="h-4 w-16 shrink-0" />}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
