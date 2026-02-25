@@ -156,6 +156,18 @@ export function useUploadAudioFile() {
   };
 }
 
+// When media lists change, some top resources like "most-played" and
+// "listening-history" need to be invalidated too even if we do not know
+// for a fact that the invalidation affects that resource
+export function mediaListInvalidationSideEffect() {
+  queryClient.invalidateQueries({
+    queryKey: MOST_PLAYED_KEY,
+  });
+  queryClient.invalidateQueries({
+    queryKey: LISTENING_HISTORY_KEY,
+  });
+}
+
 export function useDeleteAudiofile() {
   const removeTask = useTaskStore((state) => state.removeTask);
   const setTask = useTaskStore((state) => state.setTask);
@@ -182,9 +194,11 @@ export function useDeleteAudiofile() {
       if (media?.audiofile.id === audiofile.id) {
         unloadMedia();
       }
+
       queryClient.invalidateQueries({
         queryKey: key,
       });
+      mediaListInvalidationSideEffect();
     },
     onError: (_, audiofile) => {
       toast.error(`Error deleting audio file "${audiofile.filename}"`);
@@ -230,6 +244,7 @@ export function useDeletePlaylist() {
       // ivalidate caches that are affected by this operation
       queryClient.invalidateQueries({ queryKey: getPlaylistKey(playlist.id) });
       queryClient.invalidateQueries({ queryKey: getPlaylistsListKey() });
+      mediaListInvalidationSideEffect();
     },
     onError: (_, playlist) => {
       toast.error(`Error deleting playlist "${playlist.name}"`);
@@ -258,6 +273,7 @@ export function useLeavePlaylist() {
       // ivalidate caches that are affected by this operation
       queryClient.invalidateQueries({ queryKey: getPlaylistKey(playlist.id) });
       queryClient.invalidateQueries({ queryKey: getPlaylistsListKey() });
+      mediaListInvalidationSideEffect();
     },
     onError: (error, playlist) => {
       let message = "Could not leave the playlist. Please try again.";
