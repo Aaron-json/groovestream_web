@@ -50,7 +50,7 @@ import {
 import { Audiofile } from "@/api/types/media";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDuration } from "@/lib/media/utils";
-import { MediaQueryKey, useDeleteAudioFile } from "@/hooks/media";
+import { MediaQueryKey, useDeleteAudiofile } from "@/hooks/media";
 import { useMediaStateStore } from "@/lib/media/stores/state";
 import { cn } from "@/lib/utils";
 
@@ -81,8 +81,6 @@ type AudiofileTableProps = {
   audiofiles: Audiofile[];
   queryKey: MediaQueryKey;
   skeleton?: boolean;
-  onChange?: () => void;
-  refetch?: () => void;
   className?: string;
   showSearch?: boolean;
   showCount?: boolean;
@@ -92,8 +90,6 @@ function AudiofileTable({
   audiofiles,
   queryKey,
   skeleton,
-  onChange,
-  refetch,
   className,
   showSearch = true,
   showCount = true,
@@ -101,7 +97,7 @@ function AudiofileTable({
   const isMobile = useIsMobile();
   const [filter, setFilter] = useState("");
   const deferredFilter = useDeferredValue(filter);
-  const deleteAudioFile = useDeleteAudioFile();
+  const deleteAudioMutation = useDeleteAudiofile();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { media, setMedia, playPauseToggle, playbackState } =
@@ -129,18 +125,10 @@ function AudiofileTable({
   );
 
   const handleDelete = useCallback(
-    (file: Audiofile) => {
-      deleteAudioFile(file)
-        .then(() => {
-          onChange?.();
-          refetch?.();
-          toast.success("Track deleted");
-        })
-        .catch((error) => {
-          toast.error("Delete Error", { description: error.message });
-        });
+    (audio: Audiofile) => {
+      deleteAudioMutation.mutate(audio);
     },
-    [deleteAudioFile, onChange, refetch],
+    [deleteAudioMutation.mutate],
   );
 
   const columns = useMemo(

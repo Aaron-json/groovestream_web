@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { usePlaylistAudiofiles } from "@/hooks/media";
 import { AudiofileTable } from "@/components/custom/audiofile-table";
-import { queryClient } from "@/lib/query";
 import { Music2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -17,7 +16,6 @@ function RouteComponent() {
     data: audiofiles,
     isLoading,
     error,
-    refetch,
     queryKey,
   } = usePlaylistAudiofiles(playlistId);
 
@@ -55,12 +53,5 @@ function RouteComponent() {
     );
   }
 
-  return (
-    <AudiofileTable
-      audiofiles={audiofiles}
-      queryKey={queryKey}
-      onChange={() => queryClient.invalidateQueries()}
-      refetch={refetch}
-    />
-  );
+  return <AudiofileTable audiofiles={audiofiles} queryKey={queryKey} />;
 }
