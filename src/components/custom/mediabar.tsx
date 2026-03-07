@@ -197,7 +197,9 @@ function Seeker() {
   const [isSeeking, setIsSeeking] = useState(false);
 
   const audiofile = media?.audiofile;
-  const duration = audiofile?.duration ? Math.round(audiofile.duration) : 0;
+  const duration = audiofile?.duration
+    ? Math.round(audiofile.duration / 1000)
+    : 0;
 
   useEffect(() => {
     if (isSeeking || playbackState !== "playing") return;

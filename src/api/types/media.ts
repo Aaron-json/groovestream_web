@@ -9,7 +9,7 @@ export type Audiofile = {
   uploaded_by_id: string | null;
   uploaded_by_username: string | null;
   artists: string[] | null;
-  duration: number;
+  duration: number; /** milliseconds */
   track_number: number | null;
   track_total: number | null;
   genre: string | null;

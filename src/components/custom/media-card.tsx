@@ -113,7 +113,7 @@ const MediaCard = ({ media, onClick, queryKey, index }: MediaCardProps) => {
 
               {isAudio && media.duration && (
                 <span className="shrink-0 ml-2 font-mono">
-                  {formatDuration(media.duration)}
+                  {formatDuration(media.duration / 1000)}
                 </span>
               )}
             </div>

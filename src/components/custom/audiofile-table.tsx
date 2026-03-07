@@ -173,10 +173,7 @@ function AudiofileTable({
 
   return (
     <div
-      className={cn(
-        "flex max-h-full flex-col rounded-md border",
-        className,
-      )}
+      className={cn("flex max-h-full flex-col rounded-md border", className)}
     >
       {showSearch && (
         <div className="shrink-0 flex items-center gap-3 border-b p-3">
@@ -402,7 +399,7 @@ function getDesktopColumns(
       meta: { className: "w-20 text-right" },
       cell: ({ getValue }) => (
         <span className="font-mono text-muted-foreground">
-          {formatDuration(getValue())}
+          {formatDuration(getValue() / 1000)}
         </span>
       ),
     }),
