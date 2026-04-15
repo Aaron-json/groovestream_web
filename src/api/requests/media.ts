@@ -31,7 +31,7 @@ export async function confirmUpload(task_id: string) {
 }
 
 type UploadAudiofileOptions = {
-  onProgress?: (current: number, total: number) => any;
+  onProgress?: (current: number, total: number) => void;
 };
 export async function uploadAudiofile(
   file: File,
