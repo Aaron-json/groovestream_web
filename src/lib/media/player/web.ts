@@ -107,6 +107,10 @@ export default class WebAudioPlayer implements MediaPlayer {
     if (this.videoElement) this.videoElement.volume = vol;
   }
 
+  getVolume() {
+    return this.videoElement?.volume || 0;
+  }
+
   setMute(mute: boolean) {
     if (this.videoElement) this.videoElement.muted = mute;
   }
@@ -115,7 +119,7 @@ export default class WebAudioPlayer implements MediaPlayer {
     if (this.videoElement) this.videoElement.currentTime = time;
   }
 
-  getCurrentTime() {
+  getPosition() {
     return this.videoElement?.currentTime || 0;
   }
 

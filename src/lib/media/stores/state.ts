@@ -54,7 +54,8 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
   _playerFactory: undefined,
   playbackState: "unloaded",
   mute: false,
-  volume: 0.7,
+  // default volume is set from the player during initialization
+  volume: 0,
 
   init: async (factory: () => MediaPlayer) => {
     const player = factory();
@@ -68,7 +69,7 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
       },
     };
     await player.init(callbacks);
-    set({ player, _playerFactory: factory });
+    set({ player, _playerFactory: factory, volume: player.getVolume() });
   },
 
   setMedia: async (queryKey, index = 0) => {
@@ -189,7 +190,7 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
     if (!player) {
       return 0;
     }
-    return player.getCurrentTime();
+    return player.getPosition();
   },
 
   _setPlaybackState: (s) => set({ playbackState: s }),

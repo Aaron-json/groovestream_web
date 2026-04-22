@@ -40,9 +40,10 @@ export interface MediaPlayer {
   play(): Promise<void>;
   pause(): void;
   setVolume(volume: number): void;
+  getVolume(): number;
   setMute(mute: boolean): void;
   seek(time: number): void;
-  getCurrentTime(): number;
+  getPosition(): number;
 }
 
 export type PlayerCallbacks = Partial<{
