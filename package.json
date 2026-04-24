@@ -9,7 +9,8 @@
     "build:analyze": "ANALYZE=1 tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "check": "tsc --build --noEmit"
+    "check": "tsc --build --noEmit",
+    "gen-api": "tsx ./src/api/types/gen.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",

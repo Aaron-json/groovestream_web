@@ -1,0 +1,1454 @@
+export interface paths {
+    "/analytics/audiofiles/most-played": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List analytics audiofiles most played */
+        get: operations["list-analytics-audiofiles-most-played"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/audiofiles/deliverables/{deliverable_id}/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get audiofiles deliverables by deliverable ID token */
+        get: operations["get-audiofiles-deliverables-by-deliverable-id-token"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/audiofiles/{audiofile_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete audiofiles by audiofile ID */
+        delete: operations["delete-audiofiles-by-audiofile-id"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/audiofiles/{audiofile_id}/deliverables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List audiofiles by audiofile ID deliverables */
+        get: operations["list-audiofiles-by-audiofile-id-deliverables"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/audiofiles/{audiofile_id}/metadata": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get audiofiles by audiofile ID metadata */
+        get: operations["get-audiofiles-by-audiofile-id-metadata"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/history/audiofiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List history audiofiles */
+        get: operations["list-history-audiofiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/history/audiofiles/{audiofile_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post history audiofiles by audiofile ID */
+        post: operations["post-history-audiofiles-by-audiofile-id"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/playlist-invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List playlist invites */
+        get: operations["list-playlist-invites"];
+        put?: never;
+        /** Post playlist invites */
+        post: operations["post-playlist-invites"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/playlist-invites/{playlist_id}/{playlist_invite_sender_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete playlist invites by playlist ID by playlist invite sender ID */
+        delete: operations["delete-playlist-invites-by-playlist-id-by-playlist-invite-sender-id"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/playlist-invites/{playlist_id}/{playlist_invite_sender_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post playlist invites by playlist ID by playlist invite sender ID accept */
+        post: operations["post-playlist-invites-by-playlist-id-by-playlist-invite-sender-id-accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/playlists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List playlists */
+        get: operations["list-playlists"];
+        put?: never;
+        /** Post playlists */
+        post: operations["post-playlists"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/playlists/{playlist_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get playlists by playlist ID */
+        get: operations["get-playlists-by-playlist-id"];
+        put?: never;
+        post?: never;
+        /** Delete playlists by playlist ID */
+        delete: operations["delete-playlists-by-playlist-id"];
+        options?: never;
+        head?: never;
+        /** Patch playlists by playlist ID */
+        patch: operations["patch-playlists-by-playlist-id"];
+        trace?: never;
+    };
+    "/playlists/{playlist_id}/audiofiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List playlists by playlist ID audiofiles */
+        get: operations["list-playlists-by-playlist-id-audiofiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/playlists/{playlist_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List playlists by playlist ID members */
+        get: operations["list-playlists-by-playlist-id-members"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/playlists/{playlist_id}/members/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete playlists by playlist ID members me */
+        delete: operations["delete-playlists-by-playlist-id-members-me"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/playlists/{playlist_id}/members/{member_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete playlists by playlist ID members by member ID */
+        delete: operations["delete-playlists-by-playlist-id-members-by-member-id"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List tasks */
+        get: operations["list-tasks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/upload/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post upload confirm */
+        post: operations["post-upload-confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/upload/url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post upload URL */
+        post: operations["post-upload-url"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get users */
+        get: operations["get-users"];
+        put?: never;
+        /** Post users */
+        post: operations["post-users"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch users */
+        patch: operations["patch-users"];
+        trace?: never;
+    };
+    "/users/check-username": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get users check username */
+        get: operations["get-users-check-username"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
+export type webhooks = Record<string, never>;
+export interface components {
+    schemas: {
+        ApiError: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ApiError.json
+             */
+            readonly $schema?: string;
+            data: unknown;
+            error_code: string | null;
+            /** Format: int64 */
+            http_code: number;
+            message: string;
+        };
+        AudiofileView: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/AudiofileView.json
+             */
+            readonly $schema?: string;
+            album: string | null;
+            artists: string[] | null;
+            /** Format: int32 */
+            channels: number | null;
+            /** Format: int32 */
+            duration: number | null;
+            filename: string;
+            genre: string | null;
+            id: string;
+            object_id: string;
+            playlist_id: string;
+            title: string | null;
+            /** Format: int32 */
+            track_number: number | null;
+            /** Format: int32 */
+            track_total: number | null;
+            /** Format: date-time */
+            uploaded_at: string;
+            uploaded_by_id: string;
+            uploaded_by_username: string | null;
+        };
+        CreateAudioTokenResponse: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/CreateAudioTokenResponse.json
+             */
+            readonly $schema?: string;
+            token: string;
+        };
+        GetDeliverablesRow: {
+            audiofile_id: string;
+            /** Format: int32 */
+            bitrate: number;
+            /** Format: int32 */
+            channels: number;
+            codec: string;
+            container: string;
+            /** Format: date-time */
+            created_at: string;
+            dash_manifest_id: string | null;
+            /** Format: int32 */
+            fragment_duration: number | null;
+            hls_manifest_id: string | null;
+            id: string;
+            /** Format: int32 */
+            sample_rate: number;
+        };
+        GetUploadUrlResponse: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/GetUploadUrlResponse.json
+             */
+            readonly $schema?: string;
+            headers: {
+                [key: string]: string;
+            };
+            method: string;
+            object_id: string;
+            task_id: string;
+            url: string;
+        };
+        GetUserTasksRow: {
+            /** Format: date-time */
+            created_at: string;
+            error: string | null;
+            id: string;
+            payload: unknown;
+            status: string;
+            /** Format: date-time */
+            status_updated_at: string;
+            type: string;
+            user_id: string;
+        };
+        "Patch-playlists-by-playlist-idRequest": {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/Patch-playlists-by-playlist-idRequest.json
+             */
+            readonly $schema?: string;
+            /** @description The new playlist name */
+            name: string | null;
+        };
+        "Patch-usersRequest": {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/Patch-usersRequest.json
+             */
+            readonly $schema?: string;
+            /** @description The new username */
+            username: string | null;
+        };
+        PlaylistInviteView: {
+            /** Format: date-time */
+            created_at: string;
+            from_id: string;
+            from_username: string;
+            id: string;
+            playlist_id: string;
+            playlist_name: string;
+            playlist_owner_id: string;
+            playlist_owner_username: string;
+            to_id: string;
+        };
+        PlaylistMemberView: {
+            /** Format: date-time */
+            created_at: string;
+            id: string;
+            playlist_id: string;
+            user_id: string;
+            username: string;
+        };
+        PlaylistView: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PlaylistView.json
+             */
+            readonly $schema?: string;
+            /** Format: date-time */
+            created_at: string;
+            id: string;
+            name: string;
+            owner_id: string;
+            owner_username: string;
+        };
+        "Post-playlist-invitesRequest": {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/Post-playlist-invitesRequest.json
+             */
+            readonly $schema?: string;
+            /** @description The playlist ID */
+            playlist_id: string;
+            /** @description The recipient username */
+            username: string;
+        };
+        "Post-playlistsRequest": {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/Post-playlistsRequest.json
+             */
+            readonly $schema?: string;
+            /** @description The playlist name */
+            name: string;
+        };
+        "Post-upload-confirmRequest": {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/Post-upload-confirmRequest.json
+             */
+            readonly $schema?: string;
+            /** @description The task ID */
+            task_id: string;
+        };
+        "Post-upload-urlRequest": {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/Post-upload-urlRequest.json
+             */
+            readonly $schema?: string;
+            /**
+             * Format: int64
+             * @description The content length
+             */
+            content_length: number;
+            /** @description The filename */
+            filename: string;
+            /** @description The playlist ID */
+            playlist_id: string;
+        };
+        "Post-usersRequest": {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/Post-usersRequest.json
+             */
+            readonly $schema?: string;
+            /** @description The desired username */
+            username: string;
+        };
+        User: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/User.json
+             */
+            readonly $schema?: string;
+            /** Format: date-time */
+            created_at: string;
+            id: string;
+            username: string;
+        };
+    };
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
+}
+export type $defs = Record<string, never>;
+export interface operations {
+    "list-analytics-audiofiles-most-played": {
+        parameters: {
+            query?: {
+                /** @description Maximum number of results */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AudiofileView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "get-audiofiles-deliverables-by-deliverable-id-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The deliverable ID */
+                deliverable_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateAudioTokenResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "delete-audiofiles-by-audiofile-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The audiofile ID */
+                audiofile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "list-audiofiles-by-audiofile-id-deliverables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The audiofile ID */
+                audiofile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetDeliverablesRow"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "get-audiofiles-by-audiofile-id-metadata": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The audiofile ID */
+                audiofile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AudiofileView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "list-history-audiofiles": {
+        parameters: {
+            query?: {
+                /** @description Maximum number of results */
+                limit?: number;
+                /** @description Number of results to skip */
+                skip?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AudiofileView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "post-history-audiofiles-by-audiofile-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The audiofile ID */
+                audiofile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "list-playlist-invites": {
+        parameters: {
+            query?: {
+                /** @description Maximum number of results */
+                limit?: number;
+                /** @description Number of results to skip */
+                skip?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaylistInviteView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "post-playlist-invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Post-playlist-invitesRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "delete-playlist-invites-by-playlist-id-by-playlist-invite-sender-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The playlist ID */
+                playlist_id: string;
+                /** @description The sender ID */
+                playlist_invite_sender_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "post-playlist-invites-by-playlist-id-by-playlist-invite-sender-id-accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The playlist ID */
+                playlist_id: string;
+                /** @description The sender ID */
+                playlist_invite_sender_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "list-playlists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaylistView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "post-playlists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Post-playlistsRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "get-playlists-by-playlist-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The playlist ID */
+                playlist_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaylistView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "delete-playlists-by-playlist-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The playlist ID */
+                playlist_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "patch-playlists-by-playlist-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The playlist ID */
+                playlist_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Patch-playlists-by-playlist-idRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "list-playlists-by-playlist-id-audiofiles": {
+        parameters: {
+            query?: {
+                /** @description Search text */
+                search?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The playlist ID */
+                playlist_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AudiofileView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "list-playlists-by-playlist-id-members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The playlist ID */
+                playlist_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaylistMemberView"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "delete-playlists-by-playlist-id-members-me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The playlist ID */
+                playlist_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "delete-playlists-by-playlist-id-members-by-member-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The playlist ID */
+                playlist_id: string;
+                /** @description The member ID */
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "list-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetUserTasksRow"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "post-upload-confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Post-upload-confirmRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "post-upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Post-upload-urlRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetUploadUrlResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "get-users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "post-users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Post-usersRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "patch-users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Patch-usersRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    "get-users-check-username": {
+        parameters: {
+            query?: {
+                /** @description The username to check */
+                username?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": boolean;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+}
