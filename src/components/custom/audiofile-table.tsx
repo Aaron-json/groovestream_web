@@ -399,7 +399,7 @@ function getDesktopColumns(
       meta: { className: "w-20 text-right" },
       cell: ({ getValue }) => (
         <span className="font-mono text-muted-foreground">
-          {formatDuration(getValue() / 1000)}
+          {formatDuration((getValue() ?? 0) / 1000)}
         </span>
       ),
     }),

@@ -1,5 +1,5 @@
 import shaka from "shaka-player";
-import { CDN_URL } from "@/api/axiosClient";
+import { CDN_URL } from "@/api/api";
 import { MediaPlayer, PlayerCallbacks } from "../types";
 
 const DEFAULT_VOLUME = 0.7;

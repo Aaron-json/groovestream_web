@@ -131,7 +131,7 @@ interface CloudTasksProps {
     type: string;
     status: string;
     payload: any;
-  }>;
+  }> | null;
 }
 
 function CloudTasks({ tasks }: CloudTasksProps) {

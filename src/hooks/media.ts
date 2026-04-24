@@ -9,6 +9,7 @@ import {
   getUserPlaylists,
   leavePlaylist,
   uploadAudiofile,
+  LeavePlaylistError,
 } from "../api/requests/media";
 import { MediaTask, NewMediaTask, TaskType, useTaskStore } from "@/lib/tasks";
 import { Playlist, Audiofile } from "@/api/types/media";
@@ -17,7 +18,6 @@ import { queryClient } from "@/lib/query";
 
 import { useMediaStateStore } from "@/lib/media/stores/state";
 import { isAxiosError } from "axios";
-import { ResponseError } from "@/api/types/errors";
 
 export type MediaQueryKey = string[];
 
@@ -277,10 +277,12 @@ export function useLeavePlaylist() {
     },
     onError: (error, playlist) => {
       let message = "Could not leave the playlist. Please try again.";
-      if (isAxiosError<ResponseError>(error)) {
+      if (isAxiosError<LeavePlaylistError>(error)) {
         const errorCode = error.response?.data.error_code;
         if (errorCode === "OWNER_CANNOT_LEAVE") {
           message = "The owner of a playlist cannot leave it.";
+        } else {
+          message = error.response?.data.message || message;
         }
       }
       toast.error(`Error leaving playlist "${playlist.name}"`, {

@@ -1,3 +1,5 @@
+import { components } from "./schema";
+
 export interface Friend {
   friend_username: string;
   created_at: string;
@@ -5,10 +7,4 @@ export interface Friend {
   friend_id: string;
 }
 
-export interface PlaylistMember {
-  username: string;
-  created_at: string;
-  user_id: string;
-  id: string;
-  playlist_id: string;
-}
+export type PlaylistMember = components["schemas"]["PlaylistMemberView"];

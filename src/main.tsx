@@ -7,7 +7,7 @@ import { TextLogo } from "./components/custom/textlogo";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { getUser } from "./api/requests/user";
 import { queryClient } from "./lib/query";
-import { AxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import { TooltipProvider } from "./components/ui/tooltip";
 
@@ -44,7 +44,7 @@ function App() {
       try {
         return await getUser();
       } catch (error) {
-        if (error instanceof AxiosError && error.status === 404) {
+        if (isAxiosError(error) && error.response?.status === 404) {
           return null;
         } else {
           throw error;

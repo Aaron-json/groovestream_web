@@ -1,5 +1,3 @@
-export interface User {
-  id: string;
-  username: string;
-  created_at: string;
-}
+import { components } from "./schema";
+
+export type User = components["schemas"]["User"];

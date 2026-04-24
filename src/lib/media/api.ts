@@ -16,6 +16,10 @@ export async function resolveDeliverable(
 ): Promise<ResolvedDeliverable> {
   const deliverables = await getDeliverables(audiofileId);
 
+  if (!deliverables) {
+    throw new Error(`No deliverables found for audiofile_id: ${audiofileId}`);
+  }
+
   // get manifest url. prefer dash over hls
   let idx = deliverables.findIndex((d) => d.dash_manifest_id);
   let url = deliverables[idx]?.dash_manifest_id;

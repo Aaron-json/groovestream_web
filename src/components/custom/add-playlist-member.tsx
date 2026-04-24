@@ -12,9 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "../ui/input";
 import { useForm } from "react-hook-form";
-import { sendPlaylistInvite } from "@/api/requests/media";
+import { sendPlaylistInvite, PostPlaylistInvitesError } from "@/api/requests/media";
 import { isAxiosError } from "axios";
-import { ResponseError } from "@/api/types/errors";
 import React from "react";
 import { Playlist } from "@/api/types/media";
 
@@ -50,7 +49,7 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
       reset();
     } catch (err) {
       let message = "An unexpected error occurred";
-      if (isAxiosError<ResponseError>(err)) {
+      if (isAxiosError<PostPlaylistInvitesError>(err)) {
         const errorCode = err.response?.data.error_code;
         if (errorCode === "USER_NOT_FOUND") {
           message = "User not found";
@@ -62,6 +61,8 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
           message = "You have already invited this user";
         } else if (errorCode === "INVALID_INVITE") {
           message = "Invalid invite";
+        } else {
+          message = err.response?.data.message || message;
         }
       }
       setError("root", {
