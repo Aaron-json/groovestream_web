@@ -1,6 +1,6 @@
 import { ResponseError } from "../types/errors";
 import { User } from "../types/user";
-import axiosClient from "../axiosClient";
+import axiosClient from "../api";
 
 export async function getUser() {
   const response = await axiosClient.get<User>("/users");

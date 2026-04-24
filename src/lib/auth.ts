@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import axiosClient from "../api/axiosClient";
+import axiosClient from "../api/api";
 import { Session } from "@supabase/supabase-js";
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";

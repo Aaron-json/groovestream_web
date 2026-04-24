@@ -1,4 +1,4 @@
-import axiosClient, { PRIMARY_API_URL } from "../axiosClient";
+import axiosClient, { PRIMARY_API_URL } from "../api";
 import { Playlist, Audiofile, AudioDeliverable } from "../types/media";
 import { PlaylistInvite } from "../types/invites";
 import axios, { AxiosRequestConfig } from "axios";
