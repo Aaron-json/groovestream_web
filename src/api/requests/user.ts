@@ -1,46 +1,51 @@
 import axiosClient from "../api";
-import { operations } from "../types/schema";
-import { ApiOpError } from "../types/errors";
+import { components } from "../types/schema";
+import { OpBundle } from "../types/helpers";
 
-export type UserResponse =
-  operations["get-users"]["responses"]["200"]["content"]["application/json"];
-export type GetUserError = ApiOpError<"get-users">;
+// Domain Types
+export type User = components["schemas"]["User"];
+
+type GetUsers = OpBundle<"get-users">;
+export type UserResponse = GetUsers["Response"];
+export type GetUserError = GetUsers["Error"];
 
 export async function getUser() {
   const response = await axiosClient.get<UserResponse>("/users");
   return response.data;
 }
 
-export type UserProfile =
-  operations["post-users"]["requestBody"]["content"]["application/json"];
-export type CreateUserError = ApiOpError<"post-users">;
+type CreateUser = OpBundle<"post-users">;
+export type UserProfile = CreateUser["Body"];
+export type CreateUserError = CreateUser["Error"];
 
-export async function createUserProfile(data: UserProfile) {
-  const response = await axiosClient.post<
-    operations["post-users"]["responses"]["200"]["content"]["application/json"]
-  >("/users", data);
+export async function createUserProfile(body: UserProfile) {
+  const response = await axiosClient.post<CreateUser["Response"]>(
+    "/users",
+    body,
+  );
   return response.data;
 }
 
-export type UserUpdateFields =
-  operations["patch-users"]["requestBody"]["content"]["application/json"];
-export type UpdateUserError = ApiOpError<"patch-users">;
+type UpdateUser = OpBundle<"patch-users">;
+export type UserUpdateFields = UpdateUser["Body"];
+export type UpdateUserError = UpdateUser["Error"];
 
-export async function updateUserInfo(userInfo: UserUpdateFields) {
-  const res = await axiosClient.patch<
-    operations["patch-users"]["responses"]["200"]["content"]["application/json"]
-  >("/users", userInfo);
+export async function updateUserInfo(body: UserUpdateFields) {
+  const res = await axiosClient.patch<UpdateUser["Response"]>(
+    "/users",
+    body,
+  );
   return res.data;
 }
 
-export type CheckUsernameError = ApiOpError<"get-users-check-username">;
-export async function usernameExists(username: string) {
-  const response = await axiosClient.get<
-    operations["get-users-check-username"]["responses"]["200"]["content"]["application/json"]
-  >(`/users/check-username`, {
-    params: {
-      username,
+type CheckUsername = OpBundle<"get-users-check-username">;
+export type CheckUsernameError = CheckUsername["Error"];
+export async function usernameExists(params: CheckUsername["Query"]) {
+  const response = await axiosClient.get<CheckUsername["Response"]>(
+    `/users/check-username`,
+    {
+      params,
     },
-  });
+  );
   return response.data;
 }

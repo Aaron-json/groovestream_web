@@ -47,12 +47,12 @@ import InfoCard from "@/components/custom/info-card";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Playlist } from "@/api/types/media";
+import { Playlist } from "@/api/requests/media";
 import { useMediaStateStore } from "@/lib/media/stores/state";
 import { useShallow } from "zustand/react/shallow";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { queryClient } from "@/lib/query";
-import { User } from "@/api/types/user";
+import { User } from "@/api/requests/user";
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId",

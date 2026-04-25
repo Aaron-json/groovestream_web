@@ -1,4 +1,4 @@
-import { AudioDeliverable, Audiofile } from "@/api/types/media";
+import { AudioDeliverable, Audiofile } from "@/api/requests/media";
 import {
   getDeliverables,
   getDeliverableToken,
@@ -14,11 +14,8 @@ export interface ResolvedDeliverable {
 export async function resolveDeliverable(
   audiofileId: Audiofile["id"],
 ): Promise<ResolvedDeliverable> {
-  const deliverables = await getDeliverables(audiofileId);
-
-  if (!deliverables) {
-    throw new Error(`No deliverables found for audiofile_id: ${audiofileId}`);
-  }
+  const deliverables =
+    (await getDeliverables({ audiofile_id: audiofileId })) ?? [];
 
   // get manifest url. prefer dash over hls
   let idx = deliverables.findIndex((d) => d.dash_manifest_id);
@@ -29,13 +26,15 @@ export async function resolveDeliverable(
     url = deliverables[idx]?.hls_manifest_id;
   }
 
-  if (!url || idx === undefined) {
+  if (!url || idx === undefined || idx === -1) {
     throw new Error(
       `No DASH or HLS manifest found for audiofile_id: ${audiofileId}`,
     );
   }
 
-  const tokenData = await getDeliverableToken(deliverables[idx].id);
+  const tokenData = await getDeliverableToken({
+    deliverable_id: deliverables[idx].id,
+  });
 
   return {
     deliverable: deliverables[idx],
@@ -46,5 +45,5 @@ export async function resolveDeliverable(
 
 export function trackHistory(audiofileId: Audiofile["id"]) {
   // fire and forget
-  addListeningHistory(audiofileId).catch(() => {});
+  addListeningHistory({ audiofile_id: audiofileId }).catch(() => {});
 }

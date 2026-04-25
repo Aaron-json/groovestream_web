@@ -1,7 +1,21 @@
-import { FriendRequest } from "../types/invites";
-import { Friend } from "../types/relations";
 import axiosClient from "../api";
-import { User } from "../types/user";
+import { User } from "./user";
+
+// Domain Types
+export interface Friend {
+  friend_username: string;
+  created_at: string;
+  friendship_id: string;
+  friend_id: string;
+}
+
+export interface FriendRequest {
+  id: string;
+  from_id: string;
+  from_username: string;
+  to_id: string;
+  created_at: string;
+}
 
 export async function getFriends(limit?: number, skip?: number) {
   const params: any = {};
@@ -14,10 +28,12 @@ export async function getFriends(limit?: number, skip?: number) {
   const response = await axiosClient.get<Friend[]>("/friends", { params });
   return response.data;
 }
+
 export async function getFriendRequests() {
   const response = await axiosClient.get<FriendRequest[]>("/friend-requests");
   return response.data;
 }
+
 export async function sendFriendRequest(username: string) {
   const response = await axiosClient.post("/friend-requests", {
     username,
@@ -36,6 +52,7 @@ export async function rejectFriendRequest(senderID: User["id"]) {
   const response = await axiosClient.delete(`/friend-requests/${senderID}`);
   return response.data;
 }
+
 export async function deleteFriend(friendID: Friend["friend_id"]) {
   const response = await axiosClient.delete(`/friends/${friendID}`);
   return response.data;

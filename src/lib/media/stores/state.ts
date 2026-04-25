@@ -12,7 +12,7 @@ import {
 } from "../types";
 import { getDeliverableToken } from "@/api/requests/media";
 import { queryClient } from "@/lib/query";
-import { Audiofile } from "@/api/types/media";
+import { Audiofile } from "@/api/requests/media";
 
 export type MediaSlice = {
   media: CurrentMedia | undefined;
@@ -105,7 +105,9 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
       player.setToken(token);
       player.setCallbacks({
         refreshToken: async () => {
-          const token = await getDeliverableToken(deliverable.id);
+          const token = await getDeliverableToken({
+            deliverable_id: deliverable.id,
+          });
           return token.token;
         },
       });

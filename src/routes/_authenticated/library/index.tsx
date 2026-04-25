@@ -4,12 +4,12 @@ import {
   acceptPlaylistInvite,
   getPlaylistInvites,
   rejectPlaylistInvite,
+  PlaylistInvite,
 } from "@/api/requests/media";
 import MediaList, { MediaListSkeleton } from "@/components/custom/media-list";
 import InfoCard from "@/components/custom/info-card";
 import CreatePlaylistModal from "@/components/custom/create-playlist";
 import InviteList from "@/components/custom/invite-list";
-import { PlaylistInvite } from "@/api/types/invites";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -35,13 +35,16 @@ function RouteComponent() {
     refetch: refetchPlaylistInvites,
   } = useQuery({
     queryKey: ["playlistInvites"],
-    queryFn: () => getPlaylistInvites(10),
+    queryFn: () => getPlaylistInvites({ limit: 10 }),
   });
 
   const handleAcceptInvite = useCallback(
     async (invite: PlaylistInvite) => {
       try {
-        await acceptPlaylistInvite(invite.from_id, invite.playlist_id);
+        await acceptPlaylistInvite({
+          playlist_id: invite.playlist_id,
+          playlist_invite_sender_id: invite.from_id,
+        });
         toast.success("Invite accepted");
         refetchPlaylistInvites();
         refetchPlaylists();
@@ -55,7 +58,10 @@ function RouteComponent() {
   const handleDeclineInvite = useCallback(
     async (invite: PlaylistInvite) => {
       try {
-        await rejectPlaylistInvite(invite.from_id, invite.playlist_id);
+        await rejectPlaylistInvite({
+          playlist_id: invite.playlist_id,
+          playlist_invite_sender_id: invite.from_id,
+        });
         toast.success("Invite declined");
         refetchPlaylistInvites();
       } catch (error) {

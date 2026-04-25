@@ -12,10 +12,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "../ui/input";
 import { useForm } from "react-hook-form";
-import { sendPlaylistInvite, PostPlaylistInvitesError } from "@/api/requests/media";
+import { sendPlaylistInvite, Playlist, PostPlaylistInvitesError } from "@/api/requests/media";
 import { isAxiosError } from "axios";
 import React from "react";
-import { Playlist } from "@/api/types/media";
 
 type AddPlaylistMemberProps = {
   playlistId: Playlist["id"];
@@ -45,7 +44,10 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
 
   async function onSubmit(data: AddPlaylistMemberValues) {
     try {
-      await sendPlaylistInvite(props.playlistId, data.username);
+      await sendPlaylistInvite({
+        playlist_id: props.playlistId,
+        username: data.username,
+      });
       reset();
     } catch (err) {
       let message = "An unexpected error occurred";

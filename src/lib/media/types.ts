@@ -1,4 +1,4 @@
-import { Audiofile } from "@/api/types/media";
+import { Audiofile } from "@/api/requests/media";
 import { MediaQueryKey } from "@/hooks/media";
 
 export type PlaybackState = "unloaded" | "playing" | "loading" | "paused";

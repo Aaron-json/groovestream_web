@@ -80,7 +80,7 @@ function RouteComponent() {
 
     setUsernameState("checking");
     try {
-      const available = !(await usernameExists(username));
+      const available = !(await usernameExists({ username }));
 
       setUsernameState(available ? "available" : "unavailable");
       if (!available) {

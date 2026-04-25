@@ -9,10 +9,11 @@ import {
   getUserPlaylists,
   leavePlaylist,
   uploadAudiofile,
+  Playlist,
+  Audiofile,
   LeavePlaylistError,
 } from "../api/requests/media";
 import { MediaTask, NewMediaTask, TaskType, useTaskStore } from "@/lib/tasks";
-import { Playlist, Audiofile } from "@/api/types/media";
 import { toast } from "sonner";
 import { queryClient } from "@/lib/query";
 
@@ -70,7 +71,7 @@ export function usePlaylistInfo(playlistId: Playlist["id"]) {
   const queryKey = getPlaylistMetadataKey(playlistId);
   const query = useQuery({
     queryKey,
-    queryFn: async () => getPlaylistInfo(playlistId),
+    queryFn: async () => getPlaylistInfo({ playlist_id: playlistId }),
   });
   return { ...query, queryKey } as const;
 }
@@ -79,7 +80,7 @@ export function usePlaylistAudiofiles(playlistId: Playlist["id"]) {
   const queryKey = getPlaylistAudiofilesKey(playlistId);
   const query = useQuery({
     queryKey,
-    queryFn: () => getPlaylistAudiofiles(playlistId),
+    queryFn: () => getPlaylistAudiofiles({ playlist_id: playlistId }),
   });
   return { ...query, queryKey } as const;
 }
@@ -88,7 +89,7 @@ export function useMostPlayed(limit = 10) {
   const queryKey = MOST_PLAYED_KEY;
   const query = useQuery({
     queryKey,
-    queryFn: () => getMostPlayedAudioFiles(limit),
+    queryFn: () => getMostPlayedAudioFiles({ limit }),
   });
   return { ...query, queryKey } as const;
 }
@@ -97,7 +98,7 @@ export function useListeningHistory(limit = 10, skip?: number) {
   const queryKey = LISTENING_HISTORY_KEY;
   const query = useQuery({
     queryKey,
-    queryFn: () => getAudioFileHistory(limit, skip),
+    queryFn: () => getAudioFileHistory({ limit, skip }),
   });
   return { ...query, queryKey } as const;
 }
@@ -175,7 +176,8 @@ export function useDeleteAudiofile() {
   const unloadMedia = useMediaStateStore((state) => state.unloadMedia);
 
   return useMutation({
-    mutationFn: (audiofile: Audiofile) => deleteAudioFile(audiofile.id),
+    mutationFn: (audiofile: Audiofile) =>
+      deleteAudioFile({ audiofile_id: audiofile.id }),
     onMutate: async (audiofile) => {
       const taskId = genTaskId();
       const task: MediaTask = {
@@ -219,7 +221,8 @@ export function useDeletePlaylist() {
   const unloadMedia = useMediaStateStore((state) => state.unloadMedia);
 
   return useMutation({
-    mutationFn: (playlist: Playlist) => deletePlaylist(playlist.id),
+    mutationFn: (playlist: Playlist) =>
+      deletePlaylist({ playlist_id: playlist.id }),
     onMutate: async (playlist) => {
       toast(`Deleting playlist "${playlist.name}"`, {
         description: "This may take a while",
@@ -262,7 +265,8 @@ export function useLeavePlaylist() {
   const unloadMedia = useMediaStateStore((state) => state.unloadMedia);
 
   return useMutation({
-    mutationFn: (playlist: Playlist) => leavePlaylist(playlist.id),
+    mutationFn: (playlist: Playlist) =>
+      leavePlaylist({ playlist_id: playlist.id }),
     onSuccess: (_data, playlist) => {
       toast.success(`Successfully left the playlist "${playlist.name}"`);
 

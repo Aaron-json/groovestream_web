@@ -1,6 +1,6 @@
 import { MediaQueryKey } from "@/hooks/media";
 import MediaCard, { MediaCardSkeleton } from "./media-card";
-import { Audiofile, Playlist } from "@/api/types/media";
+import { Audiofile, Playlist } from "@/api/requests/media";
 
 export type MediaCardListProps = {
   queryKey?: MediaQueryKey;

@@ -1,4 +1,4 @@
-import { PlaylistInvite } from "@/api/types/invites";
+import { PlaylistInvite } from "@/api/requests/media";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

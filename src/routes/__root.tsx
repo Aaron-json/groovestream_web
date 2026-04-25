@@ -1,6 +1,6 @@
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { User } from "@/api/types/user";
+import { User } from "@/api/requests/user";
 
 type RouterContext = {
   auth: ReturnType<typeof useAuth>;
