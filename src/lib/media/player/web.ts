@@ -7,7 +7,7 @@ const DEFAULT_VOLUME = 0.7;
 export default class WebAudioPlayer implements MediaPlayer {
   private videoElement: HTMLVideoElement | null = null;
   private player: shaka.Player | undefined;
-  private deliverableToken: string | undefined;
+  private authToken: string | undefined;
   // acts as a lock for multiple requests all trying to
   // refresh the token since shaka can do concurrent requests
   private tokenRefreshPromise: Promise<string> | undefined;
@@ -58,11 +58,10 @@ export default class WebAudioPlayer implements MediaPlayer {
         bufferBehind: 30,
       },
     });
-
   }
 
   setToken(token: string) {
-    this.deliverableToken = token;
+    this.authToken = token;
   }
 
   async load(manifestUrl: string): Promise<number> {
@@ -77,7 +76,7 @@ export default class WebAudioPlayer implements MediaPlayer {
     if (this.player) {
       this.player.unload();
     }
-    this.deliverableToken = undefined;
+    this.authToken = undefined;
   }
 
   async destroy() {
@@ -92,7 +91,7 @@ export default class WebAudioPlayer implements MediaPlayer {
     }
 
     this.callbacks = {};
-    this.deliverableToken = undefined;
+    this.authToken = undefined;
   }
 
   async play() {
@@ -140,8 +139,8 @@ export default class WebAudioPlayer implements MediaPlayer {
         const cdn_url = `${CDN_URL}/${object_name}`;
         request.uris[0] = cdn_url;
 
-        if (this.deliverableToken) {
-          request.headers["Authorization"] = `Bearer ${this.deliverableToken}`;
+        if (this.authToken) {
+          request.headers["Authorization"] = `Bearer ${this.authToken}`;
         }
       }
     });
@@ -170,7 +169,7 @@ export default class WebAudioPlayer implements MediaPlayer {
             if (!token) {
               throw new Error("Token refresh callback not provided");
             }
-            this.deliverableToken = token;
+            this.authToken = token;
             player.retryStreaming();
             return token;
           })
@@ -180,7 +179,7 @@ export default class WebAudioPlayer implements MediaPlayer {
       // let the network engine handle the error as normal
       await this.tokenRefreshPromise?.catch(() => {});
     });
-}
+  }
 
   // this function is called during initialization and sets up references to
   // mutable callbacks. This removes the need to delete/cleanup listeners.

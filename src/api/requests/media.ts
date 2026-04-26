@@ -1,13 +1,12 @@
 import axiosClient, { PRIMARY_API_URL } from "../api";
 import axios, { AxiosRequestConfig } from "axios";
 import { components } from "../types/schema";
-import { OpBundle, ApiOp } from "../types/helpers";
+import { OpBundle } from "../types/helpers";
 import { User } from "./user";
 
 // Domain Types
 export type Audiofile = components["schemas"]["AudiofileView"];
 export type Playlist = components["schemas"]["PlaylistView"];
-export type AudioDeliverable = components["schemas"]["GetDeliverablesRow"];
 export type Media = Audiofile | Playlist;
 
 export type PlaylistInvite = components["schemas"]["PlaylistInviteView"];
@@ -34,10 +33,7 @@ export async function createUpload(body: CreateUpload["Body"]) {
 type ConfirmUpload = OpBundle<"post-upload-confirm">;
 export type ConfirmUploadError = ConfirmUpload["Error"];
 export async function confirmUpload(body: ConfirmUpload["Body"]) {
-  return axiosClient.post<ConfirmUpload["Response"]>(
-    "/upload/confirm",
-    body,
-  );
+  return axiosClient.post<ConfirmUpload["Response"]>("/upload/confirm", body);
 }
 
 type UploadAudiofileOptions = {
@@ -103,7 +99,6 @@ export async function deleteAudioFile(path: DeleteAudioFile["Path"]) {
 }
 
 type GetAudiofileMetadata = OpBundle<"get-audiofiles-by-audiofile-id-metadata">;
-export type GetAudiofileMetadataError = GetAudiofileMetadata["Error"];
 export async function getAudiofileMetadata(path: GetAudiofileMetadata["Path"]) {
   const response = await axiosClient.get<GetAudiofileMetadata["Response"]>(
     `/audiofiles/${path.audiofile_id}/metadata`,
@@ -111,21 +106,22 @@ export async function getAudiofileMetadata(path: GetAudiofileMetadata["Path"]) {
   return response.data;
 }
 
-type ListAudiofilesDeliverables = ApiOp<"list-audiofiles-by-audiofile-id-deliverables">;
-type ListAudiofilesDeliverablesBundle = OpBundle<ListAudiofilesDeliverables>;
-export type ListAudiofilesDeliverablesError = ListAudiofilesDeliverablesBundle["Error"];
-export async function getDeliverables(path: ListAudiofilesDeliverablesBundle["Path"]) {
-  const response = await axiosClient.get<ListAudiofilesDeliverablesBundle["Response"]>(
-    `/audiofiles/${path.audiofile_id}/deliverables`,
-  );
+export type ListAudiofilesEncodingsBundle =
+  OpBundle<"list-audiofiles-by-audiofile-id-encodings">;
+export async function getEncodings(
+  path: ListAudiofilesEncodingsBundle["Path"],
+) {
+  const response = await axiosClient.get<
+    ListAudiofilesEncodingsBundle["Response"]
+  >(`/audiofiles/${path.audiofile_id}/encodings`);
   return response.data;
 }
 
-type GetDeliverableToken = OpBundle<"get-audiofiles-deliverables-by-deliverable-id-token">;
-export type GetDeliverableTokenError = GetDeliverableToken["Error"];
-export async function getDeliverableToken(path: GetDeliverableToken["Path"]) {
-  const response = await axiosClient.get<GetDeliverableToken["Response"]>(
-    `/audiofiles/deliverables/${path.deliverable_id}/token`,
+type GetEncodingToken =
+  OpBundle<"get-audiofiles-encodings-by-encoding-id-token">;
+export async function getEncodingToken(path: GetEncodingToken["Path"]) {
+  const response = await axiosClient.get<GetEncodingToken["Response"]>(
+    `/audiofiles/encodings/${path.encoding_id}/token`,
   );
   return response.data;
 }
@@ -153,7 +149,6 @@ export function getObjectUrl(objectId: string) {
 /////////////////////////////////////////////////////////////////////////////////////
 
 type DeletePlaylist = OpBundle<"delete-playlists-by-playlist-id">;
-export type DeletePlaylistError = DeletePlaylist["Error"];
 export async function deletePlaylist(path: DeletePlaylist["Path"]) {
   const response = await axiosClient.delete<DeletePlaylist["Response"]>(
     `/playlists/${path.playlist_id}`,
@@ -184,7 +179,8 @@ export async function updatePlaylist(
   return response.data;
 }
 
-type ListPlaylistAudiofiles = OpBundle<"list-playlists-by-playlist-id-audiofiles">;
+type ListPlaylistAudiofiles =
+  OpBundle<"list-playlists-by-playlist-id-audiofiles">;
 export async function getPlaylistAudiofiles(
   path: ListPlaylistAudiofiles["Path"],
   params?: ListPlaylistAudiofiles["Query"],
@@ -247,7 +243,8 @@ export async function sendPlaylistInvite(body: PostPlaylistInvite["Body"]) {
   return response.data;
 }
 
-type AcceptInvite = OpBundle<"post-playlist-invites-by-playlist-id-by-playlist-invite-sender-id-accept">;
+type AcceptInvite =
+  OpBundle<"post-playlist-invites-by-playlist-id-by-playlist-invite-sender-id-accept">;
 export type AcceptPlaylistInviteError = AcceptInvite["Error"];
 export async function acceptPlaylistInvite(path: AcceptInvite["Path"]) {
   const response = await axiosClient.post<AcceptInvite["Response"]>(
@@ -256,7 +253,8 @@ export async function acceptPlaylistInvite(path: AcceptInvite["Path"]) {
   return response.data;
 }
 
-type RejectInvite = OpBundle<"delete-playlist-invites-by-playlist-id-by-playlist-invite-sender-id">;
+type RejectInvite =
+  OpBundle<"delete-playlist-invites-by-playlist-id-by-playlist-invite-sender-id">;
 export type RejectPlaylistInviteError = RejectInvite["Error"];
 export async function rejectPlaylistInvite(path: RejectInvite["Path"]) {
   const response = await axiosClient.delete<RejectInvite["Response"]>(
@@ -274,7 +272,8 @@ export async function leavePlaylist(path: LeavePlaylist["Path"]) {
   return response.data;
 }
 
-type RemoveMember = OpBundle<"delete-playlists-by-playlist-id-members-by-member-id">;
+type RemoveMember =
+  OpBundle<"delete-playlists-by-playlist-id-members-by-member-id">;
 export type RemovePlaylistMemberError = RemoveMember["Error"];
 export async function removePlaylistMember(path: RemoveMember["Path"]) {
   const response = await axiosClient.delete<RemoveMember["Response"]>(

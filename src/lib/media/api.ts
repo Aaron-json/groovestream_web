@@ -1,29 +1,28 @@
-import { AudioDeliverable, Audiofile } from "@/api/requests/media";
+import { Audiofile, ListAudiofilesEncodingsBundle } from "@/api/requests/media";
 import {
-  getDeliverables,
-  getDeliverableToken,
+  getEncodings,
+  getEncodingToken,
   addListeningHistory,
 } from "@/api/requests/media";
 
-export interface ResolvedDeliverable {
-  deliverable: AudioDeliverable;
+export interface ResolvedEncoding {
+  encoding: NonNullable<ListAudiofilesEncodingsBundle["Response"]>[number];
   manifestUrl: string;
   token: string;
 }
 
-export async function resolveDeliverable(
+export async function resolveEncoding(
   audiofileId: Audiofile["id"],
-): Promise<ResolvedDeliverable> {
-  const deliverables =
-    (await getDeliverables({ audiofile_id: audiofileId })) ?? [];
+): Promise<ResolvedEncoding> {
+  const encodings = (await getEncodings({ audiofile_id: audiofileId })) ?? [];
 
   // get manifest url. prefer dash over hls
-  let idx = deliverables.findIndex((d) => d.dash_manifest_id);
-  let url = deliverables[idx]?.dash_manifest_id;
+  let idx = encodings.findIndex((d) => d.dash_manifest_id);
+  let url = encodings[idx]?.dash_manifest_id;
 
   if (idx === -1) {
-    idx = deliverables.findIndex((d) => d.hls_manifest_id);
-    url = deliverables[idx]?.hls_manifest_id;
+    idx = encodings.findIndex((d) => d.hls_manifest_id);
+    url = encodings[idx]?.hls_manifest_id;
   }
 
   if (!url || idx === undefined || idx === -1) {
@@ -32,12 +31,12 @@ export async function resolveDeliverable(
     );
   }
 
-  const tokenData = await getDeliverableToken({
-    deliverable_id: deliverables[idx].id,
+  const tokenData = await getEncodingToken({
+    encoding_id: encodings[idx].id,
   });
 
   return {
-    deliverable: deliverables[idx],
+    encoding: encodings[idx],
     manifestUrl: url,
     token: tokenData.token,
   };

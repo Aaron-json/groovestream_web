@@ -29,14 +29,7 @@ function RouteComponent() {
   function getDisplay() {
     if (historyLoading || mostPlayedLoading || userLoading) {
       return <MediaListSkeleton />;
-    } else if (
-      mostPlayedErr ||
-      historyErr ||
-      userErr ||
-      !mostPlayed ||
-      !history ||
-      !user
-    ) {
+    } else if (mostPlayedErr || historyErr || userErr) {
       return (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -46,15 +39,20 @@ function RouteComponent() {
           </AlertDescription>
         </Alert>
       );
-    } else if (mostPlayed.length === 0 && history.length === 0) {
+    } else if (
+      !mostPlayed ||
+      !history ||
+      (mostPlayed.length === 0 && history.length === 0)
+    ) {
+      const username_text = user?.username
+        ? `Welcome, ${user.username}!`
+        : "Welcome!";
       return (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
             <Music2 className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-medium mb-2">
-            Welcome, {user.username}!
-          </h3>
+          <h3 className="text-lg font-medium mb-2">{username_text}</h3>
           <p className="text-muted-foreground max-w-md">
             Start exploring and listening to music. Your most played tracks and
             listening history will appear here.

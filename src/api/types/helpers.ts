@@ -64,11 +64,6 @@ export type OpResponse<
   : never;
 
 /**
- * A type-safe operation ID.
- */
-export type ApiOp<T extends keyof operations> = T;
-
-/**
  * A consolidated type bundle for an operation.
  */
 export type OpBundle<T extends keyof operations> = {

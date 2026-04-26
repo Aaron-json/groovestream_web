@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { toast } from "sonner";
 import { MediaQueryKey } from "@/hooks/media";
 
-import { resolveDeliverable, trackHistory } from "../api";
+import { resolveEncoding, trackHistory } from "../api";
 import { getNextAudioIndex } from "../utils";
 import {
   CurrentMedia,
@@ -10,7 +10,7 @@ import {
   PlaybackState,
   PlayerCallbacks,
 } from "../types";
-import { getDeliverableToken } from "@/api/requests/media";
+import { getEncodingToken } from "@/api/requests/media";
 import { queryClient } from "@/lib/query";
 import { Audiofile } from "@/api/requests/media";
 
@@ -97,7 +97,7 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
     _setPlaybackState("loading");
 
     try {
-      const { deliverable, token, manifestUrl } = await resolveDeliverable(
+      const { encoding, token, manifestUrl } = await resolveEncoding(
         audiofile.id,
       );
 
@@ -105,8 +105,8 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
       player.setToken(token);
       player.setCallbacks({
         refreshToken: async () => {
-          const token = await getDeliverableToken({
-            deliverable_id: deliverable.id,
+          const token = await getEncodingToken({
+            encoding_id: encoding.id,
           });
           return token.token;
         },

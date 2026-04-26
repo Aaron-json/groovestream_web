@@ -16,15 +16,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/audiofiles/deliverables/{deliverable_id}/token": {
+    "/audiofiles/encodings/{encoding_id}/token": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get audiofiles deliverables by deliverable ID token */
-        get: operations["get-audiofiles-deliverables-by-deliverable-id-token"];
+        /** Get audiofiles encodings by encoding ID token */
+        get: operations["get-audiofiles-encodings-by-encoding-id-token"];
         put?: never;
         post?: never;
         delete?: never;
@@ -50,15 +50,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/audiofiles/{audiofile_id}/deliverables": {
+    "/audiofiles/{audiofile_id}/encodings": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List audiofiles by audiofile ID deliverables */
-        get: operations["list-audiofiles-by-audiofile-id-deliverables"];
+        /** List audiofiles by audiofile ID encodings */
+        get: operations["list-audiofiles-by-audiofile-id-encodings"];
         put?: never;
         post?: never;
         delete?: never;
@@ -416,8 +416,11 @@ export interface components {
             readonly $schema?: string;
             token: string;
         };
-        GetDeliverablesRow: {
+        Encoding: {
             audiofile_id: string;
+            base_file_id: string;
+            /** Format: int64 */
+            base_file_size: number;
             /** Format: int32 */
             bitrate: number;
             /** Format: int32 */
@@ -431,6 +434,7 @@ export interface components {
             fragment_duration: number | null;
             hls_manifest_id: string | null;
             id: string;
+            objects_prefix: string;
             /** Format: int32 */
             sample_rate: number;
         };
@@ -627,13 +631,13 @@ export interface operations {
             };
         };
     };
-    "get-audiofiles-deliverables-by-deliverable-id-token": {
+    "get-audiofiles-encodings-by-encoding-id-token": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description The deliverable ID */
-                deliverable_id: string;
+                /** @description The encoding ID */
+                encoding_id: string;
             };
             cookie?: never;
         };
@@ -689,7 +693,7 @@ export interface operations {
             };
         };
     };
-    "list-audiofiles-by-audiofile-id-deliverables": {
+    "list-audiofiles-by-audiofile-id-encodings": {
         parameters: {
             query?: never;
             header?: never;
@@ -707,7 +711,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetDeliverablesRow"][] | null;
+                    "application/json": components["schemas"]["Encoding"][] | null;
                 };
             };
             /** @description Error */
