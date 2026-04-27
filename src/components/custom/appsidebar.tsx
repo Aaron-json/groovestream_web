@@ -36,6 +36,7 @@ const CustomLink = (props: CustomLinkProps) => {
       variant="ghost"
       size="lg"
       className="w-full flex justify-start"
+      nativeButton={false}
       render={<Link {...props} />}
     />
   );
