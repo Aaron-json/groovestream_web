@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const MAX_FILES = 5;
-const MAX_FILE_SIZE = 1024 * 1024 * 20; // 20MB
+const MAX_FILE_SIZE = 1024 * 1024 * 25; // 25MB
 const SUPPORTED_FILE_TYPES = ["mpeg", "mp3", "wav", "flac"];
 
 export const Route = createFileRoute(
