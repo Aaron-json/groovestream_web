@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { useMediaStateStore } from "@/lib/media/stores/state";
 import WebAudioPlayer from "@/lib/media/player/web";
 import { RefreshCw } from "lucide-react";
+import { NowPlayingPanel } from "@/components/custom/now-playing-panel";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -121,15 +122,20 @@ function AuthenticatedLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <div className="flex flex-col w-full h-dvh overflow-hidden px-2">
-        <TopBar />
-        <div className="flex-1 py-2 px-2 md:px-8 overflow-y-auto">
-          <Outlet />
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden px-2">
+        <div className="grid flex-1 min-h-0 grid-cols-[minmax(0,1fr)_auto]">
+          <div className="flex min-w-0 flex-col">
+            <TopBar />
+            <div className="flex-1 overflow-y-auto py-2 px-2 md:px-8">
+              <Outlet />
+            </div>
+          </div>
+          <NowPlayingPanel />
         </div>
         <div className="flex-none pb-2">
           <MediaBar />
         </div>
-      </div>
+      </main>
       <Toaster position="bottom-left" />
     </SidebarProvider>
   );

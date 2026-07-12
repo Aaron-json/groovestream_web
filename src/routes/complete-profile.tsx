@@ -131,12 +131,12 @@ function RouteComponent() {
                 <div className="flex gap-2 items-center h-6">
                   <Label htmlFor="username">Username</Label>
                   {errors.username && (
-                    <Label className="text-xs text-red-500">
+                    <Label className="text-xs text-destructive">
                       {errors.username.message}
                     </Label>
                   )}
                   {usernameState === "available" && (
-                    <p className="text-sm text-green-600">available</p>
+                    <p className="text-sm text-emerald-500">available</p>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -164,16 +164,16 @@ function RouteComponent() {
                       })}
                       className={`pr-10 ${
                         usernameState === "unavailable" || errors.username
-                          ? "border-red-500 focus-visible:ring-red-500"
+                          ? "border-destructive focus-visible:ring-destructive"
                           : ""
                       }`}
                       disabled={usernameState === "checking"}
                     />
                     {usernameState === "available" && (
-                      <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-green-500" />
+                      <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-emerald-500" />
                     )}
                     {(usernameState === "unavailable" || errors.username) && (
-                      <AlertCircle className="absolute right-3 top-3 h-4 w-4 text-red-500" />
+                      <AlertCircle className="absolute right-3 top-3 h-4 w-4 text-destructive" />
                     )}
                   </div>
 
@@ -205,7 +205,7 @@ function RouteComponent() {
 
               <div className="flex items-start justify-center">
                 {errors.root && (
-                  <p className="text-sm text-red-500">{errors.root.message}</p>
+                  <p className="text-sm text-destructive">{errors.root.message}</p>
                 )}
               </div>
 

@@ -58,6 +58,18 @@ export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId",
 )({
   component: RouteComponent,
+  staticData: {
+    // The playlist route is not nested under the library route, so it
+    // contributes its logical parent to the trail as well.
+    crumbs: (params) => [
+      { label: "Library", to: "/library" },
+      {
+        label: <PlaylistCrumb playlistId={params.playlistId} />,
+        to: "/library/playlists/$playlistId",
+        params,
+      },
+    ],
+  },
   params: {
     parse: function (params) {
       const playlist_id = params.playlistId;
@@ -70,6 +82,13 @@ export const Route = createFileRoute(
     });
   },
 });
+
+// Breadcrumb label that resolves once the playlist metadata query
+// has data.
+function PlaylistCrumb({ playlistId }: { playlistId: Playlist["id"] }) {
+  const { data: playlist } = usePlaylistInfo(playlistId);
+  return playlist?.name ?? "Playlist";
+}
 
 function RouteComponent() {
   const { media, playbackState, playPauseToggle, setMedia } =
@@ -176,7 +195,7 @@ function RouteComponent() {
 
   return (
     <section className="flex h-full flex-col gap-6">
-      <div className="flex gap-4">
+      <div className="flex gap-4 rounded-lg border bg-card p-4">
         {/* Playlist Cover */}
         <AspectRatio
           ratio={1}
@@ -378,7 +397,7 @@ function RouteComponent() {
 function PlaylistSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="flex gap-4">
+      <div className="flex gap-4 rounded-lg border bg-card p-4">
         <Skeleton className="w-32 h-32 md:w-40 md:h-40 rounded-lg shrink-0" />
         <div className="flex flex-col justify-end min-w-0 flex-1 space-y-2">
           <div className="space-y-2">

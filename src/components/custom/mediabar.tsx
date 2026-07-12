@@ -8,10 +8,12 @@ import {
   SkipForward,
   Volume2,
   VolumeX,
-  Music2,
   LoaderCircle,
+  ChevronRight,
+  Music2,
 } from "lucide-react";
 import { useMediaStateStore } from "@/lib/media/stores/state";
+import { useUIStore } from "@/lib/ui";
 import { formatDuration } from "@/lib/media/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useShallow } from "zustand/react/shallow";
@@ -29,6 +31,8 @@ export default function MediaBar() {
         playPauseToggle: state.playPauseToggle,
       })),
     );
+
+  const toggleNowPlaying = useUIStore((state) => state.toggleNowPlaying);
 
   const audiofile = media?.audiofile;
 
@@ -49,13 +53,14 @@ export default function MediaBar() {
     : "Unknown artist";
 
   return (
-    <div className="bg-card border rounded">
+    <div className="bg-card border border-border/80 rounded-xl shadow-md">
       {isMobile ? (
         <MobileLayout
           trackTitle={trackTitle}
           trackArtist={trackArtist}
           playIcon={getPlayIcon()}
           onPlayPause={playPauseToggle}
+          onExpand={audiofile ? toggleNowPlaying : undefined}
         />
       ) : (
         <DesktopLayout
@@ -65,6 +70,7 @@ export default function MediaBar() {
           onPlayPause={playPauseToggle}
           onNext={next}
           onPrev={prev}
+          onExpand={audiofile ? toggleNowPlaying : undefined}
         />
       )}
     </div>
@@ -76,6 +82,7 @@ interface MobileLayoutProps {
   trackArtist: string;
   playIcon: React.ReactNode;
   onPlayPause: () => void;
+  onExpand?: () => void;
 }
 
 function MobileLayout({
@@ -83,12 +90,17 @@ function MobileLayout({
   trackArtist,
   playIcon,
   onPlayPause,
+  onExpand,
 }: MobileLayoutProps) {
   return (
     <div className="px-3 py-2">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <TrackInfo title={trackTitle} artist={trackArtist} />
+          <TrackInfo
+            title={trackTitle}
+            artist={trackArtist}
+            onClick={onExpand}
+          />
           <ControlButton
             icon={playIcon}
             onClick={onPlayPause}
@@ -108,6 +120,7 @@ interface DesktopLayoutProps {
   onPlayPause: () => void;
   onNext: () => void;
   onPrev: () => void;
+  onExpand?: () => void;
 }
 
 function DesktopLayout({
@@ -117,12 +130,17 @@ function DesktopLayout({
   onPlayPause,
   onNext,
   onPrev,
+  onExpand,
 }: DesktopLayoutProps) {
   return (
-    <div className="px-2 py-2">
+    <div className="px-3 py-2">
       <div className="grid grid-cols-12 gap-7 items-center">
         <div className="col-span-3 min-w-0">
-          <TrackInfo title={trackTitle} artist={trackArtist} />
+          <TrackInfo
+            title={trackTitle}
+            artist={trackArtist}
+            onClick={onExpand}
+          />
         </div>
 
         <div className="col-span-6 flex flex-col items-center space-y-2">
@@ -149,7 +167,7 @@ function DesktopLayout({
           </div>
         </div>
 
-        <div className="col-span-3 flex items-center justify-center">
+        <div className="col-span-3 flex items-center justify-end">
           <VolumeControl />
         </div>
       </div>
@@ -160,14 +178,16 @@ function DesktopLayout({
 interface TrackInfoProps {
   title: string;
   artist: string;
+  onClick?: () => void;
 }
 
-function TrackInfo({ title, artist }: TrackInfoProps) {
-  return (
-    <div className="flex items-center gap-3 min-w-0">
-      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center shrink-0">
-        <Music2 className="h-6 w-6 text-muted-foreground" />
-      </div>
+function TrackInfo({ title, artist, onClick }: TrackInfoProps) {
+  const nowPlayingOpen = useUIStore((state) => state.nowPlayingOpen);
+  const inner = (
+    <>
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-muted">
+        <Music2 className="size-5.5 text-muted-foreground" />
+      </span>
       <div className="min-w-0 flex-1">
         <h3
           className="text-sm font-medium text-foreground truncate"
@@ -179,7 +199,26 @@ function TrackInfo({ title, artist }: TrackInfoProps) {
           {artist}
         </p>
       </div>
-    </div>
+    </>
+  );
+
+  if (!onClick) {
+    return (
+      <div className="flex w-full min-w-0 items-center gap-3 p-1">{inner}</div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Toggle now playing panel"
+      aria-expanded={nowPlayingOpen}
+      className="flex w-full min-w-0 items-center gap-3 rounded-lg p-1 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
+    >
+      {inner}
+      <ChevronRight className="mr-1 size-4 shrink-0 text-muted-foreground/70" />
+    </button>
   );
 }
 

@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   {
     title: "Home",
-    url: "/",
+    url: "/home",
     icon: HomeIcon,
   },
   {
@@ -54,8 +54,8 @@ export default function AppSidebar() {
   }
   return (
     <Sidebar>
-      <SidebarHeader>
-        <TextLogo />
+      <SidebarHeader className="border-b">
+        <TextLogo className="justify-center" />
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

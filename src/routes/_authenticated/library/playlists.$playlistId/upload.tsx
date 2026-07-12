@@ -15,6 +15,11 @@ export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId/upload",
 )({
   component: RouteComponent,
+  staticData: {
+    crumbs: (params) => [
+      { label: "Upload", to: "/library/playlists/$playlistId/upload", params },
+    ],
+  },
 });
 
 const formatBytes = (bytes: number): string => {

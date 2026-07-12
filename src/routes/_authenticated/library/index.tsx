@@ -18,6 +18,9 @@ import { usePlaylistList } from "@/hooks/media";
 
 export const Route = createFileRoute("/_authenticated/library/")({
   component: RouteComponent,
+  staticData: {
+    crumbs: () => [{ label: "Library", to: "/library" }],
+  },
 });
 
 function RouteComponent() {

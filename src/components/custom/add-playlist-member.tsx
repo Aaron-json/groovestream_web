@@ -114,14 +114,14 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
         </DialogDescription>
 
         {formState.isSubmitSuccessful && !formState.errors.root && (
-          <div className="mt-4 flex items-center rounded-md border border-green-500 bg-green-50 p-3 text-sm text-green-700">
+          <div className="mt-4 flex items-center rounded-md border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-500">
             <Check className="mr-2 h-5 w-5 shrink-0" />
             Invite sent successfully to{" "}
             {formState.defaultValues?.username || "user"}.
           </div>
         )}
         {formState.errors.root?.message && (
-          <div className="mt-4 flex items-center rounded-md border border-red-500 bg-red-50 p-3 text-sm text-red-700">
+          <div className="mt-4 flex items-center rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
             <AlertTriangle className="mr-2 h-5 w-5 shrink-0" />
             {formState.errors.root.message}
           </div>
@@ -145,7 +145,7 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
               })}
             />
             {formState.errors.username && (
-              <p className="text-sm text-red-600 mt-1">
+              <p className="text-sm text-destructive mt-1">
                 {formState.errors.username.message}
               </p>
             )}

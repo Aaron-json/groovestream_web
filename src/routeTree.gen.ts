@@ -13,7 +13,7 @@ import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
-import { Route as AuthenticatedSocialRouteImport } from './routes/_authenticated/social'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedLibraryIndexRouteImport } from './routes/_authenticated/library/index'
 import { Route as AuthenticatedLibraryPlaylistsPlaylistIdRouteImport } from './routes/_authenticated/library/playlists.$playlistId'
 import { Route as AuthenticatedLibraryPlaylistsPlaylistIdIndexRouteImport } from './routes/_authenticated/library/playlists.$playlistId/index'
@@ -38,9 +38,9 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedSocialRoute = AuthenticatedSocialRouteImport.update({
-  id: '/social',
-  path: '/social',
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedLibraryIndexRoute =
@@ -72,7 +72,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/complete-profile': typeof CompleteProfileRoute
-  '/social': typeof AuthenticatedSocialRoute
+  '/home': typeof AuthenticatedHomeRoute
   '/library/': typeof AuthenticatedLibraryIndexRoute
   '/library/playlists/$playlistId': typeof AuthenticatedLibraryPlaylistsPlaylistIdRouteWithChildren
   '/library/playlists/$playlistId/upload': typeof AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute
@@ -81,7 +81,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/complete-profile': typeof CompleteProfileRoute
-  '/social': typeof AuthenticatedSocialRoute
+  '/home': typeof AuthenticatedHomeRoute
   '/': typeof AuthenticatedIndexRoute
   '/library': typeof AuthenticatedLibraryIndexRoute
   '/library/playlists/$playlistId/upload': typeof AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute
@@ -92,7 +92,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
   '/complete-profile': typeof CompleteProfileRoute
-  '/_authenticated/social': typeof AuthenticatedSocialRoute
+  '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/library/': typeof AuthenticatedLibraryIndexRoute
   '/_authenticated/library/playlists/$playlistId': typeof AuthenticatedLibraryPlaylistsPlaylistIdRouteWithChildren
@@ -105,7 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/complete-profile'
-    | '/social'
+    | '/home'
     | '/library/'
     | '/library/playlists/$playlistId'
     | '/library/playlists/$playlistId/upload'
@@ -114,7 +114,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/complete-profile'
-    | '/social'
+    | '/home'
     | '/'
     | '/library'
     | '/library/playlists/$playlistId/upload'
@@ -124,7 +124,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/complete-profile'
-    | '/_authenticated/social'
+    | '/_authenticated/home'
     | '/_authenticated/'
     | '/_authenticated/library/'
     | '/_authenticated/library/playlists/$playlistId'
@@ -168,11 +168,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/social': {
-      id: '/_authenticated/social'
-      path: '/social'
-      fullPath: '/social'
-      preLoaderRoute: typeof AuthenticatedSocialRouteImport
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/library/': {
@@ -225,14 +225,14 @@ const AuthenticatedLibraryPlaylistsPlaylistIdRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedSocialRoute: typeof AuthenticatedSocialRoute
+  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedLibraryIndexRoute: typeof AuthenticatedLibraryIndexRoute
   AuthenticatedLibraryPlaylistsPlaylistIdRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedSocialRoute: AuthenticatedSocialRoute,
+  AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedLibraryIndexRoute: AuthenticatedLibraryIndexRoute,
   AuthenticatedLibraryPlaylistsPlaylistIdRoute:

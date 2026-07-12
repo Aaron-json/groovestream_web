@@ -19,24 +19,24 @@ const InviteCard = ({ invite, onAccept, onDecline }: PlaylistInviteProps) => {
       <CardContent className="p-4">
         <div className="flex items-center gap-2">
           <div>
-            <Mail className="h-5 w-5 text-slate-600" />
+            <Mail className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">
               {invite.from_username} invited you to
             </p>
-            <p className="text-sm text-slate-200 truncate">
+            <p className="text-sm text-muted-foreground truncate">
               {invite.playlist_name}
             </p>
           </div>
-          <div className="flex gap-1 font-destructive">
+          <div className="flex gap-1">
             <Button
               size="sm"
               variant="ghost"
               className="h-8 w-8 p-0"
               onClick={() => onDecline(invite)}
             >
-              <X className="h-4 w-4 text-slate-300 text-destructive" />
+              <X className="h-4 w-4 text-destructive" />
             </Button>
             <Button
               size="sm"
@@ -61,7 +61,7 @@ export function InviteCardSkeleton() {
           <div className="flex-1 w-20">
             <Skeleton className="h-5 w-full" />
           </div>
-          <div className="flex gap-1 font-destructive">
+          <div className="flex gap-1">
             <Skeleton className="h-4 w-4" />
             <Skeleton className="h-4 w-4" />
           </div>
