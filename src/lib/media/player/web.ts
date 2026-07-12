@@ -1,4 +1,3 @@
-import shaka from "shaka-player";
 import { CDN_URL } from "@/api/api";
 import { MediaPlayer, PlayerCallbacks } from "../types";
 
@@ -7,6 +6,7 @@ const DEFAULT_VOLUME = 0.7;
 export default class WebAudioPlayer implements MediaPlayer {
   private videoElement: HTMLVideoElement | null = null;
   private player: shaka.Player | undefined;
+  private shakaModule: typeof shaka | undefined;
   private authToken: string | undefined;
   // acts as a lock for multiple requests all trying to
   // refresh the token since shaka can do concurrent requests
@@ -29,7 +29,9 @@ export default class WebAudioPlayer implements MediaPlayer {
 
   isSupported(): boolean {
     if (typeof window === "undefined") return false;
-    return shaka.Player.isBrowserSupported();
+    // We do not use shaka for this check to avoid loading the massive
+    // bundle on app startup
+    return !!window.MediaSource || !!(window as any).WebKitMediaSource;
   }
 
   setCallbacks(cb: PlayerCallbacks): void {
@@ -41,6 +43,11 @@ export default class WebAudioPlayer implements MediaPlayer {
     if (this.player) {
       throw new Error("Player already initialized");
     }
+
+    // Lazily load the headless compiled version of Shaka
+    const module = await import("shaka-player/dist/shaka-player.compiled.js");
+    this.shakaModule = module.default || module;
+    const shaka = this.shakaModule!;
 
     shaka.polyfill.installAll();
     this.player = new shaka.Player();
@@ -126,6 +133,9 @@ export default class WebAudioPlayer implements MediaPlayer {
     const netEngine = this.player?.getNetworkingEngine();
     const player = this.player;
     if (!netEngine || !player) return;
+
+    const shaka = this.shakaModule;
+    if (!shaka) throw new Error("Shaka module not loaded");
 
     netEngine.registerRequestFilter(async (type, request) => {
       if (

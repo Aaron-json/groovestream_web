@@ -28,7 +28,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          "shaka-player": ["shaka-player"],
           "tanstack-query": ["@tanstack/react-query"],
         },
       },
