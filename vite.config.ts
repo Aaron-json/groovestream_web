@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
-// import { visualizer } from "rollup-plugin-visualizer";
+import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -14,15 +14,13 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
-    // accorinng to docs, keep this last if sourcemaps are used
-    // uncomoment to generate bundle stats after build
-    // visualizer({
-    //   filename: ".build/bundle-stats.html",
-    //   template: "flamegraph",
-    //   sourcemap: true,
-    //   gzipSize: true,
-    //   brotliSize: true,
-    // }),
+    process.env.ANALYZE ? visualizer({
+      filename: ".build/bundle-stats.html",
+      template: "treemap",
+      sourcemap: true,
+      gzipSize: true,
+      brotliSize: true,
+    }) : undefined,
   ],
   build: {
     // helps visualizer to have more accurate sizes
