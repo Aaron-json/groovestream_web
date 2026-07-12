@@ -1,52 +1,69 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMostPlayed, useListeningHistory } from "@/hooks/media";
+import { mostPlayedOptions, listeningHistoryOptions } from "@/hooks/media";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import MediaList, { MediaListSkeleton } from "@/components/custom/media-list";
-import { Music2, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useUser } from "@/hooks/user";
+import { Music2 } from "lucide-react";
+import InfoCard from "@/components/custom/info-card";
+import { userOptions } from "@/hooks/user";
+
+import { queryClient } from "@/lib/query";
+
+const MOST_PLAYED_COUNT = 10;
+const LISTENING_HISTORY_COUNT = 6;
 
 export const Route = createFileRoute("/_authenticated/home")({
   component: RouteComponent,
+  loader: async () => {
+    await Promise.all([
+      queryClient.ensureQueryData(mostPlayedOptions(MOST_PLAYED_COUNT)),
+      queryClient.ensureQueryData(
+        listeningHistoryOptions(LISTENING_HISTORY_COUNT),
+      ),
+    ]);
+  },
+  pendingMs: 200,
+  pendingComponent: () => (
+    <section className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Home</h1>
+      </div>
+      <MediaListSkeleton />
+    </section>
+  ),
+  errorComponent: () => (
+    <section className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Home</h1>
+      </div>
+      <InfoCard
+        variant="destructive"
+        title="Error"
+        text="Unable to load your content. Please try refreshing the page."
+      />
+    </section>
+  ),
   staticData: {
     crumbs: () => [{ label: "Home", to: "/home" }],
   },
 });
 
 function RouteComponent() {
-  const { data: user, isLoading: userLoading, error: userErr } = useUser();
+  const { data: user } = useSuspenseQuery(userOptions());
+  const { data: mostPlayed } = useSuspenseQuery(
+    mostPlayedOptions(MOST_PLAYED_COUNT),
+  );
+  const mostPlayedQueryKey = mostPlayedOptions().queryKey;
 
-  const {
-    data: mostPlayed,
-    isLoading: mostPlayedLoading,
-    error: mostPlayedErr,
-    queryKey: mostPlayedQueryKey,
-  } = useMostPlayed(10);
+  const { data: history } = useSuspenseQuery(
+    listeningHistoryOptions(LISTENING_HISTORY_COUNT),
+  );
+  const historyQueryKey = listeningHistoryOptions().queryKey;
 
-  const {
-    data: history,
-    isLoading: historyLoading,
-    error: historyErr,
-    queryKey: historyQueryKey,
-  } = useListeningHistory(6);
+  const mostPlayedList = mostPlayed ?? [];
+  const historyList = history ?? [];
 
   function getDisplay() {
-    if (historyLoading || mostPlayedLoading || userLoading) {
-      return <MediaListSkeleton />;
-    } else if (mostPlayedErr || historyErr || userErr) {
-      return (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            Unable to load your content. Please try refreshing the page.
-          </AlertDescription>
-        </Alert>
-      );
-    } else if (
-      !mostPlayed ||
-      !history ||
-      (mostPlayed.length === 0 && history.length === 0)
-    ) {
+    if (mostPlayedList.length === 0 && historyList.length === 0) {
       const username_text = user?.username
         ? `Welcome, ${user.username}!`
         : "Welcome!";
@@ -65,18 +82,18 @@ function RouteComponent() {
     } else {
       return (
         <>
-          {mostPlayed.length > 0 && (
+          {mostPlayedList.length > 0 && (
             <MediaList
               title="Most Played"
-              media={mostPlayed}
+              media={mostPlayedList}
               queryKey={mostPlayedQueryKey}
             />
           )}
 
-          {history.length > 0 && (
+          {historyList.length > 0 && (
             <MediaList
               title="Listening History"
-              media={history}
+              media={historyList}
               queryKey={historyQueryKey}
             />
           )}

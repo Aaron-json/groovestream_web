@@ -2,7 +2,8 @@ import React, { useState, useRef, useCallback } from "react";
 import { FileAudio, X, Upload, Plus } from "lucide-react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { usePlaylistInfo, useUploadAudioFile } from "@/hooks/media";
+import { playlistInfoOptions, useUploadAudioFile } from "@/hooks/media";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -50,7 +51,7 @@ export default function RouteComponent() {
   const navigate = useNavigate();
 
   const { playlistId } = Route.useParams();
-  const { data: playlist } = usePlaylistInfo(playlistId);
+  const { data: playlist } = useSuspenseQuery(playlistInfoOptions(playlistId));
 
   const handleFiles = useCallback(
     (newFiles: File[]) => {

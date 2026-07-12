@@ -10,7 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { useUser } from "@/hooks/user";
+import { userOptions } from "@/hooks/user";
+import { useQuery } from "@tanstack/react-query";
 
 export default function SidebarUserCard() {
   return (
@@ -29,7 +30,7 @@ export default function SidebarUserCard() {
 }
 
 const Trigger = (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => {
-  const { data: userData, isLoading: userLoading } = useUser();
+  const { data: userData, isLoading: userLoading } = useQuery(userOptions());
   const { sessionRef } = useAuth();
 
   const url =

@@ -114,7 +114,7 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
         </DialogDescription>
 
         {formState.isSubmitSuccessful && !formState.errors.root && (
-          <div className="mt-4 flex items-center rounded-md border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-500">
+          <div className="mt-4 flex items-center rounded-md border border-primary/20 bg-primary/10 p-3 text-sm text-primary">
             <Check className="mr-2 h-5 w-5 shrink-0" />
             Invite sent successfully to{" "}
             {formState.defaultValues?.username || "user"}.

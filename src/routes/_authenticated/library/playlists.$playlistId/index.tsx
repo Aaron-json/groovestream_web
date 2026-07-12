@@ -1,41 +1,49 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { usePlaylistAudiofiles } from "@/hooks/media";
+import { playlistAudiofilesOptions } from "@/hooks/media";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { AudiofileTable } from "@/components/custom/audiofile-table";
-import { Music2, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Music2 } from "lucide-react";
+import InfoCard from "@/components/custom/info-card";
+import { queryClient } from "@/lib/query";
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId/",
 )({
   component: RouteComponent,
+  loader: ({ params }) => {
+    return queryClient.ensureQueryData(
+      playlistAudiofilesOptions(params.playlistId),
+    );
+  },
+  pendingMs: 200,
+  pendingComponent: () => {
+    const { playlistId } = Route.useParams();
+    return (
+      <AudiofileTable
+        skeleton
+        audiofiles={[]}
+        queryKey={playlistAudiofilesOptions(playlistId).queryKey}
+      />
+    );
+  },
+  errorComponent: () => (
+    <InfoCard
+      variant="destructive"
+      title="Error"
+      text="Unable to load tracks. Please try refreshing the page."
+    />
+  ),
 });
 
 function RouteComponent() {
   const { playlistId } = Route.useParams();
-  const {
-    data: audiofiles,
-    isLoading,
-    error,
-    queryKey,
-  } = usePlaylistAudiofiles(playlistId);
+  const options = playlistAudiofilesOptions(playlistId);
+  const { data: audiofiles } = useSuspenseQuery(options);
+  const queryKey = options.queryKey;
 
-  if (isLoading) {
-    return <AudiofileTable skeleton audiofiles={[]} queryKey={queryKey} />;
-  }
+  const audiofilesList = audiofiles ?? [];
 
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>
-          Unable to load tracks. Please try refreshing the page.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (!audiofiles || audiofiles.length === 0) {
+  if (audiofilesList.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg">
         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
@@ -53,5 +61,5 @@ function RouteComponent() {
     );
   }
 
-  return <AudiofileTable audiofiles={audiofiles} queryKey={queryKey} />;
+  return <AudiofileTable audiofiles={audiofilesList} queryKey={queryKey} />;
 }

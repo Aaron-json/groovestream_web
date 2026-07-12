@@ -7,7 +7,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { usePlaylistInfo } from "@/hooks/media";
+import { playlistInfoOptions } from "@/hooks/media";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CurrentMedia } from "@/lib/media/types";
 import { useMediaStateStore } from "@/lib/media/stores/state";
@@ -100,7 +100,10 @@ function CurrentTrackCard({ audiofile }: { audiofile: Audiofile }) {
   return (
     <div className="shrink-0 border-b p-4">
       <div className="mb-4">
-        <h3 className="truncate text-base font-semibold text-foreground" title={title}>
+        <h3
+          className="truncate text-base font-semibold text-foreground"
+          title={title}
+        >
           {title}
         </h3>
       </div>
@@ -160,7 +163,11 @@ function TrackDetail({
 }
 
 function PlaylistLink({ playlistId }: { playlistId: string }) {
-  const { data: playlist } = usePlaylistInfo(playlistId);
+  const media = useMediaStateStore((state) => state.media);
+  const { data: playlist } = useQuery({
+    ...playlistInfoOptions(media?.audiofile.playlist_id ?? ""),
+    enabled: !!media?.audiofile.playlist_id,
+  });
   return (
     <Link
       to="/library/playlists/$playlistId"

@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   acceptPlaylistInvite,
-  getPlaylistInvites,
   rejectPlaylistInvite,
   PlaylistInvite,
 } from "@/api/requests/media";
@@ -14,32 +13,49 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Plus, Music2 } from "lucide-react";
-import { usePlaylistList } from "@/hooks/media";
+import { playlistsListOptions, playlistInvitesOptions } from "@/hooks/media";
+
+import { queryClient } from "@/lib/query";
 
 export const Route = createFileRoute("/_authenticated/library/")({
   component: RouteComponent,
+  loader: async () => {
+    await Promise.all([
+      queryClient.ensureQueryData(playlistsListOptions()),
+      queryClient.ensureQueryData(playlistInvitesOptions(10)),
+    ]);
+  },
+  pendingMs: 200,
+  pendingComponent: () => (
+    <section className="flex flex-col gap-6">
+      <PageHeader />
+      <div className="flex justify-center">
+        <MediaListSkeleton />
+      </div>
+    </section>
+  ),
+  errorComponent: () => (
+    <section className="space-y-6">
+      <PageHeader />
+      <InfoCard
+        variant="destructive"
+        title="Error"
+        text="Unable to load your library. Please try again later."
+      />
+    </section>
+  ),
   staticData: {
     crumbs: () => [{ label: "Library", to: "/library" }],
   },
 });
 
 function RouteComponent() {
-  const {
-    data: playlists,
-    error: playlistsErr,
-    isLoading: playlistsLoading,
-    refetch: refetchPlaylists,
-  } = usePlaylistList();
+  const { data: playlists, refetch: refetchPlaylists } = useSuspenseQuery(
+    playlistsListOptions(),
+  );
 
-  const {
-    data: playlistInvites,
-    error: playlistInvitesErr,
-    isLoading: playlistInvitesLoading,
-    refetch: refetchPlaylistInvites,
-  } = useQuery({
-    queryKey: ["playlistInvites"],
-    queryFn: () => getPlaylistInvites({ limit: 10 }),
-  });
+  const { data: playlistInvites, refetch: refetchPlaylistInvites } =
+    useSuspenseQuery(playlistInvitesOptions(10));
 
   const handleAcceptInvite = useCallback(
     async (invite: PlaylistInvite) => {
@@ -74,26 +90,19 @@ function RouteComponent() {
     [refetchPlaylistInvites],
   );
 
-  // Show single error if both fail
-  if (playlistInvitesErr && playlistsErr) {
-    return (
-      <section className="space-y-6">
-        <PageHeader />
-        <InfoCard text="Unable to load your library. Please try again later." />
-      </section>
-    );
-  }
+  const playlistsList = playlists ?? [];
+  const invitesList = playlistInvites ?? [];
 
-  const hasPlaylists = playlists && playlists.length > 0;
-  const hasInvites = playlistInvites && playlistInvites.length > 0;
+  const hasPlaylists = playlistsList.length > 0;
+  const hasInvites = invitesList.length > 0;
 
   return (
     <section className="flex flex-col gap-6">
       <PageHeader />
 
-      {!playlistInvitesLoading && hasInvites && (
+      {hasInvites && (
         <InviteList
-          invites={playlistInvites}
+          invites={invitesList}
           title="Playlist Invites"
           refetch={refetchPlaylistInvites}
           onAccept={handleAcceptInvite}
@@ -102,12 +111,8 @@ function RouteComponent() {
       )}
 
       <div className="flex justify-center">
-        {playlistsLoading ? (
-          <MediaListSkeleton />
-        ) : playlistsErr ? (
-          <InfoCard text="Unable to load playlists" />
-        ) : hasPlaylists ? (
-          <MediaList media={playlists} title="Your Playlists" />
+        {hasPlaylists ? (
+          <MediaList media={playlistsList} title="Your Playlists" />
         ) : (
           <EmptyState />
         )}

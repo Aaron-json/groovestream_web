@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, queryOptions } from "@tanstack/react-query";
 import {
   deleteAudioFile,
   deletePlaylist,
@@ -6,6 +6,8 @@ import {
   getMostPlayedAudioFiles,
   getPlaylistAudiofiles,
   getPlaylistInfo,
+  getPlaylistInvites,
+  getCloudTasks,
   getUserPlaylists,
   leavePlaylist,
   uploadAudiofile,
@@ -27,80 +29,62 @@ export type MediaQueryKey = string[];
 // react-query and client store layers. react-query uses the
 // []string type while the store expects a string.
 
-const MOST_PLAYED_KEY: MediaQueryKey = ["most-played"];
-const LISTENING_HISTORY_KEY: MediaQueryKey = ["listening-history"];
+export const MOST_PLAYED_KEY: MediaQueryKey = ["most-played"];
+export const LISTENING_HISTORY_KEY: MediaQueryKey = ["listening-history"];
 
 // Returns a key that corresponds to all of the specific playlist's
-// data
-export function getPlaylistKey(playlist_id: Playlist["id"]) {
+// data. Used for fuzzy cache invalidation.
+export function getPlaylistKey(playlist_id: Playlist["id"]): MediaQueryKey {
   return ["playlist", playlist_id];
 }
 
-// If playlist_id is undefined, the key returned will correspond
-// to the media lists for all playlists.
-export function getPlaylistAudiofilesKey(
-  playlist_id: Playlist["id"],
-): MediaQueryKey {
-  return ["playlist", playlist_id, "audiofiles"];
+export function playlistAudiofilesOptions(playlist_id: Playlist["id"]) {
+  return queryOptions({
+    queryKey: ["playlist", playlist_id, "audiofiles"],
+    queryFn: () => getPlaylistAudiofiles({ playlist_id }),
+  });
 }
 
-// If playlist_id is undefined, the key returned will correspond
-// to the metadata for all playlists.
-export function getPlaylistMetadataKey(
-  playlist_id: Playlist["id"],
-): MediaQueryKey {
-  return ["playlist", playlist_id, "metadata"];
+export function playlistInfoOptions(playlist_id: Playlist["id"]) {
+  return queryOptions({
+    queryKey: ["playlist", playlist_id, "metadata"],
+    queryFn: () => getPlaylistInfo({ playlist_id }),
+  });
 }
 
-// The key for the list of playlists
-export function getPlaylistsListKey(): MediaQueryKey {
-  return ["playlists", "list"];
-}
-
-export function usePlaylistList() {
-  const queryKey = getPlaylistsListKey();
-  const query = useQuery({
-    queryKey,
+export function playlistsListOptions() {
+  return queryOptions({
+    queryKey: ["playlists", "list"],
     queryFn: () => getUserPlaylists(),
   });
-
-  return { ...query, queryKey } as const;
 }
 
-export function usePlaylistInfo(playlistId: Playlist["id"]) {
-  const queryKey = getPlaylistMetadataKey(playlistId);
-  const query = useQuery({
-    queryKey,
-    queryFn: async () => getPlaylistInfo({ playlist_id: playlistId }),
-  });
-  return { ...query, queryKey } as const;
-}
-
-export function usePlaylistAudiofiles(playlistId: Playlist["id"]) {
-  const queryKey = getPlaylistAudiofilesKey(playlistId);
-  const query = useQuery({
-    queryKey,
-    queryFn: () => getPlaylistAudiofiles({ playlist_id: playlistId }),
-  });
-  return { ...query, queryKey } as const;
-}
-
-export function useMostPlayed(limit = 10) {
-  const queryKey = MOST_PLAYED_KEY;
-  const query = useQuery({
-    queryKey,
+export function mostPlayedOptions(limit = 10) {
+  return queryOptions({
+    queryKey: MOST_PLAYED_KEY,
     queryFn: () => getMostPlayedAudioFiles({ limit }),
   });
-  return { ...query, queryKey } as const;
 }
 
-export function useListeningHistory(limit = 10, skip?: number) {
-  const queryKey = LISTENING_HISTORY_KEY;
-  const query = useQuery({
-    queryKey,
+export function listeningHistoryOptions(limit = 10, skip?: number) {
+  return queryOptions({
+    queryKey: LISTENING_HISTORY_KEY,
     queryFn: () => getAudioFileHistory({ limit, skip }),
   });
-  return { ...query, queryKey } as const;
+}
+
+export function cloudTasksOptions() {
+  return queryOptions({
+    queryKey: ["cloud-tasks"],
+    queryFn: getCloudTasks,
+  });
+}
+
+export function playlistInvitesOptions(limit = 10) {
+  return queryOptions({
+    queryKey: ["playlistInvites", limit],
+    queryFn: () => getPlaylistInvites({ limit }),
+  });
 }
 
 function genTaskId() {
@@ -144,7 +128,7 @@ export function useUploadAudioFile() {
           },
         });
         queryClient.invalidateQueries({
-          queryKey: ["cloud-tasks"],
+          queryKey: cloudTasksOptions().queryKey,
         });
       } catch (err: any) {
         toast("Error uploading file", {
@@ -190,7 +174,7 @@ export function useDeleteAudiofile() {
       return { taskId };
     },
     onSuccess: (_data, audiofile) => {
-      const key = getPlaylistAudiofilesKey(audiofile.playlist_id);
+      const key = playlistAudiofilesOptions(audiofile.playlist_id).queryKey;
       toast.success("Audio file deleted successfully");
 
       if (media?.audiofile.id === audiofile.id) {
@@ -246,7 +230,9 @@ export function useDeletePlaylist() {
 
       // ivalidate caches that are affected by this operation
       queryClient.invalidateQueries({ queryKey: getPlaylistKey(playlist.id) });
-      queryClient.invalidateQueries({ queryKey: getPlaylistsListKey() });
+      queryClient.invalidateQueries({
+        queryKey: playlistsListOptions().queryKey,
+      });
       mediaListInvalidationSideEffect();
     },
     onError: (_, playlist) => {
@@ -276,7 +262,9 @@ export function useLeavePlaylist() {
 
       // ivalidate caches that are affected by this operation
       queryClient.invalidateQueries({ queryKey: getPlaylistKey(playlist.id) });
-      queryClient.invalidateQueries({ queryKey: getPlaylistsListKey() });
+      queryClient.invalidateQueries({
+        queryKey: playlistsListOptions().queryKey,
+      });
       mediaListInvalidationSideEffect();
     },
     onError: (error, playlist) => {

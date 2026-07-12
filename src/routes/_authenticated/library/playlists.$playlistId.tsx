@@ -40,24 +40,38 @@ import AddPlaylistMember from "@/components/custom/add-playlist-member";
 import {
   useDeletePlaylist,
   useLeavePlaylist,
-  usePlaylistAudiofiles,
-  usePlaylistInfo,
+  playlistAudiofilesOptions,
+  playlistInfoOptions,
 } from "@/hooks/media";
 import InfoCard from "@/components/custom/info-card";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AudiofileTable } from "@/components/custom/audiofile-table";
 import { Playlist } from "@/api/requests/media";
 import { useMediaStateStore } from "@/lib/media/stores/state";
 import { useShallow } from "zustand/react/shallow";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { queryClient } from "@/lib/query";
 import { User } from "@/api/requests/user";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId",
 )({
   component: RouteComponent,
+  loader: ({ params }) => {
+    return queryClient.ensureQueryData(playlistInfoOptions(params.playlistId));
+  },
+  pendingMs: 200,
+  pendingComponent: PlaylistSkeleton,
+  errorComponent: () => (
+    <InfoCard
+      variant="destructive"
+      title="Error"
+      text="Something went wrong loading the playlist."
+    />
+  ),
   staticData: {
     // The playlist route is not nested under the library route, so it
     // contributes its logical parent to the trail as well.
@@ -86,8 +100,10 @@ export const Route = createFileRoute(
 // Breadcrumb label that resolves once the playlist metadata query
 // has data.
 function PlaylistCrumb({ playlistId }: { playlistId: Playlist["id"] }) {
-  const { data: playlist } = usePlaylistInfo(playlistId);
-  return playlist?.name ?? "Playlist";
+  // MUST not use useSuspenseQuery here, because the crumb is rendered
+  // without a suspense boundary necessarily.
+  const { data: playlist } = useQuery(playlistInfoOptions(playlistId));
+  return playlist?.name ?? "Loading...";
 }
 
 function RouteComponent() {
@@ -108,11 +124,7 @@ function RouteComponent() {
   const isOnPlaylistIndex = playlistIndexMatch !== undefined;
 
   const { playlistId } = Route.useParams();
-  const {
-    data: playlist,
-    isLoading: playlistLoading,
-    error: playlistError,
-  } = usePlaylistInfo(playlistId);
+  const { data: playlist } = useSuspenseQuery(playlistInfoOptions(playlistId));
 
   const [dialogState, setDialogState] = useState({
     addMember: false,
@@ -123,7 +135,7 @@ function RouteComponent() {
   const router = useRouter();
   const { mutate: deletePlaylist } = useDeletePlaylist();
   const { mutate: leavePlaylist } = useLeavePlaylist();
-  const { queryKey } = usePlaylistAudiofiles(playlistId);
+  const queryKey = playlistAudiofilesOptions(playlistId).queryKey;
 
   // we don't want to subscribe this component to this data since we only need
   // the user id to conditionally render the "leave playlist" option.
@@ -176,18 +188,6 @@ function RouteComponent() {
       });
     }
   }, [playPauseToggle, setMedia, queryKey, media]);
-
-  if (playlistLoading) {
-    return <PlaylistSkeleton />;
-  }
-
-  if (playlistError) {
-    return <InfoCard text="Something went wrong loading the playlist." />;
-  }
-
-  if (!playlist) {
-    return <InfoCard text="Playlist not found." />;
-  }
 
   const isCurrentPlaylist = media?.queryKey === queryKey;
   const isPlaying = isCurrentPlaylist && playbackState === "playing";
@@ -396,7 +396,7 @@ function RouteComponent() {
 
 function PlaylistSkeleton() {
   return (
-    <div className="space-y-6">
+    <section className="flex h-full flex-col gap-6">
       <div className="flex gap-4 rounded-lg border bg-card p-4">
         <Skeleton className="w-32 h-32 md:w-40 md:h-40 rounded-lg shrink-0" />
         <div className="flex flex-col justify-end min-w-0 flex-1 space-y-2">
@@ -412,6 +412,11 @@ function PlaylistSkeleton() {
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Fallback layout to prevent screen blanking */}
+      <div className="h-full min-h-0">
+        <AudiofileTable skeleton audiofiles={[]} queryKey={[]} />
+      </div>
+    </section>
   );
 }

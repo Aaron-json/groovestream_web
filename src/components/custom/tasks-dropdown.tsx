@@ -12,13 +12,12 @@ import { ClipboardList, ListMusic, RefreshCw } from "lucide-react";
 import { TaskType, useTaskStore } from "@/lib/tasks";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
-import { AudioUploadTaskPayload, getCloudTasks, CloudTask } from "@/api/requests/media";
+import { AudioUploadTaskPayload, CloudTask } from "@/api/requests/media";
+import { cloudTasksOptions } from "@/hooks/media";
 
 export default function TasksDropdown() {
-  const { data: cloudTasks, refetch: refetchCloudTasks } = useQuery({
-    queryKey: ["cloud-tasks"],
-    queryFn: getCloudTasks,
-  });
+  const { data: cloudTasks, refetch: refetchCloudTasks } =
+    useQuery(cloudTasksOptions());
 
   const localTasksObj = useTaskStore((state) => state.tasks);
   const localTasks = Object.entries(localTasksObj);

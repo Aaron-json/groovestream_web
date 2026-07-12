@@ -13,7 +13,8 @@ import { DropdownMenuGroup } from "@/components/ui/dropdown-menu";
 import { CustomAvatar, CustomAvatarSkeleton } from "./avatar";
 import { ArrowLeft, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useUser } from "@/hooks/user";
+import { userOptions } from "@/hooks/user";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useMatches, useRouter } from "@tanstack/react-router";
 import {
   Breadcrumb,
@@ -27,7 +28,8 @@ import { Fragment } from "react";
 import { Crumb } from "@/types/router";
 
 const AvatarDropdown = () => {
-  const { data: userData, isLoading: userDataLoading } = useUser();
+  const { data: userData, isLoading: userDataLoading } =
+    useQuery(userOptions());
   const { sessionRef } = useAuth();
 
   const url =

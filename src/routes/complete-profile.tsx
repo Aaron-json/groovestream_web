@@ -136,7 +136,7 @@ function RouteComponent() {
                     </Label>
                   )}
                   {usernameState === "available" && (
-                    <p className="text-sm text-emerald-500">available</p>
+                    <p className="text-sm text-primary">available</p>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -170,7 +170,7 @@ function RouteComponent() {
                       disabled={usernameState === "checking"}
                     />
                     {usernameState === "available" && (
-                      <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-emerald-500" />
+                      <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-primary" />
                     )}
                     {(usernameState === "unavailable" || errors.username) && (
                       <AlertCircle className="absolute right-3 top-3 h-4 w-4 text-destructive" />
