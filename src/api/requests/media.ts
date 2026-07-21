@@ -128,7 +128,7 @@ export async function getEncodingToken(path: GetEncodingToken["Path"]) {
 
 // Requests a signed url to the object
 export async function getObjectSignedUrl(objectId: string) {
-  let url = `/audiofiles/object/${objectId}/url`;
+  const url = `/audiofiles/object/${objectId}/url`;
 
   const response = await axiosClient.get<string>(url, {
     timeout: 1000 * 60 * 2,
@@ -140,7 +140,7 @@ export async function getObjectSignedUrl(objectId: string) {
 // Returns an HTTP url to get the object. Authorization headers
 // must be added manually.
 export function getObjectUrl(objectId: string) {
-  let url = `${PRIMARY_API_URL}/audiofiles/object/${objectId}`;
+  const url = `${PRIMARY_API_URL}/audiofiles/object/${objectId}`;
   return url;
 }
 
@@ -179,17 +179,17 @@ export async function updatePlaylist(
   return response.data;
 }
 
-type ListPlaylistAudiofiles =
-  OpBundle<"list-playlists-by-playlist-id-audiofiles">;
+type GetPlaylistAudiofiles =
+  OpBundle<"get-playlists-by-playlist-id-audiofiles">;
 export async function getPlaylistAudiofiles(
-  path: ListPlaylistAudiofiles["Path"],
-  params?: ListPlaylistAudiofiles["Query"],
+  path: GetPlaylistAudiofiles["Path"],
+  params?: GetPlaylistAudiofiles["Query"],
 ) {
-  const respose = await axiosClient.get<ListPlaylistAudiofiles["Response"]>(
+  const response = await axiosClient.get<GetPlaylistAudiofiles["Response"]>(
     `/playlists/${path.playlist_id}/audiofiles`,
     { params },
   );
-  return respose.data;
+  return response.data;
 }
 
 type GetPlaylistInfo = OpBundle<"get-playlists-by-playlist-id">;
@@ -208,9 +208,9 @@ export async function getPlaylistMembers(path: ListPlaylistMembers["Path"]) {
   return response.data;
 }
 
-type ListPlaylists = OpBundle<"list-playlists">;
-export async function getUserPlaylists(params?: ListPlaylists["Query"]) {
-  const response = await axiosClient.get<ListPlaylists["Response"]>(
+type GetPlaylists = OpBundle<"get-playlists">;
+export async function getUserPlaylists(params?: GetPlaylists["Query"]) {
+  const response = await axiosClient.get<GetPlaylists["Response"]>(
     "/playlists",
     {
       params,
@@ -223,10 +223,10 @@ export async function getUserPlaylists(params?: ListPlaylists["Query"]) {
 // SHARED PLAYLISTS
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-type ListPlaylistInvites = OpBundle<"list-playlist-invites">;
-export type ListPlaylistInvitesError = ListPlaylistInvites["Error"];
-export async function getPlaylistInvites(params: ListPlaylistInvites["Query"]) {
-  const response = await axiosClient.get<ListPlaylistInvites["Response"]>(
+type GetPlaylistInvites = OpBundle<"get-playlist-invites">;
+export type GetPlaylistInvitesError = GetPlaylistInvites["Error"];
+export async function getPlaylistInvites(params: GetPlaylistInvites["Query"]) {
+  const response = await axiosClient.get<GetPlaylistInvites["Response"]>(
     `/playlist-invites`,
     { params },
   );
@@ -297,9 +297,9 @@ export async function getMostPlayedAudioFiles(params: ListMostPlayed["Query"]) {
   return response.data;
 }
 
-type ListHistory = OpBundle<"list-history-audiofiles">;
-export async function getAudioFileHistory(params: ListHistory["Query"]) {
-  const response = await axiosClient.get<ListHistory["Response"]>(
+type GetHistory = OpBundle<"get-history-audiofiles">;
+export async function getAudioFileHistory(params: GetHistory["Query"]) {
+  const response = await axiosClient.get<GetHistory["Response"]>(
     `/history/audiofiles`,
     {
       params,

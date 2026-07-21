@@ -12,9 +12,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "../ui/input";
 import { useForm } from "react-hook-form";
-import { sendPlaylistInvite, Playlist, PostPlaylistInvitesError } from "@/api/requests/media";
+import {
+  sendPlaylistInvite,
+  Playlist,
+  PostPlaylistInvitesError,
+} from "@/api/requests/media";
 import { isAxiosError } from "axios";
-import React from "react";
+import React, { useState } from "react";
 
 type AddPlaylistMemberProps = {
   playlistId: Playlist["id"];
@@ -29,14 +33,15 @@ type AddPlaylistMemberValues = {
 };
 
 export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
-  const { register, handleSubmit, formState, setError, reset } =
+  const [invitedUsername, setInvitedUsername] = useState<string>();
+  const { register, handleSubmit, formState, setError, clearErrors, reset } =
     useForm<AddPlaylistMemberValues>({
       defaultValues: {
         username: "",
       },
     });
 
-  const defaultInternalTrigger = (
+  const defaultTrigger = (
     <Button variant="ghost" size="icon">
       <UserRoundPlus className="h-4 w-4" />
     </Button>
@@ -48,6 +53,7 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
         playlist_id: props.playlistId,
         username: data.username,
       });
+      setInvitedUsername(data.username);
       reset();
     } catch (err) {
       let message = "An unexpected error occurred";
@@ -80,7 +86,8 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
     if (!open) {
       // Reset form state when dialog closes
       reset({ username: "" });
-      setError("root", { message: undefined });
+      setInvitedUsername(undefined);
+      clearErrors();
     }
   };
 
@@ -100,9 +107,7 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
       */}
       {!isExternallyControlled && (
         <DialogTrigger
-          render={
-            props.trigger !== undefined ? props.trigger : defaultInternalTrigger
-          }
+          render={props.trigger !== undefined ? props.trigger : defaultTrigger}
         />
       )}
       <DialogContent>
@@ -116,8 +121,7 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
         {formState.isSubmitSuccessful && !formState.errors.root && (
           <div className="mt-4 flex items-center rounded-md border border-primary/20 bg-primary/10 p-3 text-sm text-primary">
             <Check className="mr-2 h-5 w-5 shrink-0" />
-            Invite sent successfully to{" "}
-            {formState.defaultValues?.username || "user"}.
+            Invite sent successfully to {invitedUsername}.
           </div>
         )}
         {formState.errors.root?.message && (
@@ -140,6 +144,7 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
               id="username"
               type="text"
               placeholder="Username"
+              aria-invalid={!!formState.errors.username}
               {...register("username", {
                 required: "Username is required",
               })}

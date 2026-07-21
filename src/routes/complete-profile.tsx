@@ -1,14 +1,22 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle } from "lucide-react";
 import { TextLogo } from "@/components/custom/textlogo";
-import { createUserProfile, usernameExists } from "@/api/requests/user";
+import {
+  createUserProfile,
+  CreateUserError,
+  usernameExists,
+} from "@/api/requests/user";
 import { queryClient } from "@/lib/query";
+import { userKey } from "@/query/user";
+import { useAuth } from "@/lib/auth";
+import { isAxiosError } from "axios";
 
 export const Route = createFileRoute("/complete-profile")({
   component: RouteComponent,
@@ -26,7 +34,7 @@ export const Route = createFileRoute("/complete-profile")({
   },
 });
 
-const MAX_USERNAME_LENGTH = 25;
+const MAX_USERNAME_LENGTH = 32;
 const MIN_USERNAME_LENGTH = 3;
 
 function validateUsername(username: string) {
@@ -54,6 +62,8 @@ function validateUsername(username: string) {
 }
 
 function RouteComponent() {
+  const { session } = useAuth();
+  const navigate = useNavigate();
   const [usernameState, setUsernameState] = useState<
     "checking" | "available" | "unavailable" | undefined
   >(undefined);
@@ -61,7 +71,7 @@ function RouteComponent() {
   const {
     register,
     handleSubmit,
-    getValues,
+    control,
     setError,
     clearErrors,
     formState: { isSubmitting },
@@ -73,7 +83,7 @@ function RouteComponent() {
     },
   });
 
-  const username = getValues("username");
+  const username = useWatch({ control, name: "username" });
 
   const checkAvailability = async () => {
     if (!username || username.length < 3) return;
@@ -91,7 +101,7 @@ function RouteComponent() {
       } else {
         clearErrors("username");
       }
-    } catch (err) {
+    } catch {
       setError("username", {
         type: "manual",
         message: "Failed to check availability",
@@ -108,8 +118,51 @@ function RouteComponent() {
       return;
     }
 
-    await createUserProfile({ username: data.username });
-    queryClient.invalidateQueries({ queryKey: ["user-exists"] });
+    if (!session) {
+      setError("root", {
+        message: "Your session expired. Please sign in again.",
+      });
+      return;
+    }
+
+    try {
+      await createUserProfile({ username: data.username });
+      await queryClient.invalidateQueries({
+        queryKey: userKey(session.user.id),
+      });
+      await navigate({ to: "/" });
+    } catch (error) {
+      if (
+        isAxiosError<CreateUserError>(error) &&
+        error.response?.status === 409 &&
+        error.response.data.error_code === "USERNAME_TAKEN"
+      ) {
+        setUsernameState("unavailable");
+        setError("username", {
+          type: "server",
+          message: "This username is already taken",
+        });
+        return;
+      }
+
+      if (
+        isAxiosError<CreateUserError>(error) &&
+        error.response?.status === 409 &&
+        error.response.data.error_code === "PROFILE_EXISTS"
+      ) {
+        await queryClient.invalidateQueries({
+          queryKey: userKey(session.user.id),
+        });
+        await navigate({ to: "/" });
+        return;
+      }
+
+      setError("root", {
+        message: isAxiosError<CreateUserError>(error)
+          ? (error.response?.data.message ?? "Unable to create your profile")
+          : "Unable to create your profile. Please try again.",
+      });
+    }
   };
 
   return (
@@ -130,13 +183,8 @@ function RouteComponent() {
               <div className="space-y-1">
                 <div className="flex gap-2 items-center h-6">
                   <Label htmlFor="username">Username</Label>
-                  {errors.username && (
-                    <Label className="text-xs text-destructive">
-                      {errors.username.message}
-                    </Label>
-                  )}
                   {usernameState === "available" && (
-                    <p className="text-sm text-primary">available</p>
+                    <p className="text-sm text-primary">Available</p>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -146,6 +194,10 @@ function RouteComponent() {
                       type="text"
                       placeholder="your username"
                       maxLength={MAX_USERNAME_LENGTH}
+                      aria-invalid={!!errors.username}
+                      aria-describedby={
+                        errors.username ? "username-error" : undefined
+                      }
                       {...register("username", {
                         required: "required",
                         minLength: {
@@ -159,21 +211,17 @@ function RouteComponent() {
                         validate: validateUsername,
                         onChange: () => {
                           setUsernameState(undefined);
-                          clearErrors("username");
+                          clearErrors();
                         },
                       })}
-                      className={`pr-10 ${
-                        usernameState === "unavailable" || errors.username
-                          ? "border-destructive focus-visible:ring-destructive"
-                          : ""
-                      }`}
+                      className="pr-10"
                       disabled={usernameState === "checking"}
                     />
                     {usernameState === "available" && (
-                      <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-primary" />
+                      <CheckCircle className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-primary" />
                     )}
                     {(usernameState === "unavailable" || errors.username) && (
-                      <AlertCircle className="absolute right-3 top-3 h-4 w-4 text-destructive" />
+                      <AlertCircle className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-destructive" />
                     )}
                   </div>
 
@@ -181,8 +229,8 @@ function RouteComponent() {
                     type="button"
                     variant="outline"
                     onClick={checkAvailability}
-                    disabled={!!errors.username || usernameState === "checking"}
-                    className="whitespace-nowrap w-16"
+                    disabled={!isValid || usernameState === "checking"}
+                    className="min-w-20"
                   >
                     {usernameState === "checking" ? "..." : "Check"}
                   </Button>
@@ -195,19 +243,23 @@ function RouteComponent() {
                   </span>
                 </div>
 
+                {errors.username?.message && (
+                  <p id="username-error" className="text-sm text-destructive">
+                    {errors.username.message}
+                  </p>
+                )}
+
                 <div className="mt-4">
                   <p className="text-xs text-muted-foreground italic">
                     Your username will be visible to others
                   </p>
                 </div>
               </div>
-              <div className="flex items-center"></div>
-
-              <div className="flex items-start justify-center">
-                {errors.root && (
-                  <p className="text-sm text-destructive">{errors.root.message}</p>
-                )}
-              </div>
+              {errors.root?.message && (
+                <Alert variant="destructive">
+                  <AlertDescription>{errors.root.message}</AlertDescription>
+                </Alert>
+              )}
 
               <div className="flex justify-center">
                 <Button

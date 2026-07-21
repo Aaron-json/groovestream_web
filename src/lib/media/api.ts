@@ -4,6 +4,10 @@ import {
   getEncodingToken,
   addListeningHistory,
 } from "@/api/requests/media";
+import {
+  addListeningHistoryToCache,
+  invalidateMostPlayed,
+} from "@/query/media";
 
 export interface ResolvedEncoding {
   encoding: NonNullable<ListAudiofilesEncodingsBundle["Response"]>[number];
@@ -43,6 +47,12 @@ export async function resolveEncoding(
 }
 
 export function trackHistory(audiofileId: Audiofile["id"]) {
-  // fire and forget
-  addListeningHistory({ audiofile_id: audiofileId }).catch(() => {});
+  void addListeningHistory({ audiofile_id: audiofileId })
+    .then((historyItem) => {
+      addListeningHistoryToCache(historyItem);
+      void invalidateMostPlayed();
+    })
+    .catch(() => {
+      // Listening history is supplemental and must not interrupt playback.
+    });
 }

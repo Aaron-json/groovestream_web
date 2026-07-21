@@ -9,11 +9,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, ListMusic, RefreshCw } from "lucide-react";
-import { TaskType, useTaskStore } from "@/lib/tasks";
+import { Task, TaskType, useTaskStore } from "@/lib/tasks";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { AudioUploadTaskPayload, CloudTask } from "@/api/requests/media";
-import { cloudTasksOptions } from "@/hooks/media";
+import { cloudTasksOptions } from "@/query/media";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 
 export default function TasksDropdown() {
   const { data: cloudTasks, refetch: refetchCloudTasks } =
@@ -58,9 +64,14 @@ export default function TasksDropdown() {
           <DropdownMenuSeparator />
 
           {!hasAnyTasks ? (
-            <div className="px-3 py-6 text-center">
-              <p className="text-sm text-muted-foreground">No active tasks</p>
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <ClipboardList />
+                </EmptyMedia>
+                <EmptyTitle>No active tasks</EmptyTitle>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <>
               <LocalTasks tasks={localTasks} />
@@ -74,7 +85,7 @@ export default function TasksDropdown() {
 }
 
 interface LocalTasksProps {
-  tasks: Array<[string, any]>;
+  tasks: Array<[string, Task]>;
 }
 
 function LocalTasks({ tasks }: LocalTasksProps) {

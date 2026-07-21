@@ -1,7 +1,7 @@
 import React from "react";
 import { ChevronDown, ChevronUp, LogOut } from "lucide-react";
-import { CustomAvatar, CustomAvatarSkeleton } from "./avatar";
-import { signOut, useAuth } from "@/lib/auth";
+import { CustomAvatar } from "./avatar";
+import { signOut } from "@/lib/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,8 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { userOptions } from "@/hooks/user";
-import { useQuery } from "@tanstack/react-query";
+import { useRouteContext } from "@tanstack/react-router";
 
 export default function SidebarUserCard() {
   return (
@@ -30,17 +29,13 @@ export default function SidebarUserCard() {
 }
 
 const Trigger = (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => {
-  const { data: userData, isLoading: userLoading } = useQuery(userOptions());
-  const { sessionRef } = useAuth();
+  const { auth, user: userData } = useRouteContext({ from: "__root__" });
+  const { session } = auth;
 
   const url =
-    sessionRef.current?.user.user_metadata?.avatar_url ||
-    sessionRef.current?.user.user_metadata?.picture;
-  const email = sessionRef.current?.user?.email;
-
-  if (userLoading) {
-    return <CustomAvatarSkeleton />;
-  }
+    session?.user.user_metadata?.avatar_url ||
+    session?.user.user_metadata?.picture;
+  const email = session?.user.email;
 
   return (
     <Button

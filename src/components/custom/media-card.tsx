@@ -7,17 +7,22 @@ import { Media } from "@/api/requests/media";
 import { isAudiofile } from "@/api/requests/media";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { MediaQueryKey } from "@/hooks/media";
+import type { AudiofileSource } from "@/lib/media/types";
 import { useMediaStateStore } from "@/lib/media/stores/state";
 import { formatDuration } from "@/lib/media/utils";
 export type MediaCardProps = {
   media: Media;
-  queryKey?: MediaQueryKey;
+  audiofileSource?: AudiofileSource;
   onClick?: () => void;
   index?: number;
 };
 
-const MediaCard = ({ media, onClick, queryKey, index }: MediaCardProps) => {
+const MediaCard = ({
+  media,
+  onClick,
+  audiofileSource,
+  index,
+}: MediaCardProps) => {
   const {
     media: currentMedia,
     setMedia,
@@ -32,12 +37,13 @@ const MediaCard = ({ media, onClick, queryKey, index }: MediaCardProps) => {
     playbackState === "playing";
 
   const playAudio = async () => {
-    if (!queryKey) return;
+    if (!audiofileSource) return;
     try {
-      await setMedia(queryKey, index);
-    } catch (error: any) {
+      await setMedia(audiofileSource, index);
+    } catch (error) {
       toast.error("Error loading media", {
-        description: error?.message || "Unable to load media file",
+        description:
+          error instanceof Error ? error.message : "Unable to load media file",
       });
     }
   };

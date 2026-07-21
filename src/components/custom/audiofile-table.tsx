@@ -1,25 +1,22 @@
 import {
   useState,
   useCallback,
-  useDeferredValue,
   useRef,
   useMemo,
   memo,
+  type ReactNode,
 } from "react";
 import { useVirtualizer, VirtualItem } from "@tanstack/react-virtual";
 import {
   useReactTable,
   getCoreRowModel,
-  getFilteredRowModel,
   flexRender,
   createColumnHelper,
-  FilterFn,
 } from "@tanstack/react-table";
-import { Trash2, Search, Play, Pause, MoreHorizontal } from "lucide-react";
+import { Trash2, Play, Pause, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -50,11 +47,14 @@ import {
 import { Audiofile } from "@/api/requests/media";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDuration } from "@/lib/media/utils";
-import { MediaQueryKey, useDeleteAudiofile } from "@/hooks/media";
+import { useDeleteAudiofile } from "@/query/media";
+import type { AudiofileSource } from "@/lib/media/types";
 import { useMediaStateStore } from "@/lib/media/stores/state";
 import { cn } from "@/lib/utils";
 
 declare module "@tanstack/react-table" {
+  // The generic names are required to match TanStack Table's declaration.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData, TValue> {
     className?: string;
   }
@@ -62,42 +62,27 @@ declare module "@tanstack/react-table" {
 
 const columnHelper = createColumnHelper<Audiofile>();
 
-const searchFilter: FilterFn<Audiofile> = (row, _, value) => {
-  const search = String(value).toLowerCase();
-  const file = row.original;
-  return (
-    file.title?.toLowerCase().includes(search) ||
-    file.filename?.toLowerCase().includes(search) ||
-    file.album?.toLowerCase().includes(search) ||
-    file.artists?.some((a) => a.toLowerCase().includes(search)) ||
-    false
-  );
-};
+// Keep these in sync with the h-12 rows and h-10 desktop header below.
+const ROW_HEIGHT = 48;
+const DESKTOP_HEADER_HEIGHT = 40;
 
-const ROW_HEIGHT_MOBILE = 56;
-const ROW_HEIGHT_DESKTOP = 48;
+function getAudiofileRowId(audiofile: Audiofile) {
+  return audiofile.id;
+}
 
 type AudiofileTableProps = {
   audiofiles: Audiofile[];
-  queryKey: MediaQueryKey;
-  skeleton?: boolean;
-  className?: string;
-  showSearch?: boolean;
-  showCount?: boolean;
+  audiofileSource: AudiofileSource;
+  scrollEnd?: ReactNode;
 };
 
 function AudiofileTable({
   audiofiles,
-  queryKey,
-  skeleton,
-  className,
-  showSearch = true,
-  showCount = true,
+  audiofileSource,
+  scrollEnd,
 }: AudiofileTableProps) {
   const isMobile = useIsMobile();
-  const [filter, setFilter] = useState("");
-  const deferredFilter = useDeferredValue(filter);
-  const deleteAudioMutation = useDeleteAudiofile();
+  const { mutate: deleteAudiofile } = useDeleteAudiofile();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { media, setMedia, playPauseToggle, playbackState } =
@@ -116,19 +101,36 @@ function AudiofileTable({
         playPauseToggle();
       } else {
         const index = audiofiles.findIndex((f) => f.id === file.id);
-        setMedia(queryKey, index).catch((error) => {
-          toast.error("Playback Error", { description: error.message });
+        setMedia(audiofileSource, index).catch((error) => {
+          toast.error("Playback Error", {
+            description: error instanceof Error ? error.message : undefined,
+          });
         });
       }
     },
-    [audiofiles, media?.audiofile?.id, playPauseToggle, setMedia, queryKey],
+    [
+      audiofiles,
+      audiofileSource,
+      media?.audiofile?.id,
+      playPauseToggle,
+      setMedia,
+    ],
   );
 
   const handleDelete = useCallback(
     (audio: Audiofile) => {
-      deleteAudioMutation.mutate(audio);
+      deleteAudiofile(audio, {
+        onSuccess: () => {
+          const { media: currentMedia, unloadMedia } =
+            useMediaStateStore.getState();
+          if (currentMedia?.audiofile.id === audio.id) unloadMedia();
+          toast.success("Audio file deleted successfully");
+        },
+        onError: () =>
+          toast.error(`Error deleting audio file "${audio.filename}"`),
+      });
     },
-    [deleteAudioMutation.mutate],
+    [deleteAudiofile],
   );
 
   const columns = useMemo(
@@ -142,64 +144,30 @@ function AudiofileTable({
   const table = useReactTable({
     data: audiofiles,
     columns,
-    state: { globalFilter: deferredFilter },
-    onGlobalFilterChange: setFilter,
-    globalFilterFn: searchFilter,
+    getRowId: getAudiofileRowId,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
   });
 
   const { rows } = table.getRowModel();
-
-  const rowHeight = isMobile ? ROW_HEIGHT_MOBILE : ROW_HEIGHT_DESKTOP;
+  const getItemKey = useCallback((index: number) => rows[index].id, [rows]);
+  const scrollMargin = isMobile ? 0 : DESKTOP_HEADER_HEIGHT;
 
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => containerRef.current,
-    estimateSize: () => rowHeight,
+    estimateSize: () => ROW_HEIGHT,
+    getItemKey,
+    scrollMargin,
     overscan: 10,
   });
 
   const virtualRows = virtualizer.getVirtualItems();
   const totalSize = virtualizer.getTotalSize();
 
-  if (skeleton) {
-    return <TableSkeleton isMobile={isMobile} />;
-  }
-
-  const hasNoData = !audiofiles || audiofiles.length === 0;
-  const hasFilterNoResults = rows.length === 0 && filter && !hasNoData;
-  const showEmpty = hasNoData || hasFilterNoResults;
-
   return (
-    <div
-      className={cn("flex max-h-full flex-col rounded-md border", className)}
-    >
-      {showSearch && (
-        <div className="shrink-0 flex items-center gap-3 border-b p-3">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search tracks..."
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          {showCount && (
-            <span className="hidden text-sm text-muted-foreground sm:inline-block">
-              {rows.length} tracks
-            </span>
-          )}
-        </div>
-      )}
-
+    <div className="flex min-h-0 flex-1 flex-col">
       <div ref={containerRef} className="flex-1 min-h-0 overflow-auto">
-        {showEmpty ? (
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            {filter ? "No tracks match your search." : "No tracks found."}
-          </div>
-        ) : (
+        {rows.length > 0 && (
           <Table className={cn(isMobile ? undefined : "table-fixed")}>
             {!isMobile && (
               <TableHeader>
@@ -230,10 +198,12 @@ function AudiofileTable({
                 rows={rows}
                 table={table}
                 onPlay={handlePlay}
+                scrollMargin={scrollMargin}
               />
             </TableBody>
           </Table>
         )}
+        {scrollEnd}
       </div>
     </div>
   );
@@ -247,6 +217,7 @@ interface VirtualizedRowsProps {
   >["rows"];
   table: ReturnType<typeof useReactTable<Audiofile>>;
   onPlay: (file: Audiofile) => void;
+  scrollMargin: number;
 }
 
 const VirtualizedRows = memo(function VirtualizedRows({
@@ -255,11 +226,14 @@ const VirtualizedRows = memo(function VirtualizedRows({
   rows,
   table,
   onPlay,
+  scrollMargin,
 }: VirtualizedRowsProps) {
-  const paddingTop = virtualRows[0]?.start ?? 0;
+  const paddingTop =
+    virtualRows.length > 0 ? virtualRows[0].start - scrollMargin : 0;
   const paddingBottom =
     virtualRows.length > 0
-      ? totalSize - virtualRows[virtualRows.length - 1].end
+      ? totalSize -
+        (virtualRows[virtualRows.length - 1].end - scrollMargin)
       : 0;
 
   return (
@@ -278,7 +252,7 @@ const VirtualizedRows = memo(function VirtualizedRows({
           <TableRow
             key={row.id}
             onClick={() => onPlay(row.original)}
-            className="cursor-pointer group"
+            className="h-12 cursor-pointer group"
           >
             {row.getVisibleCells().map((cell) => (
               <TableCell
@@ -512,13 +486,12 @@ function RowActions({ file, onDelete }: RowActionsProps) {
   );
 }
 
-function TableSkeleton({ isMobile }: { isMobile: boolean }) {
+function AudiofileTableSkeleton() {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="flex max-h-full flex-col rounded-md border">
-      <div className="shrink-0 border-b p-3">
-        <Skeleton className="h-8 w-full" />
-      </div>
-      <div className="flex-1 min-h-0 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 overflow-hidden">
         <div className="space-y-3 p-3">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3">
@@ -536,4 +509,4 @@ function TableSkeleton({ isMobile }: { isMobile: boolean }) {
   );
 }
 
-export { AudiofileTable, type AudiofileTableProps };
+export { AudiofileTable, AudiofileTableSkeleton, type AudiofileTableProps };

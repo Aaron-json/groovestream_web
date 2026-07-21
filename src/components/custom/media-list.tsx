@@ -1,23 +1,18 @@
-import { MediaQueryKey } from "@/hooks/media";
+import type { AudiofileSource } from "@/lib/media/types";
 import MediaCard, { MediaCardSkeleton } from "./media-card";
 import { Audiofile, Playlist } from "@/api/requests/media";
 
 export type MediaCardListProps = {
-  queryKey?: MediaQueryKey;
+  audiofileSource?: AudiofileSource;
   title?: string;
   media: (Audiofile | Playlist)[];
-  loading?: boolean;
 };
 
 export default function MediaList({
   title,
   media,
-  loading,
-  queryKey,
+  audiofileSource,
 }: MediaCardListProps) {
-  if (loading) {
-    return <MediaListSkeleton />;
-  }
   return (
     <div className="flex flex-col w-full p-1 gap-1">
       {title && (
@@ -28,7 +23,7 @@ export default function MediaList({
           <MediaCard
             key={audiofile.id}
             media={audiofile}
-            queryKey={queryKey}
+            audiofileSource={audiofileSource}
             index={index}
           />
         ))}

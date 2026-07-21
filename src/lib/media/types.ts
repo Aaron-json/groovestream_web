@@ -1,11 +1,17 @@
 import { Audiofile } from "@/api/requests/media";
-import { MediaQueryKey } from "@/hooks/media";
 
 export type PlaybackState = "unloaded" | "playing" | "loading" | "paused";
 
-export type CurrentMedia = {
-  index?: number;
+export type MediaQueryKey = readonly string[];
+
+export type AudiofileSource = {
   queryKey: MediaQueryKey;
+  getAudiofiles: () => Audiofile[];
+};
+
+export type CurrentMedia = {
+  index: number;
+  source: AudiofileSource;
   audiofile: Audiofile;
 };
 
@@ -52,5 +58,5 @@ export type PlayerCallbacks = Partial<{
   onPause: () => void;
   onVolumeChange: (volume: number, muted: boolean) => void;
   refreshToken: () => Promise<string>;
-  onError: (error: any) => void;
+  onError: (error: unknown) => void;
 }>;

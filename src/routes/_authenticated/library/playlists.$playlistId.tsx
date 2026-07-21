@@ -5,6 +5,7 @@ import {
   Link,
   useRouter,
   useMatch,
+  useRouteContext,
 } from "@tanstack/react-router";
 import {
   MoreVertical,
@@ -40,20 +41,21 @@ import AddPlaylistMember from "@/components/custom/add-playlist-member";
 import {
   useDeletePlaylist,
   useLeavePlaylist,
-  playlistAudiofilesOptions,
   playlistInfoOptions,
-} from "@/hooks/media";
+  playlistAudiofilesOptions,
+  createPlaylistAudiofileSource,
+} from "@/query/media";
 import InfoCard from "@/components/custom/info-card";
 import { toast } from "sonner";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AudiofileTable } from "@/components/custom/audiofile-table";
-import { Playlist } from "@/api/requests/media";
+import { AudiofileTableSkeleton } from "@/components/custom/audiofile-table";
+import { type LeavePlaylistError, type Playlist } from "@/api/requests/media";
+import { isAxiosError } from "axios";
 import { useMediaStateStore } from "@/lib/media/stores/state";
 import { useShallow } from "zustand/react/shallow";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { queryClient } from "@/lib/query";
-import { User } from "@/api/requests/user";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute(
@@ -133,41 +135,70 @@ function RouteComponent() {
   });
 
   const router = useRouter();
+  const { user } = useRouteContext({ from: "__root__" });
   const { mutate: deletePlaylist } = useDeletePlaylist();
   const { mutate: leavePlaylist } = useLeavePlaylist();
-  const queryKey = playlistAudiofilesOptions(playlistId).queryKey;
-
-  // we don't want to subscribe this component to this data since we only need
-  // the user id to conditionally render the "leave playlist" option.
-  // We also do't want to cause a network request because if we don't have the
-  // user data, we can just show the option and the server will reject it
-  // which avoid the extra request.
-  // This does create potential incosistencies, where the user may or may not see
-  // the option depending on whether or not the user data is in the cache. This is
-  // fine because the user data is currently loaded every time the page loads.
-  const user = queryClient.getQueryData<User>(["user"]);
+  const playlistAudiofilesQuery = useMemo(
+    () => playlistAudiofilesOptions(playlistId),
+    [playlistId],
+  );
+  const playlistAudiofileSource = useMemo(
+    () => createPlaylistAudiofileSource(playlistId),
+    [playlistId],
+  );
 
   const handleDeletePlaylist = useCallback(
-    async (playlist: Playlist) => {
+    (playlist: Playlist) => {
+      toast(`Deleting playlist "${playlist.name}"`, {
+        description: "This may take a while",
+      });
       deletePlaylist(playlist, {
         onSuccess: () => {
+          const { media: currentMedia, unloadMedia } =
+            useMediaStateStore.getState();
+          if (currentMedia?.audiofile.playlist_id === playlist.id) {
+            unloadMedia();
+          }
+          toast.success("Playlist deleted successfully");
           router.navigate({
             from: Route.fullPath,
             to: "/library",
           });
         },
+        onError: () =>
+          toast.error(`Error deleting playlist "${playlist.name}"`),
       });
     },
     [deletePlaylist, router],
   );
 
   const handleLeavePlaylist = useCallback(
-    async (playlist: Playlist) => {
+    (playlist: Playlist) => {
       leavePlaylist(playlist, {
         onSuccess: () => {
+          const { media: currentMedia, unloadMedia } =
+            useMediaStateStore.getState();
+          if (currentMedia?.audiofile.playlist_id === playlist.id) {
+            unloadMedia();
+          }
+          toast.success(`Successfully left the playlist "${playlist.name}"`);
           router.navigate({
             from: Route.fullPath,
             to: "/library",
+          });
+        },
+        onError: (error) => {
+          let message = "Could not leave the playlist. Please try again.";
+          if (isAxiosError<LeavePlaylistError>(error)) {
+            const errorCode = error.response?.data.error_code;
+            if (errorCode === "OWNER_CANNOT_LEAVE") {
+              message = "The owner of a playlist cannot leave it.";
+            } else {
+              message = error.response?.data.message || message;
+            }
+          }
+          toast.error(`Error leaving playlist "${playlist.name}"`, {
+            description: message,
           });
         },
       });
@@ -177,19 +208,32 @@ function RouteComponent() {
 
   const handlePlayback = useCallback(async () => {
     try {
-      if (media?.queryKey === queryKey) {
+      if (media?.audiofile.playlist_id === playlistId) {
         playPauseToggle();
       } else {
-        await setMedia(queryKey);
+        await queryClient.ensureInfiniteQueryData(playlistAudiofilesQuery);
+        if (playlistAudiofileSource.getAudiofiles().length === 0) {
+          toast.info("This playlist has no tracks to play");
+          return;
+        }
+        await setMedia(playlistAudiofileSource);
       }
-    } catch (error: any) {
+    } catch (error) {
       toast.error("Playback Error", {
-        description: error?.message || "Unable to play playlist",
+        description:
+          error instanceof Error ? error.message : "Unable to play playlist",
       });
     }
-  }, [playPauseToggle, setMedia, queryKey, media]);
+  }, [
+    media?.audiofile.playlist_id,
+    playPauseToggle,
+    playlistAudiofilesQuery,
+    playlistAudiofileSource,
+    playlistId,
+    setMedia,
+  ]);
 
-  const isCurrentPlaylist = media?.queryKey === queryKey;
+  const isCurrentPlaylist = media?.audiofile.playlist_id === playlistId;
   const isPlaying = isCurrentPlaylist && playbackState === "playing";
   const isLoading = isCurrentPlaylist && playbackState === "loading";
 
@@ -413,9 +457,13 @@ function PlaylistSkeleton() {
         </div>
       </div>
 
-      {/* Fallback layout to prevent screen blanking */}
       <div className="h-full min-h-0">
-        <AudiofileTable skeleton audiofiles={[]} queryKey={[]} />
+        <div className="flex max-h-full flex-col rounded-md border">
+          <div className="shrink-0 border-b p-3">
+            <Skeleton className="h-8 w-full" />
+          </div>
+          <AudiofileTableSkeleton />
+        </div>
       </div>
     </section>
   );

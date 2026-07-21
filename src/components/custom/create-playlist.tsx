@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { createPlaylist, CreatePlaylistError } from "@/api/requests/media";
 import { isAxiosError } from "axios";
-import { AlertCircle } from "lucide-react";
-import { queryClient } from "@/lib/query";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 import { Drawer, DrawerTrigger, DrawerContent } from "@/components/ui/drawer";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
+import { addPlaylistToCache } from "@/query/media";
 
 type CreatePlaylistValues = {
   name: string;
@@ -66,14 +67,15 @@ export function CreatePlaylistForm({ onFinish }: CreatePlaylistFormProps) {
 
   const onSubmit = async (data: CreatePlaylistValues) => {
     try {
-      await createPlaylist({ name: data.name });
-      queryClient.invalidateQueries({ queryKey: ["playlists"] });
+      const playlist = await createPlaylist({ name: data.name });
+      addPlaylistToCache(playlist);
       reset();
+      toast.success("Playlist created");
       if (onFinish) onFinish();
-    } catch (err: any) {
+    } catch (error) {
       let message = "An unexpected error occurred.";
-      if (isAxiosError<CreatePlaylistError>(err)) {
-        message = err.response?.data.message || message;
+      if (isAxiosError<CreatePlaylistError>(error)) {
+        message = error.response?.data.message || message;
       }
       setError("root", {
         message,
@@ -98,24 +100,21 @@ export function CreatePlaylistForm({ onFinish }: CreatePlaylistFormProps) {
         <Label htmlFor="playlist-name">Playlist Name</Label>
         <Input
           id="playlist-name"
+          aria-invalid={!!formState.errors.name}
           {...register("name", { required: "required" })}
         />
+        {formState.errors.name?.message && (
+          <p className="text-sm text-destructive">
+            {formState.errors.name.message}
+          </p>
+        )}
       </div>
 
-      <div className="w-full flex flex-col h-8">
-        {formState.isSubmitSuccessful && (
-          <div className="flex items-center">
-            <Check className="mr-2 h-3 w-3" />
-            <span className="text-sm">Playlist created successfully</span>
-          </div>
-        )}
-        {formState.errors.root && (
-          <div className="flex items-center bg-destructive text-destructive rounded-md border p-2">
-            <AlertCircle className="mr-2 h-3 w-3" />
-            <span className="text-sm">{formState.errors.root.message}</span>
-          </div>
-        )}
-      </div>
+      {formState.errors.root?.message && (
+        <Alert variant="destructive">
+          <AlertDescription>{formState.errors.root.message}</AlertDescription>
+        </Alert>
+      )}
       <div className="w-full flex justify-around gap-6">
         <Button
           type="button"

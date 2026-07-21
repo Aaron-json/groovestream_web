@@ -31,7 +31,7 @@ export default class WebAudioPlayer implements MediaPlayer {
     if (typeof window === "undefined") return false;
     // We do not use shaka for this check to avoid loading the massive
     // bundle on app startup
-    return !!window.MediaSource || !!(window as any).WebKitMediaSource;
+    return !!window.MediaSource || "WebKitMediaSource" in window;
   }
 
   setCallbacks(cb: PlayerCallbacks): void {
@@ -155,40 +155,43 @@ export default class WebAudioPlayer implements MediaPlayer {
       }
     });
 
-    player.configure("streaming.failureCallback", async (error: any) => {
-      const data = error.data;
-      if (
-        !Array.isArray(data) ||
-        typeof data[0] !== "string" ||
-        typeof data[1] !== "number"
-      ) {
-        return;
-      }
-      console.log("failureCallback", data);
-      const url = data[0];
-      const code = data[1];
-      if (
-        url.startsWith(CDN_URL) &&
-        code === 401 &&
-        this.callbacks.refreshToken &&
-        !this.tokenRefreshPromise
-      ) {
-        this.tokenRefreshPromise = this.callbacks
-          .refreshToken()
-          .then((token) => {
-            if (!token) {
-              throw new Error("Token refresh callback not provided");
-            }
-            this.authToken = token;
-            player.retryStreaming();
-            return token;
-          })
-          .finally(() => (this.tokenRefreshPromise = undefined));
-      }
+    player.configure(
+      "streaming.failureCallback",
+      async (error: shaka.util.Error) => {
+        const data = error.data;
+        if (
+          !Array.isArray(data) ||
+          typeof data[0] !== "string" ||
+          typeof data[1] !== "number"
+        ) {
+          return;
+        }
+        console.log("failureCallback", data);
+        const url = data[0];
+        const code = data[1];
+        if (
+          url.startsWith(CDN_URL) &&
+          code === 401 &&
+          this.callbacks.refreshToken &&
+          !this.tokenRefreshPromise
+        ) {
+          this.tokenRefreshPromise = this.callbacks
+            .refreshToken()
+            .then((token) => {
+              if (!token) {
+                throw new Error("Token refresh callback not provided");
+              }
+              this.authToken = token;
+              player.retryStreaming();
+              return token;
+            })
+            .finally(() => (this.tokenRefreshPromise = undefined));
+        }
 
-      // let the network engine handle the error as normal
-      await this.tokenRefreshPromise?.catch(() => {});
-    });
+        // let the network engine handle the error as normal
+        await this.tokenRefreshPromise?.catch(() => {});
+      },
+    );
   }
 
   // this function is called during initialization and sets up references to

@@ -5,9 +5,8 @@ import { routeTree } from "./routeTree.gen";
 import { useAuth } from "./lib/auth";
 import { TextLogo } from "./components/custom/textlogo";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
-import { getUser } from "./api/requests/user";
 import { queryClient } from "./lib/query";
-import { isAxiosError } from "axios";
+import { userOptions } from "./query/user";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import { TooltipProvider } from "./components/ui/tooltip";
 
@@ -33,29 +32,19 @@ declare module "@tanstack/react-router" {
 
 function App() {
   const auth = useAuth();
+  const userId = auth.session?.user.id;
 
   const {
     data: user,
     isLoading: userLoading,
     error: userError,
   } = useQuery({
-    queryKey: ["user-exists"],
-    queryFn: async () => {
-      try {
-        return await getUser();
-      } catch (error) {
-        if (isAxiosError(error) && error.response?.status === 404) {
-          return null;
-        } else {
-          throw error;
-        }
-      }
-    },
-    staleTime: Infinity,
+    ...userOptions(userId ?? ""),
+    enabled: !!userId,
   });
 
-  // handles initial loading state
-  if (auth.isAuthenticated === undefined || userLoading) {
+  // Do not run route guards until the initial auth state is authoritative.
+  if (!auth.isInitialized || (auth.isAuthenticated && userLoading)) {
     return (
       <section className="h-full flex justify-center items-center">
         <TextLogo />
@@ -81,7 +70,9 @@ function App() {
       </section>
     );
   }
-  return <RouterProvider router={router} context={{ auth, user }} />;
+  return (
+    <RouterProvider router={router} context={{ auth, user: user ?? null }} />
+  );
 }
 
 // Render the app

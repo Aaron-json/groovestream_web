@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback } from "react";
 import { FileAudio, X, Upload, Plus } from "lucide-react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { playlistInfoOptions, useUploadAudioFile } from "@/hooks/media";
+import { playlistInfoOptions, useUploadAudioFile } from "@/query/media";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -89,10 +89,26 @@ export default function RouteComponent() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  const handleUpload = useCallback(async () => {
+  const handleUpload = useCallback(() => {
     if (!playlist || files.length === 0) return;
 
-    uploadFunc(files, playlist);
+    toast("Uploading audio files", {
+      description:
+        "This may take a while. You can monitor progress from your tasks list",
+    });
+    void uploadFunc(files, playlist)
+      .then(({ failures }) => {
+        for (const { file, error } of failures) {
+          toast.error(`Error uploading "${file.name}"`, {
+            description: error instanceof Error ? error.message : undefined,
+          });
+        }
+      })
+      .catch((error) => {
+        toast.error("Unexpected upload error", {
+          description: error instanceof Error ? error.message : undefined,
+        });
+      });
     navigate({
       to: "/library/playlists/$playlistId",
       params: { playlistId },

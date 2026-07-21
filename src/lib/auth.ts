@@ -1,9 +1,11 @@
-import { useRef } from "react";
 import axiosClient from "../api/api";
 import { Session } from "@supabase/supabase-js";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Route as AuthRoute } from "@/routes/auth";
+import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
+import { queryClient } from "@/lib/query";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const anon_key = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -54,24 +56,74 @@ export async function signOut() {
   window.location.reload();
 }
 
-export function useAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>();
-  const sessionRef = useRef<Session | null>(null);
+type AuthState = {
+  session: Session | null;
+  isInitialized: boolean;
+  setSession: (session: Session | null) => void;
+};
 
-  useEffect(() => {
-    // get the initial session
-    const { data } = supabaseClient.auth.onAuthStateChange((_, session) => {
-      sessionRef.current = session;
-      setIsAuthenticated(!!session);
+// Private internal store for auth state
+const useAuthStore = create<AuthState>((set) => ({
+  session: null,
+  isInitialized: false,
+  setSession: (session) =>
+    set({
+      session,
+      isInitialized: true,
+    }),
+}));
+
+let authSubscriptionStarted = false;
+let authenticatedUserId: string | null | undefined;
+
+// Initiates the auth state subscription. Only needs to run once.
+function startAuthSubscription() {
+  if (authSubscriptionStarted) return;
+  authSubscriptionStarted = true;
+
+  // helper to set the auth state in the store
+  const setSession = (session: Session | null) => {
+    const nextUserId = session?.user.id ?? null;
+
+    // Clear cache whenever the user identity changes.
+    if (
+      authenticatedUserId !== undefined &&
+      authenticatedUserId !== nextUserId
+    ) {
+      queryClient.clear();
+    }
+
+    authenticatedUserId = nextUserId;
+
+    useAuthStore.getState().setSession(session);
+  };
+
+  const {
+    data: { subscription },
+  } = supabaseClient.auth.onAuthStateChange((_, session) => {
+    setSession(session);
+  });
+
+  // handle hot reloads since we do not unsubscribe
+  if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+      subscription.unsubscribe();
+      authSubscriptionStarted = false;
     });
+  }
+}
 
-    // get initial session. will trigger onAuthStateChange
-    supabaseClient.auth.getSession();
+// Hook for accessing/reacting to the auth state.
+// Auth state is never unsubscribed from since it is a singleton
+// that lasts for the lifetime of the application.
+export function useAuth() {
+  useEffect(startAuthSubscription, []);
 
-    return () => {
-      data.subscription.unsubscribe();
-    };
-  }, []);
-
-  return { sessionRef, isAuthenticated } as const;
+  return useAuthStore(
+    useShallow((state) => ({
+      session: state.session,
+      isInitialized: state.isInitialized,
+      isAuthenticated: state.session !== null,
+    })),
+  );
 }

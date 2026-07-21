@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { signInGoogle } from "@/lib/auth";
 import { TextLogo } from "@/components/custom/textlogo";
 import { CloudUpload, MusicIcon, UsersIcon } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useState } from "react";
 
 export const Route = createFileRoute("/auth")({
   component: RouteComponent,
@@ -18,6 +20,21 @@ export const Route = createFileRoute("/auth")({
 });
 
 export default function RouteComponent() {
+  const [signInError, setSignInError] = useState<string>();
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
+  const handleSignIn = async () => {
+    setSignInError(undefined);
+    setIsSigningIn(true);
+
+    try {
+      await signInGoogle();
+    } catch {
+      setSignInError("Unable to start Google sign-in. Please try again.");
+      setIsSigningIn(false);
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row w-full h-full">
       <div className="flex flex-col justify-center px-6 py-12 lg:px-16 lg:py-20 bg-secondary/40 lg:flex-1">
@@ -100,13 +117,19 @@ export default function RouteComponent() {
                 variant="outline"
                 size="lg"
                 className="w-full flex items-center justify-center gap-3 h-10"
-                onClick={() => {
-                  signInGoogle();
-                }}
+                onClick={handleSignIn}
+                disabled={isSigningIn}
               >
                 <FcGoogle className="w-5 h-5" />
-                <span className="font-medium">Continue with Google</span>
+                <span className="font-medium">
+                  {isSigningIn ? "Connecting…" : "Continue with Google"}
+                </span>
               </Button>
+              {signInError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{signInError}</AlertDescription>
+                </Alert>
+              )}
             </CardContent>
           </Card>
 

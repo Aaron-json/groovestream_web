@@ -1,6 +1,5 @@
-import SidebarToggle from "./sidebar-toggle";
 import TasksDropdown from "./tasks-dropdown";
-import { signOut, useAuth } from "@/lib/auth";
+import { signOut } from "@/lib/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,12 +9,16 @@ import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { DropdownMenuGroup } from "@/components/ui/dropdown-menu";
-import { CustomAvatar, CustomAvatarSkeleton } from "./avatar";
+import { CustomAvatar } from "./avatar";
 import { ArrowLeft, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { userOptions } from "@/hooks/user";
-import { useQuery } from "@tanstack/react-query";
-import { Link, useMatches, useRouter } from "@tanstack/react-router";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  Link,
+  useMatches,
+  useRouteContext,
+  useRouter,
+} from "@tanstack/react-router";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -28,18 +31,13 @@ import { Fragment } from "react";
 import { Crumb } from "@/types/router";
 
 const AvatarDropdown = () => {
-  const { data: userData, isLoading: userDataLoading } =
-    useQuery(userOptions());
-  const { sessionRef } = useAuth();
+  const { auth, user: userData } = useRouteContext({ from: "__root__" });
+  const { session } = auth;
 
   const url =
-    sessionRef.current?.user.user_metadata?.avatar_url ||
-    sessionRef.current?.user.user_metadata?.picture;
-  const email = sessionRef.current?.user?.email;
-
-  if (userDataLoading) {
-    return <CustomAvatarSkeleton />;
-  }
+    session?.user.user_metadata?.avatar_url ||
+    session?.user.user_metadata?.picture;
+  const email = session?.user.email;
 
   return (
     <DropdownMenu>
@@ -92,7 +90,7 @@ export default function TopBar() {
   return (
     <header className="sticky top-0 z-50 grid h-12 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-2 bg-background/60 backdrop-blur-sm border-b">
       <div className="flex items-center gap-1">
-        <SidebarToggle />
+        <SidebarTrigger />
         {router.history.canGoBack() && (
           <Button
             variant="ghost"

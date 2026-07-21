@@ -7,7 +7,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { playlistInfoOptions } from "@/hooks/media";
+import { playlistInfoOptions } from "@/query/media";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CurrentMedia } from "@/lib/media/types";
 import { useMediaStateStore } from "@/lib/media/stores/state";
@@ -162,6 +162,8 @@ function TrackDetail({
   );
 }
 
+// Used to navigate to the playlist when the playlist name is clicked
+// in the audio description.
 function PlaylistLink({ playlistId }: { playlistId: string }) {
   const media = useMediaStateStore((state) => state.media);
   const { data: playlist } = useQuery({
@@ -191,14 +193,14 @@ function Queue({ media }: { media: CurrentMedia }) {
   // most played, listening history...). Subscribe to that list in the
   // query cache instead of fetching, so the panel always shows exactly
   // what next/prev will use.
-  const { data: queue } = useQuery<Audiofile[] | null>({
-    queryKey: media.queryKey,
+  useQuery({
+    queryKey: media.source.queryKey,
     queryFn: skipToken,
   });
-  const queueItems = queue ?? [];
+  const queueItems = media.source.getAudiofiles();
 
   function playQueueItem(index: number) {
-    setMedia(media.queryKey, index).catch((error) => {
+    setMedia(media.source, index).catch((error) => {
       toast.error("Playback Error", {
         description: error instanceof Error ? error.message : undefined,
       });

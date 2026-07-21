@@ -1,18 +1,15 @@
 import { create } from "zustand";
 import { toast } from "sonner";
-import { MediaQueryKey } from "@/hooks/media";
-
 import { resolveEncoding, trackHistory } from "../api";
 import { getNextAudioIndex } from "../utils";
 import {
+  AudiofileSource,
   CurrentMedia,
   MediaPlayer,
   PlaybackState,
   PlayerCallbacks,
 } from "../types";
 import { getEncodingToken } from "@/api/requests/media";
-import { queryClient } from "@/lib/query";
-import { Audiofile } from "@/api/requests/media";
 
 export type MediaSlice = {
   media: CurrentMedia | undefined;
@@ -24,7 +21,7 @@ export type MediaSlice = {
 
   // actions
   init: (player: () => MediaPlayer) => Promise<void>;
-  setMedia: (queryKey: MediaQueryKey, index?: number) => Promise<void>;
+  setMedia: (source: AudiofileSource, index?: number) => Promise<void>;
   unloadMedia: () => void;
   play: () => Promise<void>;
   pause: () => void;
@@ -72,19 +69,22 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
     set({ player, _playerFactory: factory, volume: player.getVolume() });
   },
 
-  setMedia: async (queryKey, index = 0) => {
+  setMedia: async (source, index = 0) => {
     const currentMedia = get().media;
-    const list = queryClient.getQueryData<Audiofile[]>(queryKey);
+    const list = source.getAudiofiles();
     const audiofile = list?.[index];
     const player = get().player;
 
-    if (!player || !audiofile) {
-      return;
+    if (!player) {
+      throw new Error("Media player is not initialized");
+    }
+    if (!audiofile) {
+      throw new Error("The selected track is no longer available");
     }
 
     // if same song, replay
     if (
-      queryKey === currentMedia?.queryKey &&
+      source === currentMedia?.source &&
       audiofile.id === currentMedia?.audiofile.id
     ) {
       player.seek(0);
@@ -113,16 +113,16 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
       });
       await player.load(manifestUrl);
 
-      _setMediaState({ index, audiofile, queryKey });
+      _setMediaState({ index, audiofile, source });
       await player.play();
 
       trackHistory(audiofile.id);
-    } catch (error: any) {
-      if (error.name !== "AbortError") {
-        console.error(error);
-        unloadMedia();
-        toast.error("Failed to load audio");
-      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
+
+      console.error(error);
+      unloadMedia();
+      throw error;
     }
   },
 
@@ -144,7 +144,7 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
     if (playbackState === "paused") {
       try {
         await player.play();
-      } catch (e) {
+      } catch {
         unloadMedia();
       }
     }
@@ -207,10 +207,11 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
       return;
     }
 
-    const list = queryClient.getQueryData<Audiofile[]>(media.queryKey);
-    if (!list) {
+    const list = media.source.getAudiofiles();
+    if (list.length === 0) {
       unloadMedia();
-      throw new Error("Media list not found");
+      toast.error("The playback queue is no longer available");
+      return;
     }
 
     const nextIndex = getNextAudioIndex(
@@ -220,7 +221,7 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
       media.index,
     );
 
-    setMedia(media.queryKey, nextIndex).catch(() => {
+    setMedia(media.source, nextIndex).catch(() => {
       unloadMedia();
       toast.error("Error changing track");
     });

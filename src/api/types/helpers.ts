@@ -75,4 +75,4 @@ export type OpBundle<T extends keyof operations> = {
 };
 
 // Keep this as a fallback for generic errors
-export type ResponseError = OpError<any>;
+export type ResponseError = OpError<keyof operations>;
