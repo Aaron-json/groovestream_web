@@ -5,33 +5,33 @@ import {
   useMutation,
 } from "@tanstack/react-query";
 import {
-  deleteAudioFile,
+  deleteAudiofile,
   deletePlaylist,
-  getAudioFileHistory,
-  getMostPlayedAudioFiles,
-  getPlaylistAudiofiles,
-  getPlaylistInfo,
-  getPlaylistInvites,
-  getCloudTasks,
-  getUserPlaylists,
+  getPlaylist,
   leavePlaylist,
-  uploadAudiofile,
-  Playlist,
+  listListeningHistory,
+  listMostPlayedAudiofiles,
+  listPlaylistAudiofiles,
+  listPlaylistInvites,
+  listPlaylists,
+  listTasks,
+} from "@/api/generated/sdk.gen";
+import { uploadAudiofile } from "@/api/upload";
+import type {
   Audiofile,
-} from "../api/requests/media";
+  AudiofilePage,
+  HistoryItem,
+  HistoryMutationItem,
+  HistoryPage,
+  Playlist,
+  PlaylistInvite,
+  PlaylistInvitePage,
+  PlaylistPage,
+} from "@/api/types";
 import { MediaTask, NewMediaTask, TaskType, useTaskStore } from "@/lib/tasks";
 import { queryClient } from "@/lib/query";
 
 import type { AudiofileSource } from "@/lib/media/types";
-import type { components } from "@/api/types/schema";
-
-type HistoryItem = components["schemas"]["GetListeningHistoryRow"];
-type HistoryMutationItem = components["schemas"]["GetListeningHistoryInfoRow"];
-type PlaylistInvite = components["schemas"]["PlaylistInviteView"];
-type AudiofilePage = components["schemas"]["PaginationAudiofileView"];
-type HistoryPage = components["schemas"]["PaginationGetListeningHistoryRow"];
-type PlaylistPage = components["schemas"]["PaginationPlaylistView"];
-type PlaylistInvitePage = components["schemas"]["PaginationPlaylistInviteView"];
 
 const PLAYLISTS_KEY = ["playlists"] as const;
 export const PLAYLISTS_LIST_KEY = [...PLAYLISTS_KEY, "list"] as const;
@@ -189,14 +189,15 @@ export function invalidateMostPlayed() {
 export function playlistAudiofilesOptions(playlist_id: Playlist["id"]) {
   return infiniteQueryOptions({
     queryKey: getPlaylistAudiofilesKey(playlist_id),
-    queryFn: ({ pageParam }) =>
-      getPlaylistAudiofiles(
-        { playlist_id },
-        {
+    queryFn: ({ pageParam, signal }) =>
+      listPlaylistAudiofiles({
+        path: { playlist_id },
+        query: {
           limit: PLAYLIST_AUDIOFILES_PAGE_SIZE,
           cursor: pageParam,
         },
-      ),
+        signal,
+      }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
       lastPage.has_more ? lastPage.cursor : undefined,
@@ -204,9 +205,9 @@ export function playlistAudiofilesOptions(playlist_id: Playlist["id"]) {
 }
 
 function getCachedPlaylistAudiofiles(playlist_id: Playlist["id"]): Audiofile[] {
-  const data = queryClient.getQueryData<
-    InfiniteData<Awaited<ReturnType<typeof getPlaylistAudiofiles>>>
-  >(playlistAudiofilesOptions(playlist_id).queryKey);
+  const data = queryClient.getQueryData<InfiniteData<AudiofilePage>>(
+    playlistAudiofilesOptions(playlist_id).queryKey,
+  );
   if (!data) return [];
   return flattenInfiniteData(data, (page) => page.data ?? []);
 }
@@ -223,17 +224,20 @@ export function createPlaylistAudiofileSource(
 export function playlistInfoOptions(playlist_id: Playlist["id"]) {
   return queryOptions({
     queryKey: ["playlist", playlist_id, "metadata"],
-    queryFn: () => getPlaylistInfo({ playlist_id }),
+    queryFn: ({ signal }) => getPlaylist({ path: { playlist_id }, signal }),
   });
 }
 
 export function playlistsListOptions() {
   return infiniteQueryOptions({
     queryKey: PLAYLISTS_LIST_KEY,
-    queryFn: ({ pageParam }) =>
-      getUserPlaylists({
-        limit: PLAYLIST_PAGE_SIZE,
-        cursor: pageParam,
+    queryFn: ({ pageParam, signal }) =>
+      listPlaylists({
+        query: {
+          limit: PLAYLIST_PAGE_SIZE,
+          cursor: pageParam,
+        },
+        signal,
       }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
@@ -242,9 +246,9 @@ export function playlistsListOptions() {
 }
 
 export function getCachedPlaylistsList(): Playlist[] {
-  const data = queryClient.getQueryData<
-    InfiniteData<Awaited<ReturnType<typeof getUserPlaylists>>>
-  >(playlistsListOptions().queryKey);
+  const data = queryClient.getQueryData<InfiniteData<PlaylistPage>>(
+    playlistsListOptions().queryKey,
+  );
   if (!data) return [];
 
   return flattenInfiniteData(data, (page) => page.data ?? []);
@@ -253,14 +257,18 @@ export function getCachedPlaylistsList(): Playlist[] {
 export function mostPlayedOptions() {
   return queryOptions({
     queryKey: MOST_PLAYED_KEY,
-    queryFn: () => getMostPlayedAudioFiles({ limit: MOST_PLAYED_LIMIT }),
+    queryFn: ({ signal }) =>
+      listMostPlayedAudiofiles({
+        query: { limit: MOST_PLAYED_LIMIT },
+        signal,
+      }),
   });
 }
 
 function getCachedMostPlayedAudiofiles(): Audiofile[] {
-  const data = queryClient.getQueryData<
-    Awaited<ReturnType<typeof getMostPlayedAudioFiles>>
-  >(mostPlayedOptions().queryKey);
+  const data = queryClient.getQueryData<Audiofile[] | null>(
+    mostPlayedOptions().queryKey,
+  );
   return data ?? [];
 }
 
@@ -274,10 +282,13 @@ export function createMostPlayedAudiofileSource(): AudiofileSource {
 export function listeningHistoryOptions() {
   return infiniteQueryOptions({
     queryKey: LISTENING_HISTORY_KEY,
-    queryFn: ({ pageParam }) =>
-      getAudioFileHistory({
-        limit: LISTENING_HISTORY_PAGE_SIZE,
-        cursor: pageParam,
+    queryFn: ({ pageParam, signal }) =>
+      listListeningHistory({
+        query: {
+          limit: LISTENING_HISTORY_PAGE_SIZE,
+          cursor: pageParam,
+        },
+        signal,
       }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
@@ -286,9 +297,9 @@ export function listeningHistoryOptions() {
 }
 
 function getCachedListeningHistoryAudiofiles(): Audiofile[] {
-  const data = queryClient.getQueryData<
-    InfiniteData<Awaited<ReturnType<typeof getAudioFileHistory>>>
-  >(listeningHistoryOptions().queryKey);
+  const data = queryClient.getQueryData<InfiniteData<HistoryPage>>(
+    listeningHistoryOptions().queryKey,
+  );
   if (!data) return [];
   return flattenInfiniteData(data, (page) => page.data ?? []);
 }
@@ -303,17 +314,20 @@ export function createListeningHistoryAudiofileSource(): AudiofileSource {
 export function cloudTasksOptions() {
   return queryOptions({
     queryKey: ["cloud-tasks"],
-    queryFn: getCloudTasks,
+    queryFn: ({ signal }) => listTasks({ signal }),
   });
 }
 
 export function playlistInvitesOptions() {
   return infiniteQueryOptions({
     queryKey: PLAYLIST_INVITES_KEY,
-    queryFn: ({ pageParam }) =>
-      getPlaylistInvites({
-        limit: PLAYLIST_INVITES_PAGE_SIZE,
-        cursor: pageParam,
+    queryFn: ({ pageParam, signal }) =>
+      listPlaylistInvites({
+        query: {
+          limit: PLAYLIST_INVITES_PAGE_SIZE,
+          cursor: pageParam,
+        },
+        signal,
       }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
@@ -379,7 +393,7 @@ export function useDeleteAudiofile() {
 
   return useMutation({
     mutationFn: (audiofile: Audiofile) =>
-      deleteAudioFile({ audiofile_id: audiofile.id }),
+      deleteAudiofile({ path: { audiofile_id: audiofile.id } }),
     onMutate: async (audiofile) => {
       const taskId = genTaskId();
       const task: MediaTask = {
@@ -409,7 +423,7 @@ export function useDeletePlaylist() {
 
   return useMutation({
     mutationFn: (playlist: Playlist) =>
-      deletePlaylist({ playlist_id: playlist.id }),
+      deletePlaylist({ path: { playlist_id: playlist.id } }),
     onMutate: async (playlist) => {
       const taskId = genTaskId();
       const task: MediaTask = {
@@ -435,7 +449,7 @@ export function useDeletePlaylist() {
 export function useLeavePlaylist() {
   return useMutation({
     mutationFn: (playlist: Playlist) =>
-      leavePlaylist({ playlist_id: playlist.id }),
+      leavePlaylist({ path: { playlist_id: playlist.id } }),
     onSuccess: (_data, playlist) => {
       removePlaylistFromCache(playlist.id);
     },

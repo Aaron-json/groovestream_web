@@ -4,8 +4,8 @@ import { Plus } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
-import { createPlaylist, CreatePlaylistError } from "@/api/requests/media";
-import { isAxiosError } from "axios";
+import { createPlaylist } from "@/api/generated/sdk.gen";
+import { isApiError } from "@/api/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
@@ -67,15 +67,15 @@ export function CreatePlaylistForm({ onFinish }: CreatePlaylistFormProps) {
 
   const onSubmit = async (data: CreatePlaylistValues) => {
     try {
-      const playlist = await createPlaylist({ name: data.name });
+      const playlist = await createPlaylist({ body: { name: data.name } });
       addPlaylistToCache(playlist);
       reset();
       toast.success("Playlist created");
       if (onFinish) onFinish();
     } catch (error) {
       let message = "An unexpected error occurred.";
-      if (isAxiosError<CreatePlaylistError>(error)) {
-        message = error.response?.data.message || message;
+      if (isApiError(error)) {
+        message = error.message;
       }
       setError("root", {
         message,

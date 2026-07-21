@@ -1,16 +1,17 @@
-import { Audiofile, ListAudiofilesEncodingsBundle } from "@/api/requests/media";
 import {
-  getEncodings,
-  getEncodingToken,
   addListeningHistory,
-} from "@/api/requests/media";
+  createEncodingToken,
+  listAudiofileEncodings,
+} from "@/api/generated/sdk.gen";
+import type { Audiofile } from "@/api/types";
+import type { Encoding } from "@/api/generated/types.gen";
 import {
   addListeningHistoryToCache,
   invalidateMostPlayed,
 } from "@/query/media";
 
 export interface ResolvedEncoding {
-  encoding: NonNullable<ListAudiofilesEncodingsBundle["Response"]>[number];
+  encoding: Encoding;
   manifestUrl: string;
   token: string;
 }
@@ -18,7 +19,10 @@ export interface ResolvedEncoding {
 export async function resolveEncoding(
   audiofileId: Audiofile["id"],
 ): Promise<ResolvedEncoding> {
-  const encodings = (await getEncodings({ audiofile_id: audiofileId })) ?? [];
+  const encodings =
+    (await listAudiofileEncodings({
+      path: { audiofile_id: audiofileId },
+    })) ?? [];
 
   // get manifest url. prefer dash over hls
   let idx = encodings.findIndex((d) => d.dash_manifest_id);
@@ -35,8 +39,8 @@ export async function resolveEncoding(
     );
   }
 
-  const tokenData = await getEncodingToken({
-    encoding_id: encodings[idx].id,
+  const tokenData = await createEncodingToken({
+    path: { encoding_id: encodings[idx].id },
   });
 
   return {
@@ -47,7 +51,7 @@ export async function resolveEncoding(
 }
 
 export function trackHistory(audiofileId: Audiofile["id"]) {
-  void addListeningHistory({ audiofile_id: audiofileId })
+  void addListeningHistory({ path: { audiofile_id: audiofileId } })
     .then((historyItem) => {
       addListeningHistoryToCache(historyItem);
       void invalidateMostPlayed();

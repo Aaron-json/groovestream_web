@@ -1,4 +1,4 @@
-import { PlaylistInvite } from "@/api/requests/media";
+import type { PlaylistInvite } from "@/api/types";
 import InviteCard, { InviteCardSkeleton } from "./invite-card";
 
 type InviteListProps = {

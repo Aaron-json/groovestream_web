@@ -9,14 +9,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle } from "lucide-react";
 import { TextLogo } from "@/components/custom/textlogo";
 import {
+  checkUsernameExists,
   createUserProfile,
-  CreateUserError,
-  usernameExists,
-} from "@/api/requests/user";
+} from "@/api/generated/sdk.gen";
+import { isApiError } from "@/api/types";
 import { queryClient } from "@/lib/query";
 import { userKey } from "@/query/user";
 import { useAuth } from "@/lib/auth";
-import { isAxiosError } from "axios";
 
 export const Route = createFileRoute("/complete-profile")({
   component: RouteComponent,
@@ -90,7 +89,9 @@ function RouteComponent() {
 
     setUsernameState("checking");
     try {
-      const available = !(await usernameExists({ username }));
+      const available = !(
+        await checkUsernameExists({ query: { username } })
+      );
 
       setUsernameState(available ? "available" : "unavailable");
       if (!available) {
@@ -126,16 +127,16 @@ function RouteComponent() {
     }
 
     try {
-      await createUserProfile({ username: data.username });
+      await createUserProfile({ body: { username: data.username } });
       await queryClient.invalidateQueries({
         queryKey: userKey(session.user.id),
       });
       await navigate({ to: "/" });
     } catch (error) {
       if (
-        isAxiosError<CreateUserError>(error) &&
-        error.response?.status === 409 &&
-        error.response.data.error_code === "USERNAME_TAKEN"
+        isApiError(error) &&
+        error.http_code === 409 &&
+        error.error_code === "USERNAME_TAKEN"
       ) {
         setUsernameState("unavailable");
         setError("username", {
@@ -146,9 +147,9 @@ function RouteComponent() {
       }
 
       if (
-        isAxiosError<CreateUserError>(error) &&
-        error.response?.status === 409 &&
-        error.response.data.error_code === "PROFILE_EXISTS"
+        isApiError(error) &&
+        error.http_code === 409 &&
+        error.error_code === "PROFILE_EXISTS"
       ) {
         await queryClient.invalidateQueries({
           queryKey: userKey(session.user.id),
@@ -158,8 +159,8 @@ function RouteComponent() {
       }
 
       setError("root", {
-        message: isAxiosError<CreateUserError>(error)
-          ? (error.response?.data.message ?? "Unable to create your profile")
+        message: isApiError(error)
+          ? error.message
           : "Unable to create your profile. Please try again.",
       });
     }

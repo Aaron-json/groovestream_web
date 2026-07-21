@@ -1,6 +1,6 @@
-import { getUser } from "@/api/requests/user";
+import { getCurrentUser } from "@/api/generated/sdk.gen";
+import { isApiError } from "@/api/types";
 import { queryOptions } from "@tanstack/react-query";
-import { isAxiosError } from "axios";
 
 export const userKey = (userId: string) => ["user", userId] as const;
 
@@ -9,11 +9,11 @@ export const userKey = (userId: string) => ["user", userId] as const;
 export function userOptions(userId: string) {
   return queryOptions({
     queryKey: userKey(userId),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       try {
-        return await getUser();
+        return await getCurrentUser({ signal });
       } catch (error) {
-        if (isAxiosError(error) && error.response?.status === 404) {
+        if (isApiError(error) && error.http_code === 404) {
           return null;
         }
 

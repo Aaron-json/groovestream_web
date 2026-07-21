@@ -9,7 +9,7 @@ import {
   PlaybackState,
   PlayerCallbacks,
 } from "../types";
-import { getEncodingToken } from "@/api/requests/media";
+import { createEncodingToken } from "@/api/generated/sdk.gen";
 
 export type MediaSlice = {
   media: CurrentMedia | undefined;
@@ -105,8 +105,8 @@ export const useMediaStateStore = create<MediaSlice>((set, get) => ({
       player.setToken(token);
       player.setCallbacks({
         refreshToken: async () => {
-          const token = await getEncodingToken({
-            encoding_id: encoding.id,
+          const token = await createEncodingToken({
+            path: { encoding_id: encoding.id },
           });
           return token.token;
         },

@@ -4,7 +4,7 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User } from "@/api/requests/user";
+import type { User } from "@/api/types";
 import { cn } from "@/lib/utils";
 
 type CustomAvatarProps = React.ComponentProps<typeof ShadAvatar> & {

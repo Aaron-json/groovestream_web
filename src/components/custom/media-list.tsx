@@ -1,6 +1,6 @@
 import type { AudiofileSource } from "@/lib/media/types";
 import MediaCard, { MediaCardSkeleton } from "./media-card";
-import { Audiofile, Playlist } from "@/api/requests/media";
+import type { Audiofile, Playlist } from "@/api/types";
 
 export type MediaCardListProps = {
   audiofileSource?: AudiofileSource;

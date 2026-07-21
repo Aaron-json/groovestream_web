@@ -50,8 +50,7 @@ import { toast } from "sonner";
 import { useState, useCallback, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AudiofileTableSkeleton } from "@/components/custom/audiofile-table";
-import { type LeavePlaylistError, type Playlist } from "@/api/requests/media";
-import { isAxiosError } from "axios";
+import { isApiError, type Playlist } from "@/api/types";
 import { useMediaStateStore } from "@/lib/media/stores/state";
 import { useShallow } from "zustand/react/shallow";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -189,12 +188,12 @@ function RouteComponent() {
         },
         onError: (error) => {
           let message = "Could not leave the playlist. Please try again.";
-          if (isAxiosError<LeavePlaylistError>(error)) {
-            const errorCode = error.response?.data.error_code;
+          if (isApiError(error)) {
+            const errorCode = error.error_code;
             if (errorCode === "OWNER_CANNOT_LEAVE") {
               message = "The owner of a playlist cannot leave it.";
             } else {
-              message = error.response?.data.message || message;
+              message = error.message;
             }
           }
           toast.error(`Error leaving playlist "${playlist.name}"`, {

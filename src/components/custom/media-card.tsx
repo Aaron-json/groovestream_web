@@ -3,8 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Media } from "@/api/requests/media";
-import { isAudiofile } from "@/api/requests/media";
+import type { Media } from "@/api/types";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import type { AudiofileSource } from "@/lib/media/types";
@@ -30,7 +29,7 @@ const MediaCard = ({
     playbackState,
   } = useMediaStateStore();
 
-  const isAudio = isAudiofile(media);
+  const isAudio = "filename" in media;
   const isCurrentlyPlaying =
     isAudio &&
     currentMedia?.audiofile?.id === media.id &&

@@ -14,10 +14,8 @@ import { Input } from "../ui/input";
 import { useForm } from "react-hook-form";
 import {
   sendPlaylistInvite,
-  Playlist,
-  PostPlaylistInvitesError,
-} from "@/api/requests/media";
-import { isAxiosError } from "axios";
+} from "@/api/generated/sdk.gen";
+import { isApiError, type Playlist } from "@/api/types";
 import React, { useState } from "react";
 
 type AddPlaylistMemberProps = {
@@ -50,15 +48,17 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
   async function onSubmit(data: AddPlaylistMemberValues) {
     try {
       await sendPlaylistInvite({
-        playlist_id: props.playlistId,
-        username: data.username,
+        body: {
+          playlist_id: props.playlistId,
+          username: data.username,
+        },
       });
       setInvitedUsername(data.username);
       reset();
     } catch (err) {
       let message = "An unexpected error occurred";
-      if (isAxiosError<PostPlaylistInvitesError>(err)) {
-        const errorCode = err.response?.data.error_code;
+      if (isApiError(err)) {
+        const errorCode = err.error_code;
         if (errorCode === "USER_NOT_FOUND") {
           message = "User not found";
         } else if (errorCode === "SELF_INVITE") {
@@ -70,7 +70,7 @@ export default function AddPlaylistMember(props: AddPlaylistMemberProps) {
         } else if (errorCode === "INVALID_INVITE") {
           message = "Invalid invite";
         } else {
-          message = err.response?.data.message || message;
+          message = err.message;
         }
       }
       setError("root", {

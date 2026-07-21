@@ -1,35 +1,12 @@
-import axiosClient from "../api/api";
 import { Session } from "@supabase/supabase-js";
 import { useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { Route as AuthRoute } from "@/routes/auth";
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { queryClient } from "@/lib/query";
+import { supabaseClient } from "@/lib/supabase";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const anon_key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-export const supabaseClient = createClient(supabaseUrl, anon_key);
-
-// Returns an authentication token. If the user is not authenticated, throws an error.
-async function getAuthToken(): Promise<string | undefined> {
-  const curSession = await supabaseClient.auth.getSession();
-
-  if (curSession.error) {
-    throw curSession.error;
-  } else if (!curSession.data.session) {
-    throw new Error("No session");
-  } else {
-    return curSession.data.session.access_token;
-  }
-}
-
-// attack auth interceptor to axiosClient for
-axiosClient.interceptors.request.use(async (config) => {
-  const token = await getAuthToken();
-  config.headers.Authorization = "Bearer " + token;
-  return config;
-});
+export { supabaseClient } from "@/lib/supabase";
 
 export async function signInGoogle() {
   const location = `${window.location.origin}/${AuthRoute.path}`;

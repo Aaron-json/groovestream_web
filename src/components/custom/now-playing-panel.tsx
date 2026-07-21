@@ -1,4 +1,4 @@
-import { Audiofile } from "@/api/requests/media";
+import type { Audiofile } from "@/api/types";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,

@@ -44,7 +44,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { Audiofile } from "@/api/requests/media";
+import type { Audiofile } from "@/api/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDuration } from "@/lib/media/utils";
 import { useDeleteAudiofile } from "@/query/media";

@@ -3,8 +3,8 @@ import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import {
   acceptPlaylistInvite,
   rejectPlaylistInvite,
-  PlaylistInvite,
-} from "@/api/requests/media";
+} from "@/api/generated/sdk.gen";
+import type { PlaylistInvite } from "@/api/types";
 import MediaList, { MediaListSkeleton } from "@/components/custom/media-list";
 import InfoCard from "@/components/custom/info-card";
 import CreatePlaylistModal from "@/components/custom/create-playlist";
@@ -88,8 +88,10 @@ function RouteComponent() {
   const handleAcceptInvite = useCallback(async (invite: PlaylistInvite) => {
     try {
       await acceptPlaylistInvite({
-        playlist_id: invite.playlist_id,
-        playlist_invite_sender_id: invite.from_id,
+        path: {
+          playlist_id: invite.playlist_id,
+          playlist_invite_sender_id: invite.from_id,
+        },
       });
       removePlaylistInviteFromCache(invite);
       void queryClient.invalidateQueries({ queryKey: PLAYLISTS_LIST_KEY });
@@ -102,8 +104,10 @@ function RouteComponent() {
   const handleDeclineInvite = useCallback(async (invite: PlaylistInvite) => {
     try {
       await rejectPlaylistInvite({
-        playlist_id: invite.playlist_id,
-        playlist_invite_sender_id: invite.from_id,
+        path: {
+          playlist_id: invite.playlist_id,
+          playlist_invite_sender_id: invite.from_id,
+        },
       });
       removePlaylistInviteFromCache(invite);
       toast.success("Invite declined");

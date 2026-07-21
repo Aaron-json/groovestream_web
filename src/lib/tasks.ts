@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Media } from "@/api/requests/media";
+import type { Media } from "@/api/types";
 
 export type TaskSlice = {
   tasks: Record<string, Task>;

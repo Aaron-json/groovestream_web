@@ -1,4 +1,4 @@
-import { Audiofile } from "@/api/requests/media";
+import type { Audiofile } from "@/api/types";
 
 export function formatDuration(duration?: number | null): string {
   if (duration === null || duration === undefined) return "--:--";

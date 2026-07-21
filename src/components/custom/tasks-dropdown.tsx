@@ -12,7 +12,7 @@ import { ClipboardList, ListMusic, RefreshCw } from "lucide-react";
 import { Task, TaskType, useTaskStore } from "@/lib/tasks";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
-import { AudioUploadTaskPayload, CloudTask } from "@/api/requests/media";
+import type { CloudTask, Playlist, User } from "@/api/types";
 import { cloudTasksOptions } from "@/query/media";
 import {
   Empty,
@@ -20,6 +20,14 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+
+type AudioUploadTaskPayload = {
+  filename: string;
+  object_id: string;
+  playlist_id: Playlist["id"];
+  task_id: string;
+  user_id: User["id"];
+};
 
 export default function TasksDropdown() {
   const { data: cloudTasks, refetch: refetchCloudTasks } =
