@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react";
 import path from "path";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
@@ -24,11 +24,16 @@ export default defineConfig({
   ],
   build: {
     // helps visualizer to have more accurate sizes
-    sourcemap: true,
-    rollupOptions: {
+    sourcemap: Boolean(process.env.ANALYZE),
+    rolldownOptions: {
       output: {
-        manualChunks: {
-          "tanstack-query": ["@tanstack/react-query"],
+        codeSplitting: {
+          groups: [
+            {
+              name: "tanstack-query",
+              test: /node_modules[\\/]@tanstack[\\/]react-query/,
+            },
+          ],
         },
       },
     },
