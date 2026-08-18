@@ -1,0 +1,22 @@
+{
+  "name": "@groovestream/api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./client": "./src/client.ts",
+    "./errors": "./src/errors.ts",
+    "./models": "./src/models.ts",
+    "./sdk": "./src/generated/sdk.gen.ts",
+    "./username": "./src/username.ts"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "gen-api": "openapi-ts",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "0.99.0",
+    "typescript": "~6.0.3"
+  }
+}

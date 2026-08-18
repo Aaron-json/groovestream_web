@@ -11,6 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
+.expo
+apps/mobile/ios
+apps/mobile/android
 
 # Editor directories and files
 .vscode/*
@@ -24,6 +27,8 @@ dist-ssr
 *.sw?
 
 .env*
+!.env.example
 
 # build output
 .build
+*.tsbuildinfo
