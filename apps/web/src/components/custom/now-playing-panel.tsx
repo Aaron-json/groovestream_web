@@ -8,8 +8,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { playlistInfoOptions } from "@groovestream/query/media";
 import { useIsMobile } from "@/hooks/use-mobile";
+import type { PlaybackItem } from "@groovestream/media/encodings";
 import type { AudioSource } from "@groovestream/media/source";
 import type { CurrentMedia } from "@groovestream/media/player";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
@@ -92,59 +94,131 @@ function NowPlayingContent() {
 
   return (
     <div className="h-full flex min-h-0 flex-1 flex-col">
-      <CurrentTrackCard audiofile={media.audiofile} />
+      <CurrentTrackInformation
+        audiofile={media.audiofile}
+        playbackItem={media.playbackItem}
+      />
       <Queue media={media} />
     </div>
   );
 }
 
-function CurrentTrackCard({ audiofile }: { audiofile: Audiofile }) {
+const informationPanelClassName =
+  "rounded-lg border border-border/60 bg-background/60 p-3";
+
+function CurrentTrackInformation({
+  audiofile,
+  playbackItem,
+}: {
+  audiofile: Audiofile;
+  playbackItem: PlaybackItem | undefined;
+}) {
   const title = audiofile.title || audiofile.filename;
   return (
-    <div className="shrink-0 border-b p-4">
-      <div className="mb-4">
-        <h3
-          className="truncate text-base font-semibold text-foreground"
-          title={title}
-        >
-          {title}
-        </h3>
-      </div>
+    <div className="shrink-0 border-b px-4 py-3">
+      <h3
+        className="mb-3 truncate text-base font-semibold text-foreground"
+        title={title}
+      >
+        {title}
+      </h3>
 
-      <div className="space-y-2.5 rounded-lg bg-muted/50 border border-border/50 p-3 text-xs text-muted-foreground shadow-sm">
-        <TrackDetail icon={<Mic2 />}>
-          Artist{" "}
-          <span className="font-medium text-foreground">
-            {audiofile.artists?.join(", ") || "Unknown artist"}
-          </span>
-        </TrackDetail>
-        <TrackDetail icon={<ListMusic />}>
-          Playlist <PlaylistLink playlistId={audiofile.playlist_id} />
-        </TrackDetail>
-        {audiofile.uploaded_by_username && (
-          <TrackDetail icon={<User />}>
-            Uploaded by{" "}
-            <span className="font-medium text-foreground">
-              {audiofile.uploaded_by_username}
-            </span>
-          </TrackDetail>
-        )}
-        {audiofile.album && (
-          <TrackDetail icon={<Disc />}>
-            Album{" "}
-            <span className="font-medium text-foreground">
-              {audiofile.album}
-            </span>
-          </TrackDetail>
-        )}
-        {audiofile.genre && (
-          <TrackDetail icon={<Tag />}>
-            Genre{" "}
-            <span className="font-medium text-foreground">
-              {audiofile.genre}
-            </span>
-          </TrackDetail>
-        )}
+      <Tabs defaultValue="track">
+        <TabsList className="w-full">
+          <TabsTrigger value="track">Track</TabsTrigger>
+          <TabsTrigger value="playback">Playback</TabsTrigger>
+        </TabsList>
+        <TabsContent value="track" className={informationPanelClassName}>
+          <div className="space-y-2 text-xs text-muted-foreground">
+            <TrackDetail icon={<Mic2 />}>
+              Artist{" "}
+              <span className="font-medium text-foreground">
+                {audiofile.artists?.join(", ") || "Unknown artist"}
+              </span>
+            </TrackDetail>
+            <TrackDetail icon={<ListMusic />}>
+              Playlist <PlaylistLink playlistId={audiofile.playlist_id} />
+            </TrackDetail>
+            {audiofile.uploaded_by_username && (
+              <TrackDetail icon={<User />}>
+                Uploaded by{" "}
+                <span className="font-medium text-foreground">
+                  {audiofile.uploaded_by_username}
+                </span>
+              </TrackDetail>
+            )}
+            {audiofile.album && (
+              <TrackDetail icon={<Disc />}>
+                Album{" "}
+                <span className="font-medium text-foreground">
+                  {audiofile.album}
+                </span>
+              </TrackDetail>
+            )}
+            {audiofile.genre && (
+              <TrackDetail icon={<Tag />}>
+                Genre{" "}
+                <span className="font-medium text-foreground">
+                  {audiofile.genre}
+                </span>
+              </TrackDetail>
+            )}
+          </div>
+        </TabsContent>
+        <TabsContent value="playback" className={informationPanelClassName}>
+          {playbackItem ? (
+            <PlaybackDetails item={playbackItem} />
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Encoding details will appear when playback starts.
+            </p>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function PlaybackDetails({ item }: { item: PlaybackItem }) {
+  const { encoding, delivery } = item;
+  const bitrate = `${Math.round(encoding.bitrate / 1_000)} kbps`;
+  const sampleRateKhz = encoding.sample_rate / 1_000;
+  const sampleRateValue = Number.isInteger(sampleRateKhz)
+    ? sampleRateKhz.toFixed(0)
+    : sampleRateKhz.toFixed(1);
+  const sampleRate = `${sampleRateValue} kHz`;
+  let channels = `${encoding.channels} channels`;
+  if (encoding.channels === 1) channels = "Mono";
+  if (encoding.channels === 2) channels = "Stereo";
+  const properties = [
+    ["Codec", encoding.codec.toUpperCase()],
+    ["Bitrate", bitrate],
+    ["Sample rate", sampleRate],
+    ["Channels", channels],
+    ["Container", encoding.container.toUpperCase()],
+    ["Delivery", delivery.toUpperCase()],
+  ] as const;
+
+  return (
+    <div className="text-xs">
+      <dl className="grid grid-cols-3 gap-x-3 gap-y-2.5">
+        {properties.map(([label, value]) => (
+          <div key={label} className="min-w-0">
+            <dt className="text-muted-foreground">{label}</dt>
+            <dd className="mt-0.5 truncate font-medium text-foreground tabular-nums">
+              {value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-2.5 border-t border-border/50 pt-2.5">
+        <span className="text-muted-foreground">Encoding ID</span>
+        <code
+          className="mt-0.5 block truncate text-[0.6875rem] text-foreground"
+          title={encoding.id}
+        >
+          {encoding.id}
+        </code>
       </div>
     </div>
   );
@@ -284,8 +358,7 @@ function useAudioSourceItems(source: AudioSource) {
   }));
 
   useEffect(() => {
-    const update = () =>
-      setSnapshot({ source, items: source.getAudiofiles() });
+    const update = () => setSnapshot({ source, items: source.getAudiofiles() });
     update();
     return source.subscribe(update);
   }, [source]);

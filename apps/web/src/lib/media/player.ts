@@ -11,6 +11,7 @@ import {
   type AudioSource,
 } from "@groovestream/media/source";
 import {
+  INITIAL_PLAYBACK_STATE,
   UnsupportedPlaybackError,
   playbackStatesEqual,
   toUnloadedPlaybackState,
@@ -20,38 +21,38 @@ import {
   type PlaybackState,
 } from "@groovestream/media/player";
 
-const DEFAULT_VOLUME = 0.7;
-const WEB_CODECS = [
+const INITIAL_VOLUME = 0.7;
+const WEB_CODEC_SUPPORT = [
   { codec: "opus", mimeType: 'audio/mp4; codecs="opus"' },
   { codec: "aac", mimeType: 'audio/mp4; codecs="mp4a.40.2"' },
 ] as const;
 
-type Authorization = {
+type CdnAuthorization = {
   encodingId: string;
   token: string;
-  refresh?: Promise<string>;
+  refreshPromise?: Promise<void>;
 };
 
 export default class WebAudioPlayer implements MediaPlayer {
   private videoElement: HTMLVideoElement | null = null;
-  private player: shaka.Player | undefined;
-  private authorization: Authorization | undefined;
+  private shakaPlayer: shaka.Player | undefined;
+  private cdnAuthorization: CdnAuthorization | undefined;
   private readonly stateListeners = new Set<() => void>();
   private state: PlaybackState = {
-    status: "unloaded",
-    currentMedia: undefined,
-    position: 0,
-    duration: 0,
-    volume: DEFAULT_VOLUME,
-    muted: false,
+    ...INITIAL_PLAYBACK_STATE,
+    volume: INITIAL_VOLUME,
   };
-  private sourceUnsubscribe: (() => void) | undefined;
-  private activeLoad: AbortController | undefined;
+  private unsubscribeFromSource: (() => void) | undefined;
+  private activeLoadController: AbortController | undefined;
   private mediaPreferences: MediaPreferences | undefined;
 
   isSupported(): boolean {
     if (typeof window === "undefined") return false;
-    return !!window.MediaSource || "WebKitMediaSource" in window;
+    const browser = window as typeof window & {
+      ManagedMediaSource?: typeof MediaSource;
+    };
+    // CDN authorization depends on Shaka's request filters, not native HLS.
+    return Boolean(browser.MediaSource || browser.ManagedMediaSource);
   }
 
   getState(): PlaybackState {
@@ -64,13 +65,14 @@ export default class WebAudioPlayer implements MediaPlayer {
   }
 
   async init(): Promise<void> {
-    if (this.player) throw new Error("Player already initialized");
+    if (this.shakaPlayer) throw new Error("Player already initialized");
     if (typeof document === "undefined") {
       throw new Error("The web player requires a browser environment");
     }
 
-    const module = await import("shaka-player/dist/shaka-player.compiled.js");
-    const shaka = module.default || module;
+    const shakaModule =
+      await import("shaka-player/dist/shaka-player.compiled.js");
+    const shaka = shakaModule.default || shakaModule;
 
     shaka.polyfill.installAll();
     if (!shaka.Player.isBrowserSupported()) {
@@ -78,45 +80,44 @@ export default class WebAudioPlayer implements MediaPlayer {
         "This browser does not support necessary media features. Please update or use a different browser",
       );
     }
-    const support = await shaka.Player.probeSupport(false);
+    const browserSupport = await shaka.Player.probeSupport(false);
     this.mediaPreferences = {
-      codecs: WEB_CODECS.filter(({ mimeType }) => support.media[mimeType]).map(
-        ({ codec }) => codec,
-      ),
+      codecs: WEB_CODEC_SUPPORT.filter(
+        ({ mimeType }) => browserSupport.media[mimeType],
+      ).map(({ codec }) => codec),
       deliveries: ["dash", "hls"],
     };
 
     const videoElement = document.createElement("video");
     videoElement.playsInline = true;
     videoElement.style.display = "none";
-    videoElement.volume = DEFAULT_VOLUME;
+    videoElement.volume = INITIAL_VOLUME;
     document.body.appendChild(videoElement);
 
-    const player = new shaka.Player();
+    const shakaPlayer = new shaka.Player();
     try {
-      await player.attach(videoElement);
+      await shakaPlayer.attach(videoElement);
     } catch (error) {
-      await player.destroy();
+      await shakaPlayer.destroy();
       videoElement.remove();
       this.mediaPreferences = undefined;
       throw error;
     }
     this.videoElement = videoElement;
-    this.player = player;
-    this.setState({
+    this.shakaPlayer = shakaPlayer;
+    this.setPlaybackState({
       ...this.state,
       volume: videoElement.volume,
       muted: videoElement.muted,
     });
 
-    this.setupNetworking(shaka);
-    this.setupListeners();
+    this.configureNetworking(shaka);
+    this.registerEventListeners();
   }
 
   load(source: AudioSource, audiofileId: Audiofile["id"]): Promise<void> {
-    const controller = this.beginOperation();
-    return this.runOperation(controller, () =>
-      this.loadAudiofile(source, audiofileId, controller),
+    return this.runExclusiveLoad((signal) =>
+      this.loadAudiofile(source, audiofileId, signal),
     );
   }
 
@@ -129,25 +130,18 @@ export default class WebAudioPlayer implements MediaPlayer {
   }
 
   unload() {
-    this.activeLoad?.abort();
-    this.activeLoad = undefined;
-    this.authorization = undefined;
-    this.releaseSource();
-    this.setUnloaded();
-    this.videoElement?.pause();
-    if (this.player) void this.player.unload();
+    this.resetPlayback();
+    void this.shakaPlayer?.unload().catch((error) => {
+      console.error("Unable to unload media", error);
+    });
   }
 
   async destroy() {
-    this.activeLoad?.abort();
-    this.activeLoad = undefined;
-    this.authorization = undefined;
-    this.releaseSource();
-    this.setUnloaded();
+    this.resetPlayback();
 
-    if (this.player) {
-      await this.player.destroy();
-      this.player = undefined;
+    if (this.shakaPlayer) {
+      await this.shakaPlayer.destroy();
+      this.shakaPlayer = undefined;
     }
 
     this.videoElement?.remove();
@@ -177,240 +171,263 @@ export default class WebAudioPlayer implements MediaPlayer {
     if (!this.videoElement) return;
     this.videoElement.currentTime = position;
     if (this.state.status === "playing" || this.state.status === "paused") {
-      this.setState({ ...this.state, position });
+      this.setPlaybackState({ ...this.state, position });
     }
   }
 
-  private setState(nextState: PlaybackState) {
+  private setPlaybackState(nextState: PlaybackState) {
     if (playbackStatesEqual(this.state, nextState)) return;
     this.state = nextState;
     this.stateListeners.forEach((listener) => listener());
   }
 
-  private setUnloaded() {
-    this.setState(toUnloadedPlaybackState(this.state));
+  private resetPlayback() {
+    this.activeLoadController?.abort();
+    this.activeLoadController = undefined;
+    this.cdnAuthorization = undefined;
+    this.clearSourceSubscription();
+    this.setPlaybackState(toUnloadedPlaybackState(this.state));
+    this.videoElement?.pause();
   }
 
-  private beginOperation() {
-    // Aborting is only half of cancellation: the signal is also checked after
-    // platform promises that Shaka cannot cancel itself.
-    this.activeLoad?.abort();
-    const controller = new AbortController();
-    this.activeLoad = controller;
-    return controller;
-  }
-
-  private async runOperation(
-    controller: AbortController,
-    operation: () => Promise<void>,
+  private async runExclusiveLoad(
+    loadMedia: (signal: AbortSignal) => Promise<void>,
   ) {
+    this.activeLoadController?.abort();
+    const controller = new AbortController();
+    this.activeLoadController = controller;
+
     try {
-      await operation();
+      await loadMedia(controller.signal);
     } catch (error) {
       if (controller.signal.aborted) {
         throw new DOMException("Aborted", "AbortError");
       }
-      if (this.activeLoad === controller) {
-        this.authorization = undefined;
-        this.releaseSource();
-        this.setUnloaded();
-        this.videoElement?.pause();
-        await this.player?.unload().catch(() => {});
+      if (this.activeLoadController === controller) {
+        this.resetPlayback();
+        // Cleanup must not replace the load error reported to the caller.
+        await this.shakaPlayer?.unload().catch(() => {});
       }
       throw error;
     } finally {
-      if (this.activeLoad === controller) this.activeLoad = undefined;
+      if (this.activeLoadController === controller) {
+        this.activeLoadController = undefined;
+      }
     }
   }
 
-  private releaseSource() {
-    this.sourceUnsubscribe?.();
-    this.sourceUnsubscribe = undefined;
+  private clearSourceSubscription() {
+    this.unsubscribeFromSource?.();
+    this.unsubscribeFromSource = undefined;
   }
 
-  private setActiveSource(source: AudioSource) {
+  private subscribeToSource(source: AudioSource) {
     const currentSource = this.state.currentMedia?.source;
-    if (source === currentSource && this.sourceUnsubscribe) return;
-    this.releaseSource();
-    this.sourceUnsubscribe = source.subscribe(() => this.handleSourceChange());
+    if (source === currentSource && this.unsubscribeFromSource) return;
+    this.clearSourceSubscription();
+    this.unsubscribeFromSource = source.subscribe(() =>
+      this.handleSourceUpdate(),
+    );
   }
 
-  private handleSourceChange() {
+  private handleSourceUpdate() {
     const state = this.state;
-    const media = state.currentMedia;
-    if (!media) return;
+    const currentMedia = state.currentMedia;
+    if (!currentMedia) return;
 
-    const list = media.source.getAudiofiles();
-    const index = list.findIndex(({ id }) => id === media.audiofile.id);
+    const audiofiles = currentMedia.source.getAudiofiles();
+    const index = audiofiles.findIndex(
+      ({ id }) => id === currentMedia.audiofile.id,
+    );
     // A removed item keeps playing. Its last known index is the stable cursor
     // used to choose a neighbor from the updated source.
     if (index === -1) return;
-    const audiofile = list[index];
-    if (index === media.index && audiofile === media.audiofile) return;
+    const audiofile = audiofiles[index];
+    if (index === currentMedia.index && audiofile === currentMedia.audiofile) {
+      return;
+    }
 
-    this.setState(updateCurrentMediaLocation(state, index, audiofile));
-  }
-
-  private async resolveItem(audiofile: Audiofile, signal: AbortSignal) {
-    if (!this.mediaPreferences) throw new Error("Player not initialized");
-    const [item] = await resolvePlaybackItems(
-      audiofile,
-      this.mediaPreferences,
-      signal,
-    );
-    signal.throwIfAborted();
-    return item;
+    this.setPlaybackState(updateCurrentMediaLocation(state, index, audiofile));
   }
 
   private async loadAudiofile(
     source: AudioSource,
     audiofileId: Audiofile["id"],
-    controller: AbortController,
+    signal: AbortSignal,
   ) {
-    if (!this.player || !this.videoElement) {
+    const shakaPlayer = this.shakaPlayer;
+    const videoElement = this.videoElement;
+    const mediaPreferences = this.mediaPreferences;
+    if (!shakaPlayer || !videoElement || !mediaPreferences) {
       throw new Error("Player not initialized");
     }
 
-    const list = source.getAudiofiles();
-    const index = list.findIndex((audiofile) => audiofile.id === audiofileId);
+    const audiofiles = source.getAudiofiles();
+    const index = audiofiles.findIndex(
+      (audiofile) => audiofile.id === audiofileId,
+    );
     if (index === -1) {
       throw new Error("The selected track is no longer available");
     }
 
-    const selection: CurrentMedia<undefined> = {
+    const loadingMedia: CurrentMedia<undefined> = {
       source,
       index,
-      audiofile: list[index],
+      audiofile: audiofiles[index],
       playbackItem: undefined,
     };
-    this.videoElement.pause();
-    this.authorization = undefined;
-    this.setActiveSource(source);
-    this.setState({
+    videoElement.pause();
+    this.cdnAuthorization = undefined;
+    this.subscribeToSource(source);
+    this.setPlaybackState({
+      ...this.state,
       status: "loading",
-      currentMedia: selection,
+      currentMedia: loadingMedia,
       position: 0,
       duration: 0,
-      volume: this.state.volume,
-      muted: this.state.muted,
     });
 
-    await this.player.unload();
-    controller.signal.throwIfAborted();
-    const item = await this.resolveItem(selection.audiofile, controller.signal);
-    if (!item) throw new UnsupportedPlaybackError(selection.audiofile.id);
+    await shakaPlayer.unload();
+    signal.throwIfAborted();
+    const [playbackItem] = await resolvePlaybackItems(
+      loadingMedia.audiofile,
+      mediaPreferences,
+      signal,
+    );
+    if (!playbackItem) {
+      throw new UnsupportedPlaybackError(loadingMedia.audiofile.id);
+    }
 
     const { token } = await createEncodingToken({
-      path: { encoding_id: item.encoding.id },
-      signal: controller.signal,
+      path: { encoding_id: playbackItem.encoding.id },
+      signal,
     });
-    controller.signal.throwIfAborted();
-    this.authorization = { encodingId: item.encoding.id, token };
+    signal.throwIfAborted();
+    this.cdnAuthorization = {
+      encodingId: playbackItem.encoding.id,
+      token,
+    };
 
-    await this.player.load(item.objectId);
-    controller.signal.throwIfAborted();
-    await this.videoElement.play();
-    controller.signal.throwIfAborted();
+    await shakaPlayer.load(playbackItem.objectId);
+    signal.throwIfAborted();
+    await videoElement.play();
+    signal.throwIfAborted();
 
-    const latestSelection = this.state.currentMedia;
-    const selectedMedia =
-      this.state.status === "loading" &&
-      latestSelection?.source === source &&
-      latestSelection.audiofile.id === audiofileId
-        ? latestSelection
-        : selection;
-    const media: CurrentMedia = { ...selectedMedia, playbackItem: item };
-    this.setState({
+    if (this.state.status !== "loading") {
+      throw new Error("Player left the loading state before media was ready");
+    }
+    const currentMedia: CurrentMedia = {
+      ...this.state.currentMedia,
+      playbackItem,
+    };
+    this.setPlaybackState({
+      ...this.state,
       status: "playing",
-      currentMedia: media,
-      position: this.videoElement.currentTime,
-      duration: this.videoElement.duration || 0,
-      volume: this.videoElement.volume,
-      muted: this.videoElement.muted,
+      currentMedia,
+      position: videoElement.currentTime,
+      duration: videoElement.duration || 0,
+      volume: videoElement.volume,
+      muted: videoElement.muted,
     });
   }
 
   private async getNavigationTarget(
     source: AudioSource,
-    media: CurrentMedia<PlaybackItem | undefined>,
-    action: "next" | "prev",
+    cursor: CurrentMedia<PlaybackItem | undefined>,
+    direction: "next" | "prev",
     signal: AbortSignal,
   ) {
-    let list = source.getAudiofiles();
+    let audiofiles = source.getAudiofiles();
     let index = getNextAudioIndex(
-      list,
-      media.audiofile.id,
-      action,
-      media.index,
+      audiofiles,
+      cursor.audiofile.id,
+      direction,
+      cursor.index,
       false,
     );
 
     while (
-      action === "next" &&
+      direction === "next" &&
       index === undefined &&
       source.pagination?.hasMore()
     ) {
-      const previousLength = list.length;
+      const previousLength = audiofiles.length;
       await source.pagination.loadMore();
       signal.throwIfAborted();
-      list = source.getAudiofiles();
+      audiofiles = source.getAudiofiles();
       index = getNextAudioIndex(
-        list,
-        media.audiofile.id,
-        action,
-        media.index,
+        audiofiles,
+        cursor.audiofile.id,
+        direction,
+        cursor.index,
         false,
       );
-      if (list.length === previousLength) break;
+      if (audiofiles.length === previousLength) break;
     }
 
     if (index === undefined && !source.pagination?.hasMore()) {
-      index = getNextAudioIndex(list, media.audiofile.id, action, media.index);
+      index = getNextAudioIndex(
+        audiofiles,
+        cursor.audiofile.id,
+        direction,
+        cursor.index,
+      );
     }
     if (index === undefined) return undefined;
-    const audiofile = list[index];
-    if (!audiofile || audiofile.id === media.audiofile.id) return undefined;
+    const audiofile = audiofiles[index];
+    if (!audiofile || audiofile.id === cursor.audiofile.id) {
+      return undefined;
+    }
     return { audiofile, index };
   }
 
-  private async navigate(action: "next" | "prev") {
-    const media = this.state.currentMedia;
-    if (!media) return;
-    const source = media.source;
-    const controller = this.beginOperation();
+  private async navigate(direction: "next" | "prev") {
+    const currentMedia = this.state.currentMedia;
+    if (!currentMedia) return;
+    const source = currentMedia.source;
 
-    await this.runOperation(controller, async () => {
+    await this.runExclusiveLoad(async (signal) => {
       if (source.getAudiofiles().length === 0) {
         throw new Error("The playback queue is no longer available");
       }
 
-      const visited = new Set<Audiofile["id"]>([media.audiofile.id]);
-      let cursor: CurrentMedia<PlaybackItem | undefined> = media;
-      let lastUnsupported: UnsupportedPlaybackError | undefined;
+      const visitedAudiofileIds = new Set<Audiofile["id"]>([
+        currentMedia.audiofile.id,
+      ]);
+      let navigationCursor: CurrentMedia<PlaybackItem | undefined> =
+        currentMedia;
+      let unsupportedPlaybackError: UnsupportedPlaybackError | undefined;
 
       while (true) {
-        const target = await this.getNavigationTarget(
+        const navigationTarget = await this.getNavigationTarget(
           source,
-          cursor,
-          action,
-          controller.signal,
+          navigationCursor,
+          direction,
+          signal,
         );
-        if (!target || visited.has(target.audiofile.id)) {
-          if (lastUnsupported) throw lastUnsupported;
+        if (
+          !navigationTarget ||
+          visitedAudiofileIds.has(navigationTarget.audiofile.id)
+        ) {
+          if (unsupportedPlaybackError) throw unsupportedPlaybackError;
           return;
         }
-        visited.add(target.audiofile.id);
+        visitedAudiofileIds.add(navigationTarget.audiofile.id);
 
         try {
-          await this.loadAudiofile(source, target.audiofile.id, controller);
+          await this.loadAudiofile(
+            source,
+            navigationTarget.audiofile.id,
+            signal,
+          );
           return;
         } catch (error) {
           if (!(error instanceof UnsupportedPlaybackError)) throw error;
-          lastUnsupported = error;
-          cursor = {
+          unsupportedPlaybackError = error;
+          navigationCursor = {
             source,
-            index: target.index,
-            audiofile: target.audiofile,
+            index: navigationTarget.index,
+            audiofile: navigationTarget.audiofile,
             playbackItem: undefined,
           };
         }
@@ -418,88 +435,67 @@ export default class WebAudioPlayer implements MediaPlayer {
     });
   }
 
-  private setupNetworking(shakaModule: typeof shaka) {
-    const netEngine = this.player?.getNetworkingEngine();
-    const player = this.player;
-    if (!netEngine || !player) return;
+  private configureNetworking(shakaModule: typeof shaka) {
+    const shakaPlayer = this.shakaPlayer;
+    if (!shakaPlayer) return;
+    const networkingEngine = shakaPlayer.getNetworkingEngine();
+    if (!networkingEngine) return;
 
-    netEngine.registerRequestFilter((type, request) => {
+    networkingEngine.registerRequestFilter((requestType, request) => {
       if (
-        type === shakaModule.net.NetworkingEngine.RequestType.MANIFEST ||
-        type === shakaModule.net.NetworkingEngine.RequestType.SEGMENT
+        requestType !== shakaModule.net.NetworkingEngine.RequestType.MANIFEST &&
+        requestType !== shakaModule.net.NetworkingEngine.RequestType.SEGMENT
       ) {
-        const originalUrl = request.uris[0];
-        const objectName = originalUrl.slice(originalUrl.lastIndexOf("/") + 1);
-        request.uris[0] = `${CDN_URL}/${objectName}`;
+        return;
+      }
 
-        const encodingId = this.getEncodingId(objectName);
-        const authorization = this.authorization;
-        if (authorization && encodingId === authorization.encodingId) {
-          request.headers["Authorization"] = `Bearer ${authorization.token}`;
-        }
+      const originalUrl = request.uris[0];
+      const objectName = originalUrl.slice(originalUrl.lastIndexOf("/") + 1);
+      request.uris[0] = `${CDN_URL}/${objectName}`;
+
+      const authorization = this.cdnAuthorization;
+      if (authorization) {
+        request.headers["Authorization"] = `Bearer ${authorization.token}`;
       }
     });
 
-    player.configure(
+    shakaPlayer.configure(
       "streaming.failureCallback",
       async (error: shaka.util.Error) => {
-        const encodingId = this.getUnauthorizedEncodingId(error);
-        const authorization = this.authorization;
-        if (!authorization || encodingId !== authorization.encodingId) return;
+        const authorization = this.cdnAuthorization;
+        if (!authorization || !this.isUnauthorizedCdnRequest(error)) return;
 
-        let refresh = authorization.refresh;
-        if (!refresh) {
-          const pending = createEncodingToken({
-            path: { encoding_id: encodingId },
+        if (!authorization.refreshPromise) {
+          authorization.refreshPromise = createEncodingToken({
+            path: { encoding_id: authorization.encodingId },
           })
             .then(({ token }) => {
-              if (
-                this.authorization === authorization &&
-                authorization.refresh === pending
-              ) {
-                authorization.token = token;
-                player.retryStreaming();
-              }
-              return token;
+              if (this.cdnAuthorization !== authorization) return;
+              authorization.token = token;
+              shakaPlayer.retryStreaming();
             })
             .catch((refreshError) => {
-              if (
-                this.authorization === authorization &&
-                authorization.refresh === pending
-              ) {
+              if (this.cdnAuthorization === authorization) {
                 this.failPlayback(refreshError);
               }
-              throw refreshError;
             })
             .finally(() => {
-              if (
-                this.authorization === authorization &&
-                authorization.refresh === pending
-              ) {
-                authorization.refresh = undefined;
-              }
+              authorization.refreshPromise = undefined;
             });
-          authorization.refresh = pending;
-          refresh = pending;
         }
 
-        await refresh.catch(() => {});
+        await authorization.refreshPromise;
       },
     );
   }
 
-  private getEncodingId(urlOrObjectName: string) {
-    const path = urlOrObjectName.split(/[?#]/, 1)[0];
-    const objectName = path.slice(path.lastIndexOf("/") + 1);
-    const separator = objectName.indexOf(".");
-    return separator > 0 ? objectName.slice(0, separator) : undefined;
-  }
-
-  private getUnauthorizedEncodingId(error: shaka.util.Error | undefined) {
+  private isUnauthorizedCdnRequest(error: shaka.util.Error | undefined) {
     const [url, status] = error?.data ?? [];
-    if (typeof url === "string" && url.startsWith(CDN_URL) && status === 401) {
-      return this.getEncodingId(url);
-    }
+    return (
+      typeof url === "string" &&
+      (url === CDN_URL || url.startsWith(`${CDN_URL}/`)) &&
+      status === 401
+    );
   }
 
   private failPlayback(error: unknown) {
@@ -507,52 +503,50 @@ export default class WebAudioPlayer implements MediaPlayer {
     this.unload();
   }
 
-  private setupListeners() {
-    if (!this.videoElement || !this.player) return;
+  private registerEventListeners() {
+    const videoElement = this.videoElement;
+    const shakaPlayer = this.shakaPlayer;
+    if (!videoElement || !shakaPlayer) return;
 
-    this.videoElement.addEventListener("ended", () => {
+    videoElement.addEventListener("ended", () => {
       void this.next().catch((error) => {
         if (!(error instanceof Error && error.name === "AbortError")) {
           console.error("Unable to advance playback", error);
         }
       });
     });
-    this.videoElement.addEventListener("play", () => {
+    videoElement.addEventListener("play", () => {
       if (this.state.status !== "paused") return;
-      this.setState({ ...this.state, status: "playing" });
+      this.setPlaybackState({ ...this.state, status: "playing" });
     });
-    this.videoElement.addEventListener("pause", () => {
+    videoElement.addEventListener("pause", () => {
       if (this.state.status !== "playing") return;
-      this.setState({ ...this.state, status: "paused" });
+      this.setPlaybackState({ ...this.state, status: "paused" });
     });
-    this.videoElement.addEventListener("volumechange", () => {
-      if (!this.videoElement) return;
-      this.setState({
+    videoElement.addEventListener("volumechange", () => {
+      this.setPlaybackState({
         ...this.state,
-        volume: this.videoElement.volume,
-        muted: this.videoElement.muted,
+        volume: videoElement.volume,
+        muted: videoElement.muted,
       });
     });
-    this.videoElement.addEventListener("timeupdate", () => {
-      if (
-        !this.videoElement ||
-        (this.state.status !== "playing" && this.state.status !== "paused")
-      ) {
+    videoElement.addEventListener("timeupdate", () => {
+      if (this.state.status !== "playing" && this.state.status !== "paused") {
         return;
       }
-      this.setState({
+      this.setPlaybackState({
         ...this.state,
-        position: this.videoElement.currentTime,
-        duration: this.videoElement.duration || 0,
+        position: videoElement.currentTime,
+        duration: videoElement.duration || 0,
       });
     });
-    this.player.addEventListener("error", (event) => {
+    shakaPlayer.addEventListener("error", (event) => {
       const error = (event as Event & { detail: shaka.util.Error }).detail;
       // Shaka emits this event and rejects load() for the same manifest error.
-      // The active load owns that failure and resets state through runOperation.
+      // The active load owns that failure and resets state through its rejection.
       if (
         this.state.status !== "loading" &&
-        !this.getUnauthorizedEncodingId(error)
+        !this.isUnauthorizedCdnRequest(error)
       ) {
         this.failPlayback(error);
       }
