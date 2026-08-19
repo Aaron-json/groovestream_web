@@ -449,9 +449,10 @@ export default class WebAudioPlayer implements MediaPlayer {
         return;
       }
 
-      const originalUrl = request.uris[0];
-      const objectName = originalUrl.slice(originalUrl.lastIndexOf("/") + 1);
-      request.uris[0] = `${CDN_URL}/${objectName}`;
+      const mediaUrl = new URL(request.uris[0], window.location.href);
+      const objectKey = mediaUrl.pathname.split("/").pop();
+      if (!objectKey) throw new Error("Media URL has no object key");
+      request.uris[0] = new URL(objectKey, `${CDN_URL}/`).href;
 
       const authorization = this.cdnAuthorization;
       if (authorization) {
