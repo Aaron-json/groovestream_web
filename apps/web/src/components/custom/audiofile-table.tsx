@@ -104,7 +104,7 @@ function AudiofileTable({
     );
 
   const handlePlay = useCallback(
-    (file: Audiofile) => {
+    (file: Audiofile, index: number) => {
       if (media?.audiofile?.id === file.id) {
         void playPauseToggle().catch((error) => {
           toast.error("Playback Error", {
@@ -112,21 +112,16 @@ function AudiofileTable({
           });
         });
       } else {
-        const index = audiofiles.findIndex((f) => f.id === file.id);
-        setMedia(audiofileSource, index).catch((error) => {
-          toast.error("Playback Error", {
-            description: error instanceof Error ? error.message : undefined,
-          });
-        });
+        setMedia({ source: audiofileSource, index, audiofile: file }).catch(
+          (error) => {
+            toast.error("Playback Error", {
+              description: error instanceof Error ? error.message : undefined,
+            });
+          },
+        );
       }
     },
-    [
-      audiofiles,
-      audiofileSource,
-      media?.audiofile?.id,
-      playPauseToggle,
-      setMedia,
-    ],
+    [audiofileSource, media?.audiofile?.id, playPauseToggle, setMedia],
   );
 
   const handleDelete = useCallback(
@@ -261,7 +256,7 @@ interface VirtualizedRowsProps {
   totalSize: number;
   rows: AudiofileTableRow[];
   table: AudiofileTableInstance;
-  onPlay: (file: Audiofile) => void;
+  onPlay: (file: Audiofile, index: number) => void;
   scrollMargin: number;
 }
 
@@ -296,7 +291,7 @@ const VirtualizedRows = memo(function VirtualizedRows({
         return (
           <TableRow
             key={row.id}
-            onClick={() => onPlay(row.original)}
+            onClick={() => onPlay(row.original, row.index)}
             className="h-12 cursor-pointer group"
           >
             {row.getAllCells().map((cell) => (

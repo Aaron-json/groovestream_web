@@ -12,8 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { playlistInfoOptions } from "@groovestream/query/media";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { PlaybackItem } from "@groovestream/media/encodings";
-import type { AudioSource } from "@groovestream/media/source";
-import type { CurrentMedia } from "@groovestream/media/player";
+import type {
+  AudioSource,
+  AudioSourcePosition,
+} from "@groovestream/media/source";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
 import { formatDuration } from "@groovestream/media/duration";
 import { useUIStore } from "@/lib/ui";
@@ -22,8 +24,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Disc, ListMusic, Mic2, Tag, User, Volume2, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
+import { shallow } from "zustand/shallow";
 
 export function NowPlayingPanel() {
   const isMobile = useIsMobile();
@@ -253,23 +256,50 @@ function PlaylistLink({ playlistId }: { playlistId: string }) {
   );
 }
 
-function Queue({ media }: { media: Omit<CurrentMedia, "playbackItem"> }) {
-  const playbackState = usePlaybackStore((state) => state.playerState.status);
+function Queue({ media }: { media: AudioSourcePosition }) {
+  const playbackStatus = usePlaybackStore((state) => state.playerState.status);
   const setMedia = usePlaybackStore((state) => state.setMedia);
   const source = media.source;
-  const queueItems = useAudioSourceItems(source);
+  const getQueueSnapshot = useMemo(() => {
+    // useSyncExternalStore requires the same object until an observed value
+    // changes; AudioSource already provides that guarantee for its item list.
+    let snapshot = {
+      audiofiles: source.getAudiofiles(),
+      hasMore: source.pagination?.hasMore() ?? false,
+      loadingMore: source.pagination?.isLoading() ?? false,
+    };
+
+    return () => {
+      const nextSnapshot = {
+        audiofiles: source.getAudiofiles(),
+        hasMore: source.pagination?.hasMore() ?? false,
+        loadingMore: source.pagination?.isLoading() ?? false,
+      };
+      if (!shallow(snapshot, nextSnapshot)) snapshot = nextSnapshot;
+      return snapshot;
+    };
+  }, [source]);
+  const queueSnapshot = useSyncExternalStore(
+    source.subscribe,
+    getQueueSnapshot,
+    getQueueSnapshot,
+  );
+  const queueItems = queueSnapshot.audiofiles;
   const pagination = source.pagination;
-  const [failedSource, setFailedSource] = useState<AudioSource>();
+  const [paginationErrorSource, setPaginationErrorSource] =
+    useState<AudioSource>();
 
   function loadMore() {
     if (!pagination || !pagination.hasMore() || pagination.isLoading()) return;
 
-    setFailedSource(undefined);
-    void pagination.loadMore().catch(() => setFailedSource(source));
+    setPaginationErrorSource(undefined);
+    void pagination.loadMore().catch(() => setPaginationErrorSource(source));
   }
 
   function playQueueItem(index: number) {
-    setMedia(media.source, index).catch((error) => {
+    const audiofile = queueItems[index];
+    if (!audiofile) return;
+    setMedia({ source, index, audiofile }).catch((error) => {
       toast.error("Playback Error", {
         description: error instanceof Error ? error.message : undefined,
       });
@@ -313,7 +343,7 @@ function Queue({ media }: { media: Omit<CurrentMedia, "playbackItem"> }) {
                     active && "text-foreground",
                   )}
                 >
-                  {active && playbackState === "playing" ? (
+                  {active && playbackStatus === "playing" ? (
                     <Volume2 className="size-3.5 text-primary opacity-80" />
                   ) : (
                     index + 1
@@ -339,29 +369,12 @@ function Queue({ media }: { media: Omit<CurrentMedia, "playbackItem"> }) {
         <InfiniteScrollTrigger
           pagination={{
             loadMore,
-            hasMore: pagination?.hasMore() ?? false,
-            isLoading: pagination?.isLoading() ?? false,
-            isError: failedSource === source,
+            hasMore: queueSnapshot.hasMore,
+            isLoading: queueSnapshot.loadingMore,
+            isError: paginationErrorSource === source,
           }}
         />
       </div>
     </>
   );
-}
-
-function useAudioSourceItems(source: AudioSource) {
-  // getAudiofiles() returns a fresh flattened array. Retain the emitted value
-  // in state instead of using it as a useSyncExternalStore snapshot.
-  const [snapshot, setSnapshot] = useState(() => ({
-    source,
-    items: source.getAudiofiles(),
-  }));
-
-  useEffect(() => {
-    const update = () => setSnapshot({ source, items: source.getAudiofiles() });
-    update();
-    return source.subscribe(update);
-  }, [source]);
-
-  return snapshot.source === source ? snapshot.items : source.getAudiofiles();
 }

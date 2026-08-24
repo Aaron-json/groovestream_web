@@ -7,15 +7,18 @@ import {
   type PlaybackItem,
 } from "@groovestream/media/encodings";
 import {
-  getNextAudioIndex,
+  getAdjacentAudioSourcePosition,
+  reconcileAudioSourcePosition,
   type AudioSource,
+  type AudioSourcePosition,
 } from "@groovestream/media/source";
 import {
   INITIAL_PLAYBACK_STATE,
+  PREVIOUS_RESTART_THRESHOLD_SECONDS,
   UnsupportedPlaybackError,
   playbackStatesEqual,
   toUnloadedPlaybackState,
-  updateCurrentMediaLocation,
+  updateCurrentSourcePosition,
   type CurrentMedia,
   type MediaPlayer,
   type PlaybackState,
@@ -33,6 +36,15 @@ type CdnAuthorization = {
   refreshPromise?: Promise<void>;
 };
 
+type SourceSubscription = {
+  source: AudioSource;
+  unsubscribe: () => void;
+};
+
+/**
+ * Owns the active AudioSourcePosition. External positions are validated at
+ * load boundaries; source notifications keep retained player state current.
+ */
 export default class WebAudioPlayer implements MediaPlayer {
   private videoElement: HTMLVideoElement | null = null;
   private shakaPlayer: shaka.Player | undefined;
@@ -42,8 +54,8 @@ export default class WebAudioPlayer implements MediaPlayer {
     ...INITIAL_PLAYBACK_STATE,
     volume: INITIAL_VOLUME,
   };
-  private unsubscribeFromSource: (() => void) | undefined;
-  private activeLoadController: AbortController | undefined;
+  private sourceSubscription: SourceSubscription | undefined;
+  private activeOperationController: AbortController | undefined;
   private mediaPreferences: MediaPreferences | undefined;
 
   isSupported(): boolean {
@@ -115,10 +127,43 @@ export default class WebAudioPlayer implements MediaPlayer {
     this.registerEventListeners();
   }
 
-  load(source: AudioSource, audiofileId: Audiofile["id"]): Promise<void> {
-    return this.runExclusiveLoad((signal) =>
-      this.loadAudiofile(source, audiofileId, signal),
-    );
+  load(position: AudioSourcePosition): Promise<void> {
+    const selectedPosition = reconcileAudioSourcePosition(position);
+    if (!selectedPosition) {
+      return Promise.reject(
+        new Error("The selected track is no longer available"),
+      );
+    }
+
+    return this.runLatestPlaybackOperation(async (signal) => {
+      const currentMedia = this.state.currentMedia;
+      if (
+        this.state.status !== "loading" &&
+        selectedPosition.source === currentMedia?.source &&
+        selectedPosition.audiofile.id === currentMedia.audiofile.id
+      ) {
+        await this.seek(0);
+        signal.throwIfAborted();
+        await this.play();
+        signal.throwIfAborted();
+        return;
+      }
+
+      try {
+        await this.beginLoading(selectedPosition, signal);
+        const playbackItem = await this.resolvePlaybackItem(
+          selectedPosition,
+          signal,
+        );
+        if (!playbackItem) {
+          throw new UnsupportedPlaybackError(selectedPosition.audiofile.id);
+        }
+        await this.loadPlaybackItem(selectedPosition, playbackItem, signal);
+      } catch (error) {
+        if (!signal.aborted) await this.clearCurrentMedia();
+        throw error;
+      }
+    });
   }
 
   next(): Promise<void> {
@@ -126,18 +171,28 @@ export default class WebAudioPlayer implements MediaPlayer {
   }
 
   previous(): Promise<void> {
-    return this.navigate("prev");
+    const status = this.state.status;
+    if (
+      (status === "playing" || status === "paused") &&
+      this.videoElement &&
+      this.videoElement.currentTime > PREVIOUS_RESTART_THRESHOLD_SECONDS
+    ) {
+      return this.seek(0);
+    }
+    return this.navigate("previous");
   }
 
   unload() {
-    this.resetPlayback();
+    this.cancelActiveOperation();
+    this.clearPlayback();
     void this.shakaPlayer?.unload().catch((error) => {
       console.error("Unable to unload media", error);
     });
   }
 
   async destroy() {
-    this.resetPlayback();
+    this.cancelActiveOperation();
+    this.clearPlayback();
 
     if (this.shakaPlayer) {
       await this.shakaPlayer.destroy();
@@ -181,123 +236,152 @@ export default class WebAudioPlayer implements MediaPlayer {
     this.stateListeners.forEach((listener) => listener());
   }
 
-  private resetPlayback() {
-    this.activeLoadController?.abort();
-    this.activeLoadController = undefined;
-    this.cdnAuthorization = undefined;
-    this.clearSourceSubscription();
-    this.setPlaybackState(toUnloadedPlaybackState(this.state));
-    this.videoElement?.pause();
-  }
-
-  private async runExclusiveLoad(
-    loadMedia: (signal: AbortSignal) => Promise<void>,
-  ) {
-    this.activeLoadController?.abort();
-    const controller = new AbortController();
-    this.activeLoadController = controller;
-
-    try {
-      await loadMedia(controller.signal);
-    } catch (error) {
-      if (controller.signal.aborted) {
-        throw new DOMException("Aborted", "AbortError");
-      }
-      if (this.activeLoadController === controller) {
-        this.resetPlayback();
-        // Cleanup must not replace the load error reported to the caller.
-        await this.shakaPlayer?.unload().catch(() => {});
-      }
-      throw error;
-    } finally {
-      if (this.activeLoadController === controller) {
-        this.activeLoadController = undefined;
-      }
-    }
-  }
-
-  private clearSourceSubscription() {
-    this.unsubscribeFromSource?.();
-    this.unsubscribeFromSource = undefined;
-  }
-
-  private subscribeToSource(source: AudioSource) {
-    const currentSource = this.state.currentMedia?.source;
-    if (source === currentSource && this.unsubscribeFromSource) return;
-    this.clearSourceSubscription();
-    this.unsubscribeFromSource = source.subscribe(() =>
-      this.handleSourceUpdate(),
-    );
-  }
-
-  private handleSourceUpdate() {
-    const state = this.state;
-    const currentMedia = state.currentMedia;
-    if (!currentMedia) return;
-
-    const audiofiles = currentMedia.source.getAudiofiles();
-    const index = audiofiles.findIndex(
-      ({ id }) => id === currentMedia.audiofile.id,
-    );
-    // A removed item keeps playing. Its last known index is the stable cursor
-    // used to choose a neighbor from the updated source.
-    if (index === -1) return;
-    const audiofile = audiofiles[index];
-    if (index === currentMedia.index && audiofile === currentMedia.audiofile) {
-      return;
-    }
-
-    this.setPlaybackState(updateCurrentMediaLocation(state, index, audiofile));
-  }
-
-  private async loadAudiofile(
-    source: AudioSource,
-    audiofileId: Audiofile["id"],
-    signal: AbortSignal,
-  ) {
+  private requirePlaybackEngine() {
     const shakaPlayer = this.shakaPlayer;
     const videoElement = this.videoElement;
     const mediaPreferences = this.mediaPreferences;
     if (!shakaPlayer || !videoElement || !mediaPreferences) {
       throw new Error("Player not initialized");
     }
+    return { shakaPlayer, videoElement, mediaPreferences };
+  }
 
-    const audiofiles = source.getAudiofiles();
-    const index = audiofiles.findIndex(
-      (audiofile) => audiofile.id === audiofileId,
-    );
-    if (index === -1) {
-      throw new Error("The selected track is no longer available");
+  private cancelActiveOperation() {
+    this.activeOperationController?.abort();
+    this.activeOperationController = undefined;
+  }
+
+  private clearPlayback() {
+    this.cdnAuthorization = undefined;
+    this.clearSourceSubscription();
+    this.setPlaybackState(toUnloadedPlaybackState(this.state));
+    this.videoElement?.pause();
+  }
+
+  private async clearCurrentMedia() {
+    this.clearPlayback();
+    // Cleanup must not replace the playback error reported to the caller.
+    await this.shakaPlayer?.unload().catch(() => {});
+  }
+
+  private async runLatestPlaybackOperation(
+    operation: (signal: AbortSignal) => Promise<void>,
+  ) {
+    this.cancelActiveOperation();
+    const controller = new AbortController();
+    this.activeOperationController = controller;
+
+    try {
+      await operation(controller.signal);
+    } catch (error) {
+      if (controller.signal.aborted) {
+        throw new DOMException("Aborted", "AbortError");
+      }
+      throw error;
+    } finally {
+      if (this.activeOperationController === controller) {
+        this.activeOperationController = undefined;
+      }
     }
+  }
 
-    const loadingMedia: CurrentMedia<undefined> = {
-      source,
-      index,
-      audiofile: audiofiles[index],
+  private clearSourceSubscription() {
+    const subscription = this.sourceSubscription;
+    this.sourceSubscription = undefined;
+    subscription?.unsubscribe();
+  }
+
+  private subscribeToSource(source: AudioSource) {
+    if (this.sourceSubscription?.source === source) return;
+    this.clearSourceSubscription();
+    const unsubscribe = source.subscribe(() => this.handleSourceUpdate());
+
+    // A source may notify synchronously while being subscribed. If that
+    // notification unloaded or replaced the media, do not retain its listener.
+    if (this.state.currentMedia?.source !== source) {
+      unsubscribe();
+      return;
+    }
+    this.sourceSubscription = { source, unsubscribe };
+  }
+
+  private handleSourceUpdate() {
+    const state = this.state;
+    if (state.status === "unloaded") return;
+
+    // Source notifications are the sole reconciliation point for retained
+    // currentMedia. Commands can therefore consume player state without repair.
+    const position = reconcileAudioSourcePosition(state.currentMedia);
+    if (!position) {
+      this.unload();
+      return;
+    }
+    this.setPlaybackState(updateCurrentSourcePosition(state, position));
+  }
+
+  private requireCurrentPosition(
+    expectedPosition: AudioSourcePosition,
+  ): AudioSourcePosition {
+    const currentMedia = this.state.currentMedia;
+    if (
+      !currentMedia ||
+      currentMedia.source !== expectedPosition.source ||
+      currentMedia.audiofile.id !== expectedPosition.audiofile.id
+    ) {
+      throw new Error("The current track is no longer in the playback source");
+    }
+    return currentMedia;
+  }
+
+  private setLoadingMedia(position: AudioSourcePosition) {
+    const { videoElement } = this.requirePlaybackEngine();
+    const currentMedia: CurrentMedia<undefined> = {
+      ...position,
       playbackItem: undefined,
     };
+
     videoElement.pause();
     this.cdnAuthorization = undefined;
-    this.subscribeToSource(source);
     this.setPlaybackState({
       ...this.state,
       status: "loading",
-      currentMedia: loadingMedia,
+      currentMedia,
       position: 0,
       duration: 0,
     });
+    this.subscribeToSource(position.source);
+  }
 
+  private async beginLoading(
+    position: AudioSourcePosition,
+    signal: AbortSignal,
+  ) {
+    const { shakaPlayer } = this.requirePlaybackEngine();
+    signal.throwIfAborted();
+    this.setLoadingMedia(position);
     await shakaPlayer.unload();
     signal.throwIfAborted();
+  }
+
+  private async resolvePlaybackItem(
+    position: AudioSourcePosition,
+    signal: AbortSignal,
+  ) {
+    const { mediaPreferences } = this.requirePlaybackEngine();
     const [playbackItem] = await resolvePlaybackItems(
-      loadingMedia.audiofile,
+      position.audiofile,
       mediaPreferences,
       signal,
     );
-    if (!playbackItem) {
-      throw new UnsupportedPlaybackError(loadingMedia.audiofile.id);
-    }
+    return playbackItem;
+  }
 
+  private async loadPlaybackItem(
+    position: AudioSourcePosition,
+    playbackItem: PlaybackItem,
+    signal: AbortSignal,
+  ) {
+    const { shakaPlayer, videoElement } = this.requirePlaybackEngine();
     const { token } = await createEncodingToken({
       path: { encoding_id: playbackItem.encoding.id },
       signal,
@@ -310,127 +394,166 @@ export default class WebAudioPlayer implements MediaPlayer {
 
     await shakaPlayer.load(playbackItem.objectId);
     signal.throwIfAborted();
-    await videoElement.play();
-    signal.throwIfAborted();
-
-    if (this.state.status !== "loading") {
-      throw new Error("Player left the loading state before media was ready");
+    const state = this.state;
+    if (
+      state.status !== "loading" ||
+      state.currentMedia.source !== position.source ||
+      state.currentMedia.audiofile.id !== position.audiofile.id
+    ) {
+      throw new Error("The selected track is no longer available");
     }
     const currentMedia: CurrentMedia = {
-      ...this.state.currentMedia,
+      ...state.currentMedia,
       playbackItem,
     };
     this.setPlaybackState({
-      ...this.state,
-      status: "playing",
+      ...state,
+      status: "paused",
       currentMedia,
       position: videoElement.currentTime,
       duration: videoElement.duration || 0,
       volume: videoElement.volume,
       muted: videoElement.muted,
     });
+
+    try {
+      await videoElement.play();
+    } catch (error) {
+      signal.throwIfAborted();
+      // Autoplay policy does not invalidate a successfully loaded encoding.
+      if (error instanceof DOMException && error.name === "NotAllowedError") {
+        return;
+      }
+      throw error;
+    }
+    signal.throwIfAborted();
   }
 
-  private async getNavigationTarget(
-    source: AudioSource,
-    cursor: CurrentMedia<PlaybackItem | undefined>,
-    direction: "next" | "prev",
+  /**
+   * Finds an adjacent position and fetches one forward page when required.
+   * Source notifications maintain the active index; after pagination this
+   * method re-reads that player-owned position instead of repairing it itself.
+   */
+  private async findNavigationTarget(
+    cursor: AudioSourcePosition,
+    direction: "next" | "previous",
     signal: AbortSignal,
   ) {
-    let audiofiles = source.getAudiofiles();
-    let index = getNextAudioIndex(
-      audiofiles,
-      cursor.audiofile.id,
+    const source = cursor.source;
+    let currentPosition = this.requireCurrentPosition(cursor);
+
+    let target = getAdjacentAudioSourcePosition(
+      currentPosition,
       direction,
-      cursor.index,
       false,
     );
 
-    while (
+    if (
       direction === "next" &&
-      index === undefined &&
+      target === undefined &&
       source.pagination?.hasMore()
     ) {
-      const previousLength = audiofiles.length;
       await source.pagination.loadMore();
       signal.throwIfAborted();
-      audiofiles = source.getAudiofiles();
-      index = getNextAudioIndex(
-        audiofiles,
-        cursor.audiofile.id,
+      currentPosition = this.requireCurrentPosition(cursor);
+      target = getAdjacentAudioSourcePosition(
+        currentPosition,
         direction,
-        cursor.index,
         false,
       );
-      if (audiofiles.length === previousLength) break;
     }
 
-    if (index === undefined && !source.pagination?.hasMore()) {
-      index = getNextAudioIndex(
-        audiofiles,
-        cursor.audiofile.id,
-        direction,
-        cursor.index,
-      );
-    }
-    if (index === undefined) return undefined;
-    const audiofile = audiofiles[index];
-    if (!audiofile || audiofile.id === cursor.audiofile.id) {
+    if (target) return target;
+    if (source.pagination?.hasMore()) return undefined;
+
+    target = getAdjacentAudioSourcePosition(currentPosition, direction);
+    if (!target || target.audiofile.id === currentPosition.audiofile.id) {
       return undefined;
     }
-    return { audiofile, index };
+    return target;
   }
 
-  private async navigate(direction: "next" | "prev") {
-    const currentMedia = this.state.currentMedia;
-    if (!currentMedia) return;
-    const source = currentMedia.source;
+  /**
+   * Skips only tracks that deterministically lack a supported representation.
+   * Network, token, Shaka, and decoding failures escape immediately.
+   */
+  private async loadFirstSupportedNavigationTarget(
+    originAudiofileId: Audiofile["id"],
+    initialTarget: AudioSourcePosition,
+    direction: "next" | "previous",
+    signal: AbortSignal,
+  ) {
+    // The source wraps and can change while encodings are fetched; IDs provide
+    // a stable termination condition when every encountered track is
+    // unsupported.
+    const encounteredAudiofileIds = new Set<Audiofile["id"]>([
+      originAudiofileId,
+    ]);
+    let candidate = initialTarget;
 
-    await this.runExclusiveLoad(async (signal) => {
-      if (source.getAudiofiles().length === 0) {
-        throw new Error("The playback queue is no longer available");
+    await this.beginLoading(candidate, signal);
+    while (true) {
+      encounteredAudiofileIds.add(candidate.audiofile.id);
+      const playbackItem = await this.resolvePlaybackItem(candidate, signal);
+      if (playbackItem) {
+        await this.loadPlaybackItem(candidate, playbackItem, signal);
+        return;
       }
 
-      const visitedAudiofileIds = new Set<Audiofile["id"]>([
-        currentMedia.audiofile.id,
-      ]);
-      let navigationCursor: CurrentMedia<PlaybackItem | undefined> =
-        currentMedia;
-      let unsupportedPlaybackError: UnsupportedPlaybackError | undefined;
+      const unsupportedAudiofileId = candidate.audiofile.id;
+      const nextCandidate = await this.findNavigationTarget(
+        candidate,
+        direction,
+        signal,
+      );
+      if (
+        !nextCandidate ||
+        encounteredAudiofileIds.has(nextCandidate.audiofile.id)
+      ) {
+        throw new UnsupportedPlaybackError(unsupportedAudiofileId);
+      }
 
-      while (true) {
-        const navigationTarget = await this.getNavigationTarget(
-          source,
-          navigationCursor,
+      candidate = nextCandidate;
+      this.setLoadingMedia(candidate);
+    }
+  }
+
+  private async navigate(direction: "next" | "previous") {
+    const currentMedia = this.state.currentMedia;
+    if (!currentMedia) return;
+
+    await this.runLatestPlaybackOperation(async (signal) => {
+      let navigationTarget: AudioSourcePosition | undefined;
+      try {
+        navigationTarget = await this.findNavigationTarget(
+          currentMedia,
           direction,
           signal,
         );
-        if (
-          !navigationTarget ||
-          visitedAudiofileIds.has(navigationTarget.audiofile.id)
-        ) {
-          if (unsupportedPlaybackError) throw unsupportedPlaybackError;
-          return;
+      } catch (error) {
+        // A ready track remains valid when pagination fails before a target is
+        // selected. A superseded loading operation has no media to preserve.
+        if (!signal.aborted && this.state.status === "loading") {
+          await this.clearCurrentMedia();
         }
-        visitedAudiofileIds.add(navigationTarget.audiofile.id);
+        throw error;
+      }
 
-        try {
-          await this.loadAudiofile(
-            source,
-            navigationTarget.audiofile.id,
-            signal,
-          );
-          return;
-        } catch (error) {
-          if (!(error instanceof UnsupportedPlaybackError)) throw error;
-          unsupportedPlaybackError = error;
-          navigationCursor = {
-            source,
-            index: navigationTarget.index,
-            audiofile: navigationTarget.audiofile,
-            playbackItem: undefined,
-          };
-        }
+      if (!navigationTarget) {
+        if (this.state.status === "loading") await this.clearCurrentMedia();
+        return;
+      }
+
+      try {
+        await this.loadFirstSupportedNavigationTarget(
+          currentMedia.audiofile.id,
+          navigationTarget,
+          direction,
+          signal,
+        );
+      } catch (error) {
+        if (!signal.aborted) await this.clearCurrentMedia();
+        throw error;
       }
     });
   }
@@ -490,8 +613,8 @@ export default class WebAudioPlayer implements MediaPlayer {
     );
   }
 
-  private isUnauthorizedCdnRequest(error: shaka.util.Error | undefined) {
-    const [url, status] = error?.data ?? [];
+  private isUnauthorizedCdnRequest(error: shaka.util.Error) {
+    const [url, status] = error.data;
     return (
       typeof url === "string" &&
       (url === CDN_URL || url.startsWith(`${CDN_URL}/`)) &&
@@ -510,6 +633,14 @@ export default class WebAudioPlayer implements MediaPlayer {
     if (!videoElement || !shakaPlayer) return;
 
     videoElement.addEventListener("ended", () => {
+      if (this.state.status === "playing") {
+        this.setPlaybackState({
+          ...this.state,
+          status: "paused",
+          position: videoElement.currentTime,
+          duration: videoElement.duration || 0,
+        });
+      }
       void this.next().catch((error) => {
         if (!(error instanceof Error && error.name === "AbortError")) {
           console.error("Unable to advance playback", error);

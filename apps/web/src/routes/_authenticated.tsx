@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { TextLogo } from "@/components/custom/textlogo";
 import { useEffect, useState } from "react";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
+import type { CurrentMedia } from "@groovestream/media/player";
 import WebAudioPlayer from "@/lib/media/player";
 import { recordListeningHistory } from "@groovestream/query/media";
 import { queryClient } from "@/lib/query";
@@ -52,13 +53,7 @@ function AuthenticatedLayout() {
           return;
         }
 
-        await init(webPlayer, {
-          onMediaChange: (media) => {
-            void recordListeningHistory(queryClient, media.audiofile.id).catch(
-              () => {},
-            );
-          },
-        });
+        await init(webPlayer);
       } catch (e) {
         console.error("Audio Init Error:", e);
         if (!cancelled) setInitError(true);
@@ -72,6 +67,33 @@ function AuthenticatedLayout() {
       void destroy().catch(() => {});
     };
   }, [destroy, init]);
+
+  useEffect(() => {
+    let lastRecordedMedia: CurrentMedia | undefined;
+
+    return usePlaybackStore.subscribe((state) => {
+      const playerState = state.playerState;
+      if (playerState.status === "unloaded") {
+        lastRecordedMedia = undefined;
+        return;
+      }
+      if (playerState.status !== "playing") return;
+
+      const currentMedia = playerState.currentMedia;
+      if (
+        currentMedia.source === lastRecordedMedia?.source &&
+        currentMedia.audiofile.id === lastRecordedMedia.audiofile.id
+      ) {
+        return;
+      }
+
+      lastRecordedMedia = currentMedia;
+      void recordListeningHistory(
+        queryClient,
+        currentMedia.audiofile.id,
+      ).catch(() => {});
+    });
+  }, []);
 
   if (unsupported) {
     return (

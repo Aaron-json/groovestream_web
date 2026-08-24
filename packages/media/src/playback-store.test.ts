@@ -1,15 +1,18 @@
-import { deepStrictEqual, rejects, strictEqual } from "node:assert";
+import { rejects, strictEqual } from "node:assert";
 import { afterEach, test } from "node:test";
 import type { Audiofile, Encoding } from "@groovestream/api/models";
 import type { PlaybackItem } from "./encodings.ts";
 import {
   toUnloadedPlaybackState,
-  type CurrentMedia,
   type MediaPlayer,
   type PlaybackState,
 } from "./player.ts";
 import { usePlaybackStore } from "./playback-store.ts";
-import type { AudioSource } from "./source.ts";
+import {
+  getAudioSourcePosition,
+  type AudioSource,
+  type AudioSourcePosition,
+} from "./source.ts";
 
 function createAudiofile(id: string): Audiofile {
   return {
@@ -32,6 +35,7 @@ function createAudiofile(id: string): Audiofile {
 }
 
 function createPlaybackItem(audiofileId: string): PlaybackItem {
+  const objectId = `${audiofileId}.m3u8`;
   const encoding: Encoding = {
     audiofile_id: audiofileId,
     base_file_id: `${audiofileId}.file`,
@@ -43,7 +47,7 @@ function createPlaybackItem(audiofileId: string): PlaybackItem {
     created_at: "2026-01-01T00:00:00Z",
     dash_manifest_id: null,
     fragment_duration: 2,
-    hls_manifest_id: `${audiofileId}.m3u8`,
+    hls_manifest_id: objectId,
     id: `${audiofileId}.encoding`,
     objects_prefix: audiofileId,
     sample_rate: 48_000,
@@ -51,44 +55,21 @@ function createPlaybackItem(audiofileId: string): PlaybackItem {
   return {
     encoding,
     delivery: "hls",
-    objectId: encoding.hls_manifest_id!,
+    objectId,
   };
 }
 
 function createSource(initialAudiofiles: readonly Audiofile[]) {
   let audiofiles = initialAudiofiles;
-  let loading = false;
-  let hasMore = false;
-  const listeners = new Set<() => void>();
   const source: AudioSource = {
     getAudiofiles: () => audiofiles,
-    subscribe: (listener) => {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-    pagination: {
-      hasMore: () => hasMore,
-      isLoading: () => loading,
-      loadMore: async () => {
-        loading = true;
-        listeners.forEach((listener) => listener());
-        audiofiles = [...audiofiles, createAudiofile("loaded-later")];
-        hasMore = false;
-        loading = false;
-        listeners.forEach((listener) => listener());
-      },
-    },
+    subscribe: () => () => {},
   };
 
   return {
     source,
     replace(nextAudiofiles: readonly Audiofile[]) {
       audiofiles = nextAudiofiles;
-      listeners.forEach((listener) => listener());
-    },
-    setHasMore(nextHasMore: boolean) {
-      hasMore = nextHasMore;
-      listeners.forEach((listener) => listener());
     },
   };
 }
@@ -96,7 +77,7 @@ function createSource(initialAudiofiles: readonly Audiofile[]) {
 class FakePlayer implements MediaPlayer {
   destroyCalls = 0;
   initCalls = 0;
-  loadCalls: Audiofile["id"][] = [];
+  loadCalls: AudioSourcePosition[] = [];
   nextError: Error | undefined;
   previousError: Error | undefined;
   private readonly listeners = new Set<() => void>();
@@ -111,10 +92,6 @@ class FakePlayer implements MediaPlayer {
 
   get listenerCount() {
     return this.listeners.size;
-  }
-
-  isSupported() {
-    return true;
   }
 
   async init() {
@@ -135,18 +112,12 @@ class FakePlayer implements MediaPlayer {
     this.listeners.forEach((listener) => listener());
   }
 
-  async load(source: AudioSource, audiofileId: Audiofile["id"]) {
-    this.loadCalls.push(audiofileId);
-    const audiofiles = source.getAudiofiles();
-    const index = audiofiles.findIndex(({ id }) => id === audiofileId);
-    const audiofile = audiofiles[index];
-    if (!audiofile) throw new Error("Missing fake audiofile");
+  async load(position: AudioSourcePosition) {
+    this.loadCalls.push(position);
     this.setState({
       status: "loading",
       currentMedia: {
-        source,
-        index,
-        audiofile,
+        ...position,
         playbackItem: undefined,
       },
       position: 0,
@@ -156,13 +127,13 @@ class FakePlayer implements MediaPlayer {
     });
   }
 
-  commitLoad() {
+  completeLoad() {
     if (this.state.status !== "loading") {
       throw new Error("Nothing is loading");
     }
     this.setState({
       ...this.state,
-      status: "playing",
+      status: "paused",
       currentMedia: {
         ...this.state.currentMedia,
         playbackItem: createPlaybackItem(this.state.currentMedia.audiofile.id),
@@ -212,62 +183,63 @@ class FakePlayer implements MediaPlayer {
   }
 }
 
+function requirePosition(source: AudioSource, index = 0) {
+  const position = getAudioSourcePosition(source, index);
+  if (!position) throw new Error("Expected an audiofile at the test index");
+  return position;
+}
+
 afterEach(async () => {
   await usePlaybackStore.getState().destroy();
 });
 
-test("mirrors the player-owned selection and hydrated playback item", async () => {
+test("mirrors loading, hydrated, and playing player states", async () => {
   const first = createAudiofile("first");
   const second = createAudiofile("second");
   const liveSource = createSource([first]);
   const player = new FakePlayer();
-  const changed: CurrentMedia[] = [];
 
-  await usePlaybackStore.getState().init(player, {
-    onMediaChange: (media) => changed.push(media),
-  });
+  await usePlaybackStore.getState().init(player);
   liveSource.replace([first, second]);
-  await usePlaybackStore.getState().setMedia(liveSource.source, 1);
+  await usePlaybackStore
+    .getState()
+    .setMedia(requirePosition(liveSource.source, 1));
 
-  strictEqual(player.loadCalls[0], second.id);
+  strictEqual(player.loadCalls[0].audiofile, second);
+  strictEqual(player.loadCalls[0].index, 1);
   const loading = usePlaybackStore.getState().playerState;
   strictEqual(loading.status, "loading");
   if (loading.status !== "loading") throw new Error("Expected loading state");
   strictEqual(loading.currentMedia.audiofile, second);
   strictEqual(loading.currentMedia.playbackItem, undefined);
-  deepStrictEqual(usePlaybackStore.getState().sourceAudiofiles, [first, second]);
 
-  player.commitLoad();
-  const playing = usePlaybackStore.getState().playerState;
-  strictEqual(playing.status, "playing");
-  if (playing.status !== "playing") throw new Error("Expected playing state");
-  strictEqual(playing.currentMedia.source, liveSource.source);
-  strictEqual(playing.currentMedia.audiofile, second);
+  player.completeLoad();
+  const paused = usePlaybackStore.getState().playerState;
+  strictEqual(paused.status, "paused");
+  if (paused.status !== "paused") throw new Error("Expected paused state");
+  strictEqual(paused.currentMedia.source, liveSource.source);
+  strictEqual(paused.currentMedia.audiofile, second);
   strictEqual(
-    playing.currentMedia.playbackItem.encoding.audiofile_id,
+    paused.currentMedia.playbackItem.encoding.audiofile_id,
     second.id,
   );
-  strictEqual(changed.length, 1);
+
+  await player.play();
+  strictEqual(usePlaybackStore.getState().playerState.status, "playing");
 });
 
-test("derives rendering snapshots and pagination from the live source", async () => {
+test("forwards source positions without duplicating player reconciliation", async () => {
   const first = createAudiofile("first");
-  const liveSource = createSource([first]);
+  const second = createAudiofile("second");
+  const liveSource = createSource([first, second]);
+  const position = requirePosition(liveSource.source, 1);
   const player = new FakePlayer();
 
   await usePlaybackStore.getState().init(player);
-  await usePlaybackStore.getState().setMedia(liveSource.source);
-  player.commitLoad();
-  liveSource.setHasMore(true);
+  liveSource.replace([second, first]);
+  await usePlaybackStore.getState().setMedia(position);
 
-  strictEqual(usePlaybackStore.getState().sourceHasMore, true);
-  await usePlaybackStore.getState().loadMore();
-  deepStrictEqual(
-    usePlaybackStore.getState().sourceAudiofiles.map(({ id }) => id),
-    ["first", "loaded-later"],
-  );
-  strictEqual(usePlaybackStore.getState().sourceHasMore, false);
-  strictEqual(usePlaybackStore.getState().sourceLoadingMore, false);
+  strictEqual(player.loadCalls[0], position);
 });
 
 test("preserves player intrinsics through phase changes", async () => {
@@ -278,12 +250,14 @@ test("preserves player intrinsics through phase changes", async () => {
   await usePlaybackStore.getState().init(player);
   usePlaybackStore.getState().setVolume(0.35);
   usePlaybackStore.getState().setMute(true);
-  await usePlaybackStore.getState().setMedia(liveSource.source);
+  await usePlaybackStore
+    .getState()
+    .setMedia(requirePosition(liveSource.source));
 
   const loading = usePlaybackStore.getState().playerState;
   strictEqual(loading.volume, 0.35);
   strictEqual(loading.muted, true);
-  player.commitLoad();
+  player.completeLoad();
   strictEqual(usePlaybackStore.getState().playerState.volume, 0.35);
   strictEqual(usePlaybackStore.getState().playerState.muted, true);
 });
@@ -301,26 +275,14 @@ test("treats cancellation as control flow but preserves real command errors", as
   await rejects(usePlaybackStore.getState().previous(), /native failure/);
 });
 
-test("reinitializing the active player only replaces store effects", async () => {
-  const audiofile = createAudiofile("first");
-  const liveSource = createSource([audiofile]);
+test("reinitializing the active player is idempotent", async () => {
   const player = new FakePlayer();
-  let firstEffectCalls = 0;
-  let latestEffectCalls = 0;
 
-  await usePlaybackStore.getState().init(player, {
-    onMediaChange: () => firstEffectCalls++,
-  });
-  await usePlaybackStore.getState().init(player, {
-    onMediaChange: () => latestEffectCalls++,
-  });
-  await usePlaybackStore.getState().setMedia(liveSource.source);
-  player.commitLoad();
+  await usePlaybackStore.getState().init(player);
+  await usePlaybackStore.getState().init(player);
 
   strictEqual(player.initCalls, 1);
   strictEqual(player.destroyCalls, 0);
-  strictEqual(firstEffectCalls, 0);
-  strictEqual(latestEffectCalls, 1);
 });
 
 test("destroy removes the player state subscription", async () => {

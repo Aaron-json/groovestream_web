@@ -44,9 +44,9 @@ const MediaCard = ({
     playbackState === "playing";
 
   const playAudio = async () => {
-    if (!audiofileSource) return;
+    if (!audiofileSource || !isAudio || index === undefined) return;
     try {
-      await setMedia(audiofileSource, index);
+      await setMedia({ source: audiofileSource, index, audiofile: media });
     } catch (error) {
       toast.error("Error loading media", {
         description:

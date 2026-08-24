@@ -15,17 +15,20 @@ export type PlaybackItem = Readonly<{
   delivery: MediaDelivery;
 }>;
 
-function getEncodingDeliveries(encoding: Encoding): MediaDelivery[] {
-  const deliveries: MediaDelivery[] = [];
-  if (encoding.dash_manifest_id) deliveries.push("dash");
-  if (encoding.hls_manifest_id) deliveries.push("hls");
-  return deliveries;
-}
+type EncodingDelivery = Readonly<{
+  delivery: MediaDelivery;
+  objectId: string;
+}>;
 
-function getMediaObject(encoding: Encoding, delivery: MediaDelivery) {
-  return delivery === "dash"
-    ? encoding.dash_manifest_id
-    : encoding.hls_manifest_id;
+function getEncodingDeliveries(encoding: Encoding): EncodingDelivery[] {
+  const deliveries: EncodingDelivery[] = [];
+  if (encoding.dash_manifest_id) {
+    deliveries.push({ delivery: "dash", objectId: encoding.dash_manifest_id });
+  }
+  if (encoding.hls_manifest_id) {
+    deliveries.push({ delivery: "hls", objectId: encoding.hls_manifest_id });
+  }
+  return deliveries;
 }
 
 /** Maps preference values from lowest to highest priority. */
@@ -43,9 +46,9 @@ export function getPlaybackItems(
   const items = encodings
     .filter((encoding) => codecPriorities.has(encoding.codec))
     .flatMap((encoding) =>
-      getEncodingDeliveries(encoding).map((delivery) => ({
+      getEncodingDeliveries(encoding).map(({ delivery, objectId }) => ({
         encoding,
-        objectId: getMediaObject(encoding, delivery)!,
+        objectId,
         delivery,
       })),
     )

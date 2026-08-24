@@ -1,33 +1,19 @@
-import type { Audiofile } from "@groovestream/api/models";
 import { create } from "zustand";
 import {
   INITIAL_PLAYBACK_STATE,
-  type CurrentMedia,
+  playbackStatesEqual,
   type MediaPlayer,
   type PlaybackState,
 } from "./player";
-import type { AudioSource } from "./source";
+import type { AudioSourcePosition } from "./source";
 
-export type PlaybackEffects = {
-  onMediaChange?: (
-    media: CurrentMedia,
-    previous: CurrentMedia | undefined,
-  ) => void;
-};
-
-export type PlaybackStore = {
+type PlaybackStore = {
   player: MediaPlayer | undefined;
   playerState: PlaybackState;
 
-  /** Derived snapshots for rendering; AudioSource remains authoritative. */
-  sourceAudiofiles: readonly Audiofile[];
-  sourceHasMore: boolean;
-  sourceLoadingMore: boolean;
-
-  init(player: MediaPlayer, effects?: PlaybackEffects): Promise<void>;
+  init(player: MediaPlayer): Promise<void>;
   destroy(): Promise<void>;
-  setMedia(source: AudioSource, index?: number): Promise<void>;
-  selectMedia(audiofileId: Audiofile["id"]): Promise<void>;
+  setMedia(position: AudioSourcePosition): Promise<void>;
   unloadMedia(): void;
   play(): Promise<void>;
   pause(): void;
@@ -37,128 +23,52 @@ export type PlaybackStore = {
   setVolume(volume: number): void;
   setMute(mute: boolean): void;
   seek(position: number): Promise<void>;
-  loadMore(): Promise<void>;
 };
 
 const initialStoreState = {
   player: undefined,
   playerState: INITIAL_PLAYBACK_STATE,
-  sourceAudiofiles: [] as readonly Audiofile[],
-  sourceHasMore: false,
-  sourceLoadingMore: false,
 };
 
 let initializingPlayer: MediaPlayer | undefined;
 let initialization: Promise<void> | undefined;
 let playerStateUnsubscribe: (() => void) | undefined;
-let playbackEffects: PlaybackEffects = {};
-let lastStartedMedia: CurrentMedia | undefined;
-let subscribedSource: AudioSource | undefined;
-let sourceUnsubscribe: (() => void) | undefined;
-
-export function isPlaybackAbort(error: unknown) {
-  return error instanceof Error && error.name === "AbortError";
-}
 
 export const usePlaybackStore = create<PlaybackStore>((set, get) => {
-  function syncSourceSnapshot(source: AudioSource | undefined) {
-    if (!source) {
-      set({
-        sourceAudiofiles: [],
-        sourceHasMore: false,
-        sourceLoadingMore: false,
-      });
-      return;
-    }
-    set({
-      sourceAudiofiles: source.getAudiofiles(),
-      sourceHasMore: source.pagination?.hasMore() ?? false,
-      sourceLoadingMore: source.pagination?.isLoading() ?? false,
-    });
-  }
-
-  function setSource(source: AudioSource | undefined) {
-    if (source === subscribedSource) {
-      syncSourceSnapshot(source);
-      return;
-    }
-    sourceUnsubscribe?.();
-    sourceUnsubscribe = undefined;
-    subscribedSource = source;
-    syncSourceSnapshot(source);
-    if (source) {
-      sourceUnsubscribe = source.subscribe(() => syncSourceSnapshot(source));
-    }
-  }
-
-  function releaseSource() {
-    sourceUnsubscribe?.();
-    sourceUnsubscribe = undefined;
-    subscribedSource = undefined;
-    syncSourceSnapshot(undefined);
-  }
-
   function syncPlayerState(player: MediaPlayer) {
     if (player !== get().player && player !== initializingPlayer) return;
 
-    const previousState = get().playerState;
     const nextState = player.getState();
-    if (nextState === previousState) return;
-
-    const previousMedia = previousState.currentMedia;
-    const media = nextState.currentMedia;
-    if (media?.source !== previousMedia?.source) {
-      if (media) setSource(media.source);
-      else releaseSource();
+    if (!playbackStatesEqual(nextState, get().playerState)) {
+      set({ playerState: nextState });
     }
-    set({ playerState: nextState });
-
-    if (nextState.status !== "playing") return;
-    const playingMedia = nextState.currentMedia;
-    const previous = lastStartedMedia;
-    if (
-      playingMedia.source === previous?.source &&
-      playingMedia.audiofile.id === previous.audiofile.id
-    ) {
-      return;
-    }
-    lastStartedMedia = playingMedia;
-    playbackEffects.onMediaChange?.(playingMedia, previous);
   }
 
-  async function runCommand(command: () => Promise<void>) {
+  async function ignoreCancellation(command: () => Promise<void> | undefined) {
     try {
       await command();
     } catch (error) {
-      if (!isPlaybackAbort(error)) throw error;
+      if (!(error instanceof Error && error.name === "AbortError")) throw error;
     }
   }
 
   return {
     ...initialStoreState,
 
-    init: async (player, effects = {}) => {
+    init: async (player) => {
       const activePlayer = get().player;
-      if (activePlayer === player) {
-        playbackEffects = effects;
-        return;
-      }
+      if (activePlayer === player) return;
       if (activePlayer) {
         await player.destroy();
         return;
       }
       if (initialization) {
-        if (initializingPlayer === player) {
-          playbackEffects = effects;
-          return initialization;
-        }
+        if (initializingPlayer === player) return initialization;
         await player.destroy();
         return initialization;
       }
 
       initializingPlayer = player;
-      playbackEffects = effects;
-      lastStartedMedia = undefined;
       const unsubscribe = player.subscribeToState(() =>
         syncPlayerState(player),
       );
@@ -191,12 +101,9 @@ export const usePlaybackStore = create<PlaybackStore>((set, get) => {
       const pending = initialization;
       if (initializingPlayer === player) initializingPlayer = undefined;
       initialization = undefined;
-      playbackEffects = {};
-      lastStartedMedia = undefined;
       const unsubscribe = playerStateUnsubscribe;
       playerStateUnsubscribe = undefined;
       unsubscribe?.();
-      releaseSource();
       set(initialStoreState);
       if (pending) await pending.catch(() => {});
       // A provider may remount while initialization is settling. Its new
@@ -205,36 +112,10 @@ export const usePlaybackStore = create<PlaybackStore>((set, get) => {
       await player?.destroy();
     },
 
-    setMedia: async (source, index = 0) => {
-      const audiofile = source.getAudiofiles()[index];
-      const { player, playerState } = get();
+    setMedia: async (position) => {
+      const player = get().player;
       if (!player) throw new Error("Media player is not initialized");
-      if (!audiofile) {
-        throw new Error("The selected track is no longer available");
-      }
-      const current = playerState.currentMedia;
-      if (
-        playerState.status !== "loading" &&
-        source === current?.source &&
-        audiofile.id === current.audiofile.id
-      ) {
-        await player.seek(0);
-        await player.play();
-        return;
-      }
-      await runCommand(() => player.load(source, audiofile.id));
-    },
-
-    selectMedia: async (audiofileId) => {
-      const source = get().playerState.currentMedia?.source;
-      if (!source) throw new Error("There is no active playback source");
-      const index = source
-        .getAudiofiles()
-        .findIndex((audiofile) => audiofile.id === audiofileId);
-      if (index === -1) {
-        throw new Error("The selected track is no longer available");
-      }
-      await get().setMedia(source, index);
+      await ignoreCancellation(() => player.load(position));
     },
 
     unloadMedia: () => get().player?.unload(),
@@ -252,19 +133,12 @@ export const usePlaybackStore = create<PlaybackStore>((set, get) => {
       if (status === "playing") get().pause();
       else if (status === "paused") await get().play();
     },
-    next: () => runCommand(async () => get().player?.next()),
-    previous: () => runCommand(async () => get().player?.previous()),
+    next: () => ignoreCancellation(() => get().player?.next()),
+    previous: () => ignoreCancellation(() => get().player?.previous()),
     setVolume: (volume) => get().player?.setVolume(volume),
     setMute: (mute) => get().player?.setMute(mute),
     seek: async (position) => {
       await get().player?.seek(position);
-    },
-    loadMore: async () => {
-      const source = get().playerState.currentMedia?.source;
-      const pagination = source?.pagination;
-      if (!pagination || !pagination.hasMore() || pagination.isLoading()) return;
-      await pagination.loadMore();
-      syncSourceSnapshot(source);
     },
   };
 });

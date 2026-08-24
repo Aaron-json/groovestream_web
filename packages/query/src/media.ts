@@ -3,6 +3,7 @@ import {
   QueryObserver,
   infiniteQueryOptions,
   queryOptions,
+  replaceEqualDeep,
   type InfiniteData,
   type QueryClient,
 } from "@tanstack/react-query";
@@ -18,7 +19,6 @@ import {
 import type {
   Audiofile,
   AudiofilePage,
-  HistoryItem,
   HistoryMutationItem,
   HistoryPage,
   Playlist,
@@ -26,7 +26,10 @@ import type {
   PlaylistInvitePage,
   PlaylistPage,
 } from "@groovestream/api/models";
-import type { AudioSource } from "@groovestream/media/source";
+import type {
+  AudioSource,
+  AudioSourcePagination,
+} from "@groovestream/media/source";
 
 const PLAYLISTS_KEY = ["playlists"] as const;
 export const PLAYLISTS_LIST_KEY = [...PLAYLISTS_KEY, "list"] as const;
@@ -39,13 +42,19 @@ const PLAYLIST_AUDIOFILES_PAGE_SIZE = 100;
 const MOST_PLAYED_LIMIT = 10;
 const LISTENING_HISTORY_PAGE_SIZE = 25;
 const PLAYLIST_INVITES_PAGE_SIZE = 20;
+const INITIAL_CURSOR: string | undefined = undefined;
+const EMPTY_AUDIOFILES: readonly Audiofile[] = [];
 
-export function getPlaylistKey(playlistId: Playlist["id"]) {
+function getPlaylistKey(playlistId: Playlist["id"]) {
   return ["playlist", playlistId] as const;
 }
 
-export function getPlaylistAudiofilesKey(playlistId: Playlist["id"]) {
+function getPlaylistAudiofilesKey(playlistId: Playlist["id"]) {
   return [...getPlaylistKey(playlistId), "audiofiles"] as const;
+}
+
+function getNextCursor(page: { has_more: boolean; cursor?: string }) {
+  return page.has_more ? page.cursor : undefined;
 }
 
 export function flattenInfiniteData<TData, TParam, TItem>(
@@ -55,32 +64,41 @@ export function flattenInfiniteData<TData, TParam, TItem>(
   return data.pages.flatMap(getItems);
 }
 
-function removeInfiniteItems<
-  TItem,
-  TPage extends { data: TItem[] | null },
-  TPageParam,
->(
-  data: InfiniteData<TPage, TPageParam> | undefined,
+function removeItems<TItem>(
+  items: TItem[],
   shouldRemove: (item: TItem) => boolean,
 ) {
-  if (!data) return undefined;
-  return {
-    ...data,
-    pages: data.pages.map((page) => ({
-      ...page,
-      data: page.data?.filter((item) => !shouldRemove(item)) ?? null,
-    })),
-  };
+  if (!items.some(shouldRemove)) return items;
+  return items.filter((item) => !shouldRemove(item));
 }
 
-function prependInfiniteItem<
-  TItem,
-  TPage extends { data: TItem[] | null },
-  TPageParam,
->(
+type InfinitePage = { data: unknown[] | null };
+type InfinitePageItem<TPage extends InfinitePage> = NonNullable<
+  TPage["data"]
+>[number];
+
+function removeInfiniteItems<TPage extends InfinitePage, TPageParam>(
   data: InfiniteData<TPage, TPageParam> | undefined,
-  item: TItem,
-  isSameItem: (existing: TItem) => boolean,
+  shouldRemove: (item: InfinitePageItem<TPage>) => boolean,
+) {
+  if (!data) return undefined;
+
+  let changed = false;
+  const pages = data.pages.map((page) => {
+    if (!page.data) return page;
+    const pageItems = removeItems(page.data, shouldRemove);
+    if (pageItems === page.data) return page;
+    changed = true;
+    return { ...page, data: pageItems };
+  });
+
+  return changed ? { ...data, pages } : data;
+}
+
+function prependInfiniteItem<TPage extends InfinitePage, TPageParam>(
+  data: InfiniteData<TPage, TPageParam> | undefined,
+  item: InfinitePageItem<TPage>,
+  isSameItem: (existing: InfinitePageItem<TPage>) => boolean,
 ) {
   const withoutItem = removeInfiniteItems(data, isSameItem);
   if (!withoutItem || withoutItem.pages.length === 0) return withoutItem;
@@ -104,9 +122,8 @@ export function playlistAudiofilesOptions(playlistId: Playlist["id"]) {
         query: { limit: PLAYLIST_AUDIOFILES_PAGE_SIZE, cursor: pageParam },
         signal,
       }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.has_more ? lastPage.cursor : undefined,
+    initialPageParam: INITIAL_CURSOR,
+    getNextPageParam: getNextCursor,
   });
 }
 
@@ -126,9 +143,8 @@ export function playlistsListOptions() {
         query: { limit: PLAYLIST_PAGE_SIZE, cursor: pageParam },
         signal,
       }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.has_more ? lastPage.cursor : undefined,
+    initialPageParam: INITIAL_CURSOR,
+    getNextPageParam: getNextCursor,
   });
 }
 
@@ -148,9 +164,8 @@ export function listeningHistoryOptions() {
         query: { limit: LISTENING_HISTORY_PAGE_SIZE, cursor: pageParam },
         signal,
       }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.has_more ? lastPage.cursor : undefined,
+    initialPageParam: INITIAL_CURSOR,
+    getNextPageParam: getNextCursor,
   });
 }
 
@@ -162,20 +177,45 @@ export function playlistInvitesOptions() {
         query: { limit: PLAYLIST_INVITES_PAGE_SIZE, cursor: pageParam },
         signal,
       }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.has_more ? lastPage.cursor : undefined,
+    initialPageParam: INITIAL_CURSOR,
+    getNextPageParam: getNextCursor,
   });
 }
 
-function cachedPlaylistAudiofiles(
-  queryClient: QueryClient,
-  playlistId: Playlist["id"],
+function createFlattenedInfiniteDataSnapshot<TPage, TItem>(
+  readInfiniteData: () => InfiniteData<TPage> | undefined,
+  getPageItems: (page: TPage) => readonly TItem[],
 ) {
-  const data = queryClient.getQueryData<InfiniteData<AudiofilePage>>(
-    getPlaylistAudiofilesKey(playlistId),
-  );
-  return data ? flattenInfiniteData(data, (page) => page.data ?? []) : [];
+  // Root identity avoids unnecessary flattening. Structural sharing also keeps
+  // the AudioSource snapshot stable when only cursor metadata changes.
+  let cachedData: InfiniteData<TPage> | undefined;
+  let cachedItems: readonly TItem[] = [];
+
+  return () => {
+    const data = readInfiniteData();
+    if (data === cachedData) return cachedItems;
+
+    cachedData = data;
+    cachedItems = replaceEqualDeep(
+      cachedItems,
+      data ? flattenInfiniteData(data, getPageItems) : [],
+    );
+    return cachedItems;
+  };
+}
+
+function createAudioSourcePagination(
+  observer: Pick<InfiniteQueryObserver, "getCurrentResult" | "fetchNextPage">,
+): AudioSourcePagination {
+  return {
+    hasMore: () => observer.getCurrentResult().hasNextPage,
+    isLoading: () => observer.getCurrentResult().isFetchingNextPage,
+    loadMore: async () => {
+      if (!observer.getCurrentResult().hasNextPage) return;
+      const result = await observer.fetchNextPage({ cancelRefetch: false });
+      if (result.isFetchNextPageError) throw result.error;
+    },
+  };
 }
 
 export function createPlaylistAudiofileSource(
@@ -187,18 +227,17 @@ export function createPlaylistAudiofileSource(
     ...options,
     enabled: false,
   });
+  const getAudiofiles = createFlattenedInfiniteDataSnapshot(
+    () =>
+      queryClient.getQueryData<InfiniteData<AudiofilePage>>(
+        getPlaylistAudiofilesKey(playlistId),
+      ),
+    (page) => page.data ?? [],
+  );
   return {
-    getAudiofiles: () => cachedPlaylistAudiofiles(queryClient, playlistId),
+    getAudiofiles,
     subscribe: (listener) => observer.subscribe(listener),
-    pagination: {
-      hasMore: () => Boolean(observer.getCurrentResult().hasNextPage),
-      isLoading: () => observer.getCurrentResult().isFetchingNextPage,
-      loadMore: async () => {
-        if (!observer.getCurrentResult().hasNextPage) return;
-        const result = await observer.fetchNextPage({ cancelRefetch: false });
-        if (result.isFetchNextPageError) throw result.error;
-      },
-    },
+    pagination: createAudioSourcePagination(observer),
   };
 }
 
@@ -211,7 +250,8 @@ export function createMostPlayedAudiofileSource(
   });
   return {
     getAudiofiles: () =>
-      queryClient.getQueryData<Audiofile[] | null>(MOST_PLAYED_KEY) ?? [],
+      queryClient.getQueryData<Audiofile[] | null>(MOST_PLAYED_KEY) ??
+      EMPTY_AUDIOFILES,
     subscribe: (listener) => observer.subscribe(listener),
   };
 }
@@ -224,23 +264,17 @@ export function createListeningHistoryAudiofileSource(
     ...options,
     enabled: false,
   });
-  return {
-    getAudiofiles: () => {
-      const data = queryClient.getQueryData<InfiniteData<HistoryPage>>(
+  const getAudiofiles = createFlattenedInfiniteDataSnapshot(
+    () =>
+      queryClient.getQueryData<InfiniteData<HistoryPage>>(
         LISTENING_HISTORY_KEY,
-      );
-      return data ? flattenInfiniteData(data, (page) => page.data ?? []) : [];
-    },
+      ),
+    (page) => page.data ?? [],
+  );
+  return {
+    getAudiofiles,
     subscribe: (listener) => observer.subscribe(listener),
-    pagination: {
-      hasMore: () => Boolean(observer.getCurrentResult().hasNextPage),
-      isLoading: () => observer.getCurrentResult().isFetchingNextPage,
-      loadMore: async () => {
-        if (!observer.getCurrentResult().hasNextPage) return;
-        const result = await observer.fetchNextPage({ cancelRefetch: false });
-        if (result.isFetchNextPageError) throw result.error;
-      },
-    },
+    pagination: createAudioSourcePagination(observer),
   };
 }
 
@@ -260,7 +294,7 @@ function removeAudiofilesFromDerivedCaches(
   shouldRemove: (audiofile: Audiofile) => boolean,
 ) {
   queryClient.setQueryData<Audiofile[]>(MOST_PLAYED_KEY, (data) =>
-    data?.filter((audiofile) => !shouldRemove(audiofile)),
+    data ? removeItems(data, shouldRemove) : data,
   );
   queryClient.setQueryData<InfiniteData<HistoryPage>>(
     LISTENING_HISTORY_KEY,
@@ -275,10 +309,7 @@ export function removePlaylistFromCache(
   queryClient.setQueryData<InfiniteData<PlaylistPage>>(
     PLAYLISTS_LIST_KEY,
     (data) =>
-      removeInfiniteItems<Playlist, PlaylistPage, unknown>(
-        data,
-        (playlist) => playlist.id === playlistId,
-      ),
+      removeInfiniteItems(data, (playlist) => playlist.id === playlistId),
   );
   removeAudiofilesFromDerivedCaches(
     queryClient,
@@ -293,11 +324,7 @@ export function removeAudiofileFromCache(
 ) {
   queryClient.setQueryData<InfiniteData<AudiofilePage>>(
     getPlaylistAudiofilesKey(audiofile.playlist_id),
-    (data) =>
-      removeInfiniteItems<Audiofile, AudiofilePage, unknown>(
-        data,
-        (item) => item.id === audiofile.id,
-      ),
+    (data) => removeInfiniteItems(data, (item) => item.id === audiofile.id),
   );
   removeAudiofilesFromDerivedCaches(
     queryClient,
@@ -311,11 +338,7 @@ export function removePlaylistInviteFromCache(
 ) {
   queryClient.setQueryData<InfiniteData<PlaylistInvitePage>>(
     PLAYLIST_INVITES_KEY,
-    (data) =>
-      removeInfiniteItems<PlaylistInvite, PlaylistInvitePage, unknown>(
-        data,
-        (item) => item.id === invite.id,
-      ),
+    (data) => removeInfiniteItems(data, (item) => item.id === invite.id),
   );
 }
 
@@ -326,11 +349,7 @@ function addListeningHistoryToCache(
   queryClient.setQueryData<InfiniteData<HistoryPage>>(
     LISTENING_HISTORY_KEY,
     (data) =>
-      prependInfiniteItem<HistoryItem, HistoryPage, unknown>(
-        data,
-        item,
-        (existing) => existing.id === item.id,
-      ),
+      prependInfiniteItem(data, item, (existing) => existing.id === item.id),
   );
 }
 

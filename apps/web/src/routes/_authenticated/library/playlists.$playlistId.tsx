@@ -47,6 +47,7 @@ import {
   playlistAudiofilesOptions,
   playlistInfoOptions,
 } from "@groovestream/query/media";
+import { getAudioSourcePosition } from "@groovestream/media/source";
 import InfoCard from "@/components/custom/info-card";
 import { toast } from "sonner";
 import { useState, useCallback, useMemo } from "react";
@@ -214,11 +215,15 @@ function RouteComponent() {
         await playPauseToggle();
       } else {
         await queryClient.ensureInfiniteQueryData(playlistAudiofilesQuery);
-        if (playlistAudiofileSource.getAudiofiles().length === 0) {
+        const firstPosition = getAudioSourcePosition(
+          playlistAudiofileSource,
+          0,
+        );
+        if (!firstPosition) {
           toast.info("This playlist has no tracks to play");
           return;
         }
-        await setMedia(playlistAudiofileSource);
+        await setMedia(firstPosition);
       }
     } catch (error) {
       toast.error("Playback Error", {

@@ -1,18 +1,18 @@
 import type { Audiofile } from "@groovestream/api/models";
 import { shallow } from "zustand/shallow";
 import type { PlaybackItem } from "./encodings";
-import type { AudioSource } from "./source";
+import type { AudioSourcePosition } from "./source";
+
+export const PREVIOUS_RESTART_THRESHOLD_SECONDS = 3;
 
 export type CurrentMedia<
   TPlaybackItem extends PlaybackItem | undefined = PlaybackItem,
-> = Readonly<{
-  source: AudioSource;
-  index: number;
-  audiofile: Audiofile;
-  playbackItem: TPlaybackItem;
-}>;
+> = AudioSourcePosition &
+  Readonly<{
+    playbackItem: TPlaybackItem;
+  }>;
 
-export type PlayerIntrinsics = Readonly<{
+type PlayerIntrinsics = Readonly<{
   position: number;
   duration: number;
   volume: number;
@@ -72,23 +72,24 @@ export function toUnloadedPlaybackState(
   };
 }
 
-/** Updates live source metadata without changing the phase's hydration level. */
-export function updateCurrentMediaLocation(
+/** Replaces the live source position without changing its hydration level. */
+export function updateCurrentSourcePosition(
   state: PlaybackState,
-  index: number,
-  audiofile: Audiofile,
+  position: AudioSourcePosition,
 ): PlaybackState {
   if (state.status === "unloaded") return state;
-  if (state.status === "loading") {
-    return {
-      ...state,
-      currentMedia: { ...state.currentMedia, index, audiofile },
-    };
+  if (
+    state.currentMedia.source === position.source &&
+    state.currentMedia.index === position.index &&
+    state.currentMedia.audiofile === position.audiofile
+  ) {
+    return state;
   }
-  return {
-    ...state,
-    currentMedia: { ...state.currentMedia, index, audiofile },
-  };
+
+  // Object.assign retains the correlation between the discriminated status
+  // and its hydrated or unhydrated media while replacing the nested position.
+  const currentMedia = Object.assign({}, state.currentMedia, position);
+  return Object.assign({}, state, { currentMedia });
 }
 
 export class UnsupportedPlaybackError extends Error {
@@ -100,13 +101,18 @@ export class UnsupportedPlaybackError extends Error {
 }
 
 export interface MediaPlayer {
-  isSupported(): boolean;
   init(): Promise<void>;
+  /** Returns a stable snapshot until the player state changes. */
   getState(): PlaybackState;
   /** Registers an invalidation listener; read the new snapshot with `getState`. */
   subscribeToState(listener: () => void): () => void;
-  load(source: AudioSource, audiofileId: Audiofile["id"]): Promise<void>;
+  /**
+   * Loads or restarts a caller snapshot. The player owns reconciling it with
+   * the live source before use and maintaining the active position afterward.
+   */
+  load(position: AudioSourcePosition): Promise<void>;
   next(): Promise<void>;
+  /** Restarts progressed media; otherwise loads the previous source position. */
   previous(): Promise<void>;
   unload(): void;
   destroy(): Promise<void>;
