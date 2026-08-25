@@ -447,13 +447,15 @@ export default class WebAudioPlayer implements MediaPlayer {
       direction,
       false,
     );
+    const pagination = source.pagination;
 
     if (
       direction === "next" &&
       target === undefined &&
-      source.pagination?.hasMore()
+      pagination &&
+      source.getSnapshot().pagination?.hasMore
     ) {
-      await source.pagination.loadMore();
+      await pagination.loadMore();
       signal.throwIfAborted();
       currentPosition = this.requireCurrentPosition(cursor);
       target = getAdjacentAudioSourcePosition(
@@ -464,7 +466,7 @@ export default class WebAudioPlayer implements MediaPlayer {
     }
 
     if (target) return target;
-    if (source.pagination?.hasMore()) return undefined;
+    if (source.getSnapshot().pagination?.hasMore) return undefined;
 
     target = getAdjacentAudioSourcePosition(currentPosition, direction);
     if (!target || target.audiofile.id === currentPosition.audiofile.id) {
@@ -486,14 +488,12 @@ export default class WebAudioPlayer implements MediaPlayer {
     // The source wraps and can change while encodings are fetched; IDs provide
     // a stable termination condition when every encountered track is
     // unsupported.
-    const encounteredAudiofileIds = new Set<Audiofile["id"]>([
-      originAudiofileId,
-    ]);
+    const seenAudiofileIds = new Set<Audiofile["id"]>([originAudiofileId]);
     let candidate = initialTarget;
 
     await this.beginLoading(candidate, signal);
     while (true) {
-      encounteredAudiofileIds.add(candidate.audiofile.id);
+      seenAudiofileIds.add(candidate.audiofile.id);
       const playbackItem = await this.resolvePlaybackItem(candidate, signal);
       if (playbackItem) {
         await this.loadPlaybackItem(candidate, playbackItem, signal);
@@ -506,10 +506,7 @@ export default class WebAudioPlayer implements MediaPlayer {
         direction,
         signal,
       );
-      if (
-        !nextCandidate ||
-        encounteredAudiofileIds.has(nextCandidate.audiofile.id)
-      ) {
+      if (!nextCandidate || seenAudiofileIds.has(nextCandidate.audiofile.id)) {
         throw new UnsupportedPlaybackError(unsupportedAudiofileId);
       }
 

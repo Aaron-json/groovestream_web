@@ -12,6 +12,7 @@ import {
   getAudioSourcePosition,
   type AudioSource,
   type AudioSourcePosition,
+  type AudioSourceSnapshot,
 } from "./source.ts";
 
 function createAudiofile(id: string): Audiofile {
@@ -60,16 +61,19 @@ function createPlaybackItem(audiofileId: string): PlaybackItem {
 }
 
 function createSource(initialAudiofiles: readonly Audiofile[]) {
-  let audiofiles = initialAudiofiles;
+  let snapshot: AudioSourceSnapshot = {
+    audiofiles: initialAudiofiles,
+    pagination: undefined,
+  };
   const source: AudioSource = {
-    getAudiofiles: () => audiofiles,
+    getSnapshot: () => snapshot,
     subscribe: () => () => {},
   };
 
   return {
     source,
     replace(nextAudiofiles: readonly Audiofile[]) {
-      audiofiles = nextAudiofiles;
+      snapshot = { audiofiles: nextAudiofiles, pagination: undefined };
     },
   };
 }

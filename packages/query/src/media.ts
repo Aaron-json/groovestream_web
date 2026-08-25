@@ -3,7 +3,6 @@ import {
   QueryObserver,
   infiniteQueryOptions,
   queryOptions,
-  replaceEqualDeep,
   type InfiniteData,
   type QueryClient,
 } from "@tanstack/react-query";
@@ -28,7 +27,7 @@ import type {
 } from "@groovestream/api/models";
 import type {
   AudioSource,
-  AudioSourcePagination,
+  AudioSourceSnapshot,
 } from "@groovestream/media/source";
 
 const PLAYLISTS_KEY = ["playlists"] as const;
@@ -182,40 +181,85 @@ export function playlistInvitesOptions() {
   });
 }
 
-function createFlattenedInfiniteDataSnapshot<TPage, TItem>(
-  readInfiniteData: () => InfiniteData<TPage> | undefined,
-  getPageItems: (page: TPage) => readonly TItem[],
-) {
-  // Root identity avoids unnecessary flattening. Structural sharing also keeps
-  // the AudioSource snapshot stable when only cursor metadata changes.
-  let cachedData: InfiniteData<TPage> | undefined;
-  let cachedItems: readonly TItem[] = [];
+type AudiofileQueryResult = Readonly<{
+  data: readonly Audiofile[] | undefined;
+}>;
 
-  return () => {
-    const data = readInfiniteData();
-    if (data === cachedData) return cachedItems;
+type PaginatedAudiofileQueryResult = AudiofileQueryResult &
+  Readonly<{
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
+  }>;
 
-    cachedData = data;
-    cachedItems = replaceEqualDeep(
-      cachedItems,
-      data ? flattenInfiniteData(data, getPageItems) : [],
-    );
-    return cachedItems;
+type QueryAudioSourceConfig =
+  | Readonly<{
+      readResult(): AudiofileQueryResult;
+      subscribe: AudioSource["subscribe"];
+      fetchNextPage?: undefined;
+    }>
+  | Readonly<{
+      readResult(): PaginatedAudiofileQueryResult;
+      subscribe: AudioSource["subscribe"];
+      fetchNextPage(): Promise<
+        Readonly<{
+          isFetchNextPageError: boolean;
+          error: unknown;
+        }>
+      >;
+    }>;
+
+/** Adapts one query observer into the complete state exposed by AudioSource. */
+function createQueryAudioSource(config: QueryAudioSourceConfig): AudioSource {
+  let snapshot: AudioSourceSnapshot | undefined;
+
+  const source: AudioSource = {
+    getSnapshot: () => {
+      if (!config.fetchNextPage) {
+        const audiofiles = config.readResult().data ?? EMPTY_AUDIOFILES;
+        if (snapshot?.audiofiles === audiofiles) return snapshot;
+
+        snapshot = { audiofiles, pagination: undefined };
+        return snapshot;
+      }
+
+      const result = config.readResult();
+      const audiofiles = result.data ?? EMPTY_AUDIOFILES;
+      const hasMore = result.hasNextPage;
+      const isLoading = result.isFetchingNextPage;
+      if (
+        snapshot?.audiofiles === audiofiles &&
+        snapshot.pagination?.hasMore === hasMore &&
+        snapshot.pagination?.isLoading === isLoading
+      ) {
+        return snapshot;
+      }
+
+      snapshot = {
+        audiofiles,
+        pagination: { hasMore, isLoading },
+      };
+      return snapshot;
+    },
+    subscribe: config.subscribe,
   };
+
+  if (config.fetchNextPage) {
+    source.pagination = {
+      loadMore: async () => {
+        if (!config.readResult().hasNextPage) return;
+        const result = await config.fetchNextPage();
+        if (result.isFetchNextPageError) throw result.error;
+      },
+    };
+  }
+  return source;
 }
 
-function createAudioSourcePagination(
-  observer: Pick<InfiniteQueryObserver, "getCurrentResult" | "fetchNextPage">,
-): AudioSourcePagination {
-  return {
-    hasMore: () => observer.getCurrentResult().hasNextPage,
-    isLoading: () => observer.getCurrentResult().isFetchingNextPage,
-    loadMore: async () => {
-      if (!observer.getCurrentResult().hasNextPage) return;
-      const result = await observer.fetchNextPage({ cancelRefetch: false });
-      if (result.isFetchNextPageError) throw result.error;
-    },
-  };
+function flattenAudiofilePages<
+  TPage extends { data: Audiofile[] | null },
+  TPageParam,
+>(data: InfiniteData<TPage, TPageParam>): Audiofile[] {
+  return flattenInfiniteData(data, (page) => page.data ?? []);
 }
 
 export function createPlaylistAudiofileSource(
@@ -226,34 +270,34 @@ export function createPlaylistAudiofileSource(
   const observer = new InfiniteQueryObserver(queryClient, {
     ...options,
     enabled: false,
+    select: flattenAudiofilePages,
   });
-  const getAudiofiles = createFlattenedInfiniteDataSnapshot(
-    () =>
-      queryClient.getQueryData<InfiniteData<AudiofilePage>>(
-        getPlaylistAudiofilesKey(playlistId),
-      ),
-    (page) => page.data ?? [],
-  );
-  return {
-    getAudiofiles,
+  // The constructor stores defaulted options, but the public property retains
+  // the broader input type in TanStack Query's declarations.
+  const observerOptions = observer.options as Parameters<
+    typeof observer.getOptimisticResult
+  >[0];
+  return createQueryAudioSource({
+    // Optimistic reads include cache writes made before the first subscriber.
+    readResult: () => observer.getOptimisticResult(observerOptions),
     subscribe: (listener) => observer.subscribe(listener),
-    pagination: createAudioSourcePagination(observer),
-  };
+    fetchNextPage: () => observer.fetchNextPage({ cancelRefetch: false }),
+  });
 }
 
 export function createMostPlayedAudiofileSource(
   queryClient: QueryClient,
 ): AudioSource {
-  const observer = new QueryObserver(queryClient, {
+  const observerOptions = queryClient.defaultQueryOptions({
     ...mostPlayedOptions(),
     enabled: false,
+    select: (audiofiles) => audiofiles ?? EMPTY_AUDIOFILES,
   });
-  return {
-    getAudiofiles: () =>
-      queryClient.getQueryData<Audiofile[] | null>(MOST_PLAYED_KEY) ??
-      EMPTY_AUDIOFILES,
+  const observer = new QueryObserver(queryClient, observerOptions);
+  return createQueryAudioSource({
+    readResult: () => observer.getOptimisticResult(observerOptions),
     subscribe: (listener) => observer.subscribe(listener),
-  };
+  });
 }
 
 export function createListeningHistoryAudiofileSource(
@@ -263,19 +307,16 @@ export function createListeningHistoryAudiofileSource(
   const observer = new InfiniteQueryObserver(queryClient, {
     ...options,
     enabled: false,
+    select: flattenAudiofilePages,
   });
-  const getAudiofiles = createFlattenedInfiniteDataSnapshot(
-    () =>
-      queryClient.getQueryData<InfiniteData<HistoryPage>>(
-        LISTENING_HISTORY_KEY,
-      ),
-    (page) => page.data ?? [],
-  );
-  return {
-    getAudiofiles,
+  const observerOptions = observer.options as Parameters<
+    typeof observer.getOptimisticResult
+  >[0];
+  return createQueryAudioSource({
+    readResult: () => observer.getOptimisticResult(observerOptions),
     subscribe: (listener) => observer.subscribe(listener),
-    pagination: createAudioSourcePagination(observer),
-  };
+    fetchNextPage: () => observer.fetchNextPage({ cancelRefetch: false }),
+  });
 }
 
 export function addPlaylistToCache(

@@ -24,9 +24,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Disc, ListMusic, Mic2, Tag, User, Volume2, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
-import { shallow } from "zustand/shallow";
 
 export function NowPlayingPanel() {
   const isMobile = useIsMobile();
@@ -260,29 +259,10 @@ function Queue({ media }: { media: AudioSourcePosition }) {
   const playbackStatus = usePlaybackStore((state) => state.playerState.status);
   const setMedia = usePlaybackStore((state) => state.setMedia);
   const source = media.source;
-  const getQueueSnapshot = useMemo(() => {
-    // useSyncExternalStore requires the same object until an observed value
-    // changes; AudioSource already provides that guarantee for its item list.
-    let snapshot = {
-      audiofiles: source.getAudiofiles(),
-      hasMore: source.pagination?.hasMore() ?? false,
-      loadingMore: source.pagination?.isLoading() ?? false,
-    };
-
-    return () => {
-      const nextSnapshot = {
-        audiofiles: source.getAudiofiles(),
-        hasMore: source.pagination?.hasMore() ?? false,
-        loadingMore: source.pagination?.isLoading() ?? false,
-      };
-      if (!shallow(snapshot, nextSnapshot)) snapshot = nextSnapshot;
-      return snapshot;
-    };
-  }, [source]);
   const queueSnapshot = useSyncExternalStore(
     source.subscribe,
-    getQueueSnapshot,
-    getQueueSnapshot,
+    source.getSnapshot,
+    source.getSnapshot,
   );
   const queueItems = queueSnapshot.audiofiles;
   const pagination = source.pagination;
@@ -290,7 +270,14 @@ function Queue({ media }: { media: AudioSourcePosition }) {
     useState<AudioSource>();
 
   function loadMore() {
-    if (!pagination || !pagination.hasMore() || pagination.isLoading()) return;
+    const paginationState = source.getSnapshot().pagination;
+    if (
+      !pagination ||
+      !paginationState?.hasMore ||
+      paginationState.isLoading
+    ) {
+      return;
+    }
 
     setPaginationErrorSource(undefined);
     void pagination.loadMore().catch(() => setPaginationErrorSource(source));
@@ -369,8 +356,8 @@ function Queue({ media }: { media: AudioSourcePosition }) {
         <InfiniteScrollTrigger
           pagination={{
             loadMore,
-            hasMore: queueSnapshot.hasMore,
-            isLoading: queueSnapshot.loadingMore,
+            hasMore: queueSnapshot.pagination?.hasMore ?? false,
+            isLoading: queueSnapshot.pagination?.isLoading ?? false,
             isError: paginationErrorSource === source,
           }}
         />

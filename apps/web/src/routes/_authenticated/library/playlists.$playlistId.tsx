@@ -112,15 +112,14 @@ function PlaylistCrumb({ playlistId }: { playlistId: Playlist["id"] }) {
 }
 
 function RouteComponent() {
-  const { media, playbackState, playPauseToggle, setMedia } =
-    usePlaybackStore(
-      useShallow((state) => ({
-        media: state.playerState.currentMedia,
-        playbackState: state.playerState.status,
-        playPauseToggle: state.playPauseToggle,
-        setMedia: state.setMedia,
-      })),
-    );
+  const { media, playbackState, playPauseToggle, setMedia } = usePlaybackStore(
+    useShallow((state) => ({
+      media: state.playerState.currentMedia,
+      playbackState: state.playerState.status,
+      playPauseToggle: state.playPauseToggle,
+      setMedia: state.setMedia,
+    })),
+  );
 
   const playlistIndexMatch = useMatch({
     from: "/_authenticated/library/playlists/$playlistId/",
@@ -149,6 +148,7 @@ function RouteComponent() {
     () => createPlaylistAudiofileSource(playlistId),
     [playlistId],
   );
+  const isCurrentPlaylist = media?.audiofile.playlist_id === playlistId;
 
   const handleDeletePlaylist = useCallback(
     (playlist: Playlist) => {
@@ -209,38 +209,30 @@ function RouteComponent() {
     [leavePlaylist, router],
   );
 
-  const handlePlayback = useCallback(async () => {
-    try {
-      if (media?.audiofile.playlist_id === playlistId) {
-        await playPauseToggle();
-      } else {
-        await queryClient.ensureInfiniteQueryData(playlistAudiofilesQuery);
-        const firstPosition = getAudioSourcePosition(
-          playlistAudiofileSource,
-          0,
-        );
-        if (!firstPosition) {
-          toast.info("This playlist has no tracks to play");
-          return;
-        }
-        await setMedia(firstPosition);
-      }
-    } catch (error) {
+  async function startPlayback() {
+    if (isCurrentPlaylist) {
+      await playPauseToggle();
+      return;
+    }
+
+    await queryClient.ensureInfiniteQueryData(playlistAudiofilesQuery);
+    const firstPosition = getAudioSourcePosition(playlistAudiofileSource, 0);
+    if (!firstPosition) {
+      toast.info("This playlist has no tracks to play");
+      return;
+    }
+    await setMedia(firstPosition);
+  }
+
+  function handlePlayback() {
+    void startPlayback().catch((error) => {
       toast.error("Playback Error", {
         description:
           error instanceof Error ? error.message : "Unable to play playlist",
       });
-    }
-  }, [
-    media?.audiofile.playlist_id,
-    playPauseToggle,
-    playlistAudiofilesQuery,
-    playlistAudiofileSource,
-    playlistId,
-    setMedia,
-  ]);
+    });
+  }
 
-  const isCurrentPlaylist = media?.audiofile.playlist_id === playlistId;
   const isPlaying = isCurrentPlaylist && playbackState === "playing";
   const isLoading = isCurrentPlaylist && playbackState === "loading";
 

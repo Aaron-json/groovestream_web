@@ -2,21 +2,32 @@ import type { Audiofile } from "@groovestream/api/models";
 import { shallow } from "zustand/shallow";
 
 export interface AudioSourcePagination {
-  hasMore(): boolean;
-  isLoading(): boolean;
   loadMore(): Promise<void>;
 }
 
+/** Immutable observable state for a live audio source. */
+export type AudioSourceSnapshot = Readonly<{
+  audiofiles: readonly Audiofile[];
+  pagination:
+    | Readonly<{
+        hasMore: boolean;
+        isLoading: boolean;
+      }>
+    | undefined;
+}>;
+
 /**
- * A live ordered queue whose contents are read from its owning cache.
+ * A live ordered playback queue. Implementations own their storage and
+ * snapshot stability; consumers observe them through this interface.
  * Audiofile IDs must be unique within a source so a moved position can be
  * recovered unambiguously after the source changes.
  */
 export interface AudioSource {
-  /** Returns the same snapshot reference while its ordered contents are unchanged. */
-  getAudiofiles(): readonly Audiofile[];
-  /** Notifies when the audiofile or pagination snapshots may have changed. */
+  /** Returns the same object until the source's observable state changes. */
+  getSnapshot(): AudioSourceSnapshot;
+  /** Notifies that `getSnapshot()` may return a different object. */
   subscribe(listener: () => void): () => void;
+  /** Present when the source can extend its current snapshot. */
   pagination?: AudioSourcePagination;
 }
 
@@ -37,7 +48,7 @@ export function getAudioSourcePosition(
   source: AudioSource,
   index: number,
 ): AudioSourcePosition | undefined {
-  const audiofile = source.getAudiofiles()[index];
+  const audiofile = source.getSnapshot().audiofiles[index];
   return audiofile ? { source, index, audiofile } : undefined;
 }
 
@@ -49,7 +60,7 @@ export function getAudioSourcePosition(
 export function reconcileAudioSourcePosition(
   position: AudioSourcePosition,
 ): AudioSourcePosition | undefined {
-  const audiofiles = position.source.getAudiofiles();
+  const audiofiles = position.source.getSnapshot().audiofiles;
   const audiofileAtIndex = audiofiles[position.index];
 
   if (audiofileAtIndex?.id === position.audiofile.id) {
@@ -68,7 +79,7 @@ export function getAdjacentAudioSourcePosition(
   direction: "next" | "previous",
   wrap = true,
 ): AudioSourcePosition | undefined {
-  const audiofiles = position.source.getAudiofiles();
+  const audiofiles = position.source.getSnapshot().audiofiles;
   const adjacentIndex =
     direction === "next" ? position.index + 1 : position.index - 1;
   const audiofile = audiofiles[adjacentIndex];

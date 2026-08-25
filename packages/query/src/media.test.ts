@@ -32,7 +32,7 @@ function createPage(audiofiles: Audiofile[]): AudiofilePage {
   return { data: audiofiles, has_more: false };
 }
 
-test("playlist sources reuse flattened snapshots until audiofiles change", () => {
+test("playlist sources reuse snapshots until observable state changes", () => {
   const queryClient = new QueryClient();
   const playlistId = "playlist-id";
   const queryKey = playlistAudiofilesOptions(playlistId).queryKey;
@@ -45,15 +45,34 @@ test("playlist sources reuse flattened snapshots until audiofiles change", () =>
     pageParams: [undefined],
   });
 
-  const firstSnapshot = source.getAudiofiles();
-  strictEqual(source.getAudiofiles(), firstSnapshot);
-  deepStrictEqual(firstSnapshot, [first]);
+  const firstSnapshot = source.getSnapshot();
+  strictEqual(source.getSnapshot(), firstSnapshot);
+  deepStrictEqual(firstSnapshot.audiofiles, [first]);
+  deepStrictEqual(firstSnapshot.pagination, {
+    hasMore: false,
+    isLoading: false,
+  });
 
   queryClient.setQueryData<InfiniteData<AudiofilePage>>(queryKey, (data) => {
     if (!data) throw new Error("Expected playlist data in the query cache");
     return { ...data, pageParams: ["refreshed"] };
   });
-  strictEqual(source.getAudiofiles(), firstSnapshot);
+  strictEqual(source.getSnapshot(), firstSnapshot);
+
+  queryClient.setQueryData<InfiniteData<AudiofilePage>>(queryKey, (data) => {
+    if (!data) throw new Error("Expected playlist data in the query cache");
+    return {
+      ...data,
+      pages: [{ ...data.pages[0], cursor: "next", has_more: true }],
+    };
+  });
+  const paginatedSnapshot = source.getSnapshot();
+  notStrictEqual(paginatedSnapshot, firstSnapshot);
+  strictEqual(paginatedSnapshot.audiofiles, firstSnapshot.audiofiles);
+  deepStrictEqual(paginatedSnapshot.pagination, {
+    hasMore: true,
+    isLoading: false,
+  });
 
   queryClient.setQueryData<InfiniteData<AudiofilePage>>(queryKey, (data) => {
     if (!data) throw new Error("Expected playlist data in the query cache");
@@ -63,10 +82,10 @@ test("playlist sources reuse flattened snapshots until audiofiles change", () =>
     };
   });
 
-  const updatedSnapshot = source.getAudiofiles();
-  notStrictEqual(updatedSnapshot, firstSnapshot);
-  strictEqual(source.getAudiofiles(), updatedSnapshot);
-  deepStrictEqual(updatedSnapshot, [first, second]);
+  const updatedSnapshot = source.getSnapshot();
+  notStrictEqual(updatedSnapshot, paginatedSnapshot);
+  strictEqual(source.getSnapshot(), updatedSnapshot);
+  deepStrictEqual(updatedSnapshot.audiofiles, [first, second]);
 });
 
 test("cache removal only replaces data when an item matches", () => {

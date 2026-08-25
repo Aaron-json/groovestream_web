@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -89,7 +89,7 @@ export default function MediaBar() {
 interface MobileLayoutProps {
   trackTitle: string;
   trackArtist: string;
-  playIcon: React.ReactNode;
+  playIcon: ReactNode;
   onPlayPause: () => void;
   onExpand?: () => void;
 }
@@ -125,7 +125,7 @@ function MobileLayout({
 interface DesktopLayoutProps {
   trackTitle: string;
   trackArtist: string;
-  playIcon: React.ReactNode;
+  playIcon: ReactNode;
   onPlayPause: () => void;
   onNext: () => void;
   onPrev: () => void;
@@ -232,47 +232,31 @@ function TrackInfo({ title, artist, onClick }: TrackInfoProps) {
 }
 
 function Seeker() {
-  const { playbackState, position, duration, seek } = usePlaybackStore(
+  const { position, duration, seek } = usePlaybackStore(
     useShallow((state) => ({
-      playbackState: state.playerState.status,
       position: state.playerState.position,
       duration: state.playerState.duration,
       seek: state.seek,
     })),
   );
 
-  const [displaySeek, setDisplaySeek] = useState(position);
-  const [isSeeking, setIsSeeking] = useState(false);
+  const [seekPreview, setSeekPreview] = useState<number>();
+  const displayedPosition = seekPreview ?? Math.floor(position);
 
-  useEffect(() => {
-    if (!isSeeking) setDisplaySeek(Math.floor(position));
-  }, [isSeeking, playbackState, position]);
-
-  const handleSeekStart = useCallback(() => {
-    setIsSeeking(true);
-  }, []);
-
-  const handleSeekEnd = useCallback(() => {
-    setIsSeeking(false);
-  }, []);
-
-  const handleSeekChange = useCallback((value: number | readonly number[]) => {
-    const newVal: number = Array.isArray(value) ? value[0] : value;
-    setDisplaySeek(newVal);
-  }, []);
-
-  const handleSeekCommit = useCallback(
-    (value: number | readonly number[]) => {
-      const newVal: number = Array.isArray(value) ? value[0] : value;
-      void seek(newVal);
-    },
-    [seek],
-  );
+  function handleSeekCommit(value: number | readonly number[]) {
+    const nextPosition = getSliderValue(value);
+    setSeekPreview(undefined);
+    void seek(nextPosition).catch((error) => {
+      toast.error("Playback Error", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    });
+  }
 
   return (
     <div className="flex items-center gap-2 w-full text-xs">
       <span className="text-muted-foreground min-w-10 font-mono">
-        {formatDuration(displaySeek)}
+        {formatDuration(displayedPosition)}
       </span>
 
       <Slider
@@ -281,10 +265,8 @@ function Seeker() {
         disabled={duration === 0}
         min={0}
         step={1}
-        value={displaySeek}
-        onPointerDown={handleSeekStart}
-        onPointerUp={handleSeekEnd}
-        onValueChange={handleSeekChange}
+        value={displayedPosition}
+        onValueChange={(value) => setSeekPreview(getSliderValue(value))}
         onValueCommitted={handleSeekCommit}
         aria-label="Seek position"
       />
@@ -297,7 +279,7 @@ function Seeker() {
 }
 
 interface ControlButtonProps {
-  icon: React.ReactNode;
+  icon: ReactNode;
   onClick: () => void;
   className?: string;
   "aria-label"?: string;
@@ -332,23 +314,9 @@ function VolumeControl() {
     })),
   );
 
-  const [localVolume, setLocalVolume] = useState(volume);
-
-  useEffect(() => {
-    setLocalVolume(volume);
-  }, [volume]);
-
-  const handleVolumeChange = useCallback(
-    (value: number | readonly number[]) => {
-      const newVal = Array.isArray(value) ? value[0] : value;
-      setVolume(newVal);
-    },
-    [setVolume],
-  );
-
-  const toggleMute = useCallback(() => {
+  function toggleMute() {
     setMute(!mute);
-  }, [setMute, mute]);
+  }
 
   const VolumeIcon = mute ? VolumeX : Volume2;
 
@@ -360,8 +328,8 @@ function VolumeControl() {
         aria-label={mute ? "Unmute" : "Mute"}
       />
       <Slider
-        value={localVolume}
-        onValueChange={handleVolumeChange}
+        value={volume}
+        onValueChange={(value) => setVolume(getSliderValue(value))}
         max={1}
         min={0}
         step={0.01}
@@ -370,4 +338,8 @@ function VolumeControl() {
       />
     </div>
   );
+}
+
+function getSliderValue(value: number | readonly number[]) {
+  return typeof value === "number" ? value : value[0];
 }

@@ -62,14 +62,14 @@ export function useUploadAudioFile() {
     const failures: Array<{ file: File; error: unknown }> = [];
 
     for (const file of files) {
-      let taskId: string | undefined;
+      const taskId = genTaskId();
+      const task = NewMediaTask(`Uploading "${file.name}"`);
+      setTask(taskId, task);
+
       try {
-        taskId = genTaskId();
-        const task = NewMediaTask(`Uploading "${file.name}"`);
-        setTask(taskId, task);
         await uploadAudiofile(file, playlist.id, {
           onProgress: (current, total) => {
-            setTask(taskId!, {
+            setTask(taskId, {
               ...task,
               progress: { current, total, unit: "bytes" },
             });
@@ -80,9 +80,8 @@ export function useUploadAudioFile() {
         });
       } catch (error) {
         failures.push({ file, error });
-      } finally {
-        if (taskId) removeTask(taskId);
       }
+      removeTask(taskId);
     }
 
     return { failures };

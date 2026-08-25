@@ -65,7 +65,7 @@ export const Route = createFileRoute("/_authenticated/home")({
 function RouteComponent() {
   const { user } = useRouteContext({ from: "__root__" });
   const { data: mostPlayed } = useSuspenseQuery(mostPlayedOptions());
-  const mostPlayedSource = useMemo(createMostPlayedAudiofileSource, []);
+  const mostPlayedSource = useMemo(() => createMostPlayedAudiofileSource(), []);
 
   const {
     data: historyData,
@@ -74,7 +74,10 @@ function RouteComponent() {
     isFetchingNextPage: isFetchingHistory,
     isFetchNextPageError: isHistoryNextPageError,
   } = useSuspenseInfiniteQuery(listeningHistoryOptions());
-  const historySource = useMemo(createListeningHistoryAudiofileSource, []);
+  const historySource = useMemo(
+    () => createListeningHistoryAudiofileSource(),
+    [],
+  );
 
   const mostPlayedList = mostPlayed ?? [];
   const historyList = flattenInfiniteData(
