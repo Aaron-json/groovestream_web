@@ -172,7 +172,7 @@ function RouteComponent() {
   );
 }
 
-function PageHeader() {
+export function PageHeader() {
   return (
     <div className="flex items-center justify-between">
       <div>
