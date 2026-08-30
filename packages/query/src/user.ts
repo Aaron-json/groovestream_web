@@ -19,7 +19,6 @@ export function userOptions(userId: string) {
         throw error;
       }
     },
-    staleTime: 15 * 60 * 1000,
   });
 }
 

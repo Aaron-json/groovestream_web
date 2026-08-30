@@ -5,6 +5,11 @@ export const queryClient = new QueryClient({
       retry: false,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
+      // Low enough to catch quick UI changes but not high enough to cause
+      // meaningful data delay/lag
+      // If more fine grained control is needed, queries should manually
+      // invalidate and/or refresh data
+      staleTime: 30_000,
     },
   },
 });
