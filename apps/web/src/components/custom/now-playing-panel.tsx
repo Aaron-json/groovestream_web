@@ -22,7 +22,7 @@ import { useUIStore } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Disc, ListMusic, Mic2, Tag, User, Volume2, X } from "lucide-react";
+import { Volume2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
@@ -105,9 +105,6 @@ function NowPlayingContent() {
   );
 }
 
-const informationPanelClassName =
-  "rounded-lg border border-border/60 bg-background/60 p-3";
-
 function CurrentTrackInformation({
   audiofile,
   playbackItem,
@@ -116,141 +113,146 @@ function CurrentTrackInformation({
   playbackItem: PlaybackItem | undefined;
 }) {
   const title = audiofile.title || audiofile.filename;
+  const artist = audiofile.artists?.join(", ") || "Unknown artist";
+
   return (
-    <div className="shrink-0 border-b px-4 py-3">
-      <h3
-        className="mb-3 truncate text-base font-semibold text-foreground"
-        title={title}
-      >
-        {title}
-      </h3>
+    <section className="shrink-0 border-b border-border/60 px-4 py-3.5 space-y-3">
+      <div className="min-w-0">
+        <h3
+          className="truncate text-base font-semibold leading-snug text-foreground"
+          title={title}
+        >
+          {title}
+        </h3>
+        <p
+          className="mt-0.5 truncate text-xs font-medium text-muted-foreground"
+          title={artist}
+        >
+          {artist}
+        </p>
+      </div>
 
       <Tabs defaultValue="track">
-        <TabsList className="w-full">
-          <TabsTrigger value="track">Track</TabsTrigger>
-          <TabsTrigger value="playback">Playback</TabsTrigger>
+        <TabsList className="h-7 w-full rounded-md bg-muted/60 p-0.5">
+          <TabsTrigger
+            value="track"
+            className="h-full rounded-sm text-xs text-muted-foreground data-active:shadow-xs"
+          >
+            Track Details
+          </TabsTrigger>
+          <TabsTrigger
+            value="playback"
+            className="h-full rounded-sm text-xs text-muted-foreground data-active:shadow-xs"
+          >
+            Audio Specs
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="track" className={informationPanelClassName}>
-          <div className="space-y-2 text-xs text-muted-foreground">
-            <TrackDetail icon={<Mic2 />}>
-              Artist{" "}
-              <span className="font-medium text-foreground">
-                {audiofile.artists?.join(", ") || "Unknown artist"}
-              </span>
-            </TrackDetail>
-            <TrackDetail icon={<ListMusic />}>
-              Playlist <PlaylistLink playlistId={audiofile.playlist_id} />
-            </TrackDetail>
-            {audiofile.uploaded_by_username && (
-              <TrackDetail icon={<User />}>
-                Uploaded by{" "}
-                <span className="font-medium text-foreground">
-                  {audiofile.uploaded_by_username}
-                </span>
-              </TrackDetail>
-            )}
+        <TabsContent value="track" className="pt-1">
+          <dl className="grid grid-cols-2 gap-1.5 text-xs">
+            <MetaTile label="Playlist">
+              <PlaylistLink playlistId={audiofile.playlist_id} />
+            </MetaTile>
             {audiofile.album && (
-              <TrackDetail icon={<Disc />}>
-                Album{" "}
-                <span className="font-medium text-foreground">
-                  {audiofile.album}
-                </span>
-              </TrackDetail>
+              <MetaTile label="Album">{audiofile.album}</MetaTile>
             )}
             {audiofile.genre && (
-              <TrackDetail icon={<Tag />}>
-                Genre{" "}
-                <span className="font-medium text-foreground">
-                  {audiofile.genre}
-                </span>
-              </TrackDetail>
+              <MetaTile label="Genre">{audiofile.genre}</MetaTile>
             )}
-          </div>
+            {audiofile.track_number != null && (
+              <MetaTile label="Track">
+                <span className="font-semibold tabular-nums">
+                  #{audiofile.track_number}
+                  {audiofile.track_total ? ` of ${audiofile.track_total}` : ""}
+                </span>
+              </MetaTile>
+            )}
+            {audiofile.uploaded_by_username && (
+              <MetaTile label="Added by">
+                {audiofile.uploaded_by_username}
+              </MetaTile>
+            )}
+          </dl>
         </TabsContent>
-        <TabsContent value="playback" className={informationPanelClassName}>
+        <TabsContent value="playback" className="pt-1">
           {playbackItem ? (
             <PlaybackDetails item={playbackItem} />
           ) : (
-            <p className="text-xs text-muted-foreground">
-              Encoding details will appear when playback starts.
+            <p className="py-2.5 text-center text-xs text-muted-foreground">
+              Audio stream details will appear when playback begins.
             </p>
           )}
         </TabsContent>
       </Tabs>
-    </div>
+    </section>
   );
 }
 
 function PlaybackDetails({ item }: { item: PlaybackItem }) {
-  const { encoding, delivery } = item;
+  const { delivery, encoding } = item;
   const bitrate = `${Math.round(encoding.bitrate / 1_000)} kbps`;
   const sampleRateKhz = encoding.sample_rate / 1_000;
   const sampleRateValue = Number.isInteger(sampleRateKhz)
     ? sampleRateKhz.toFixed(0)
     : sampleRateKhz.toFixed(1);
   const sampleRate = `${sampleRateValue} kHz`;
-  let channels = `${encoding.channels} channels`;
+  let channels = `${encoding.channels} ch`;
   if (encoding.channels === 1) channels = "Mono";
   if (encoding.channels === 2) channels = "Stereo";
+
   const properties = [
-    ["Codec", encoding.codec.toUpperCase()],
-    ["Bitrate", bitrate],
-    ["Sample rate", sampleRate],
-    ["Channels", channels],
-    ["Container", encoding.container.toUpperCase()],
-    ["Delivery", delivery.toUpperCase()],
+    { label: "Codec", value: encoding.codec.toUpperCase() },
+    { label: "Bitrate", value: bitrate },
+    { label: "Sample Rate", value: sampleRate },
+    { label: "Channels", value: channels },
+    { label: "Container", value: encoding.container.toUpperCase() },
+    { label: "Delivery", value: delivery.toUpperCase() },
   ] as const;
 
   return (
-    <div className="text-xs">
-      <dl className="grid grid-cols-3 gap-x-3 gap-y-2.5">
-        {properties.map(([label, value]) => (
-          <div key={label} className="min-w-0">
-            <dt className="text-muted-foreground">{label}</dt>
-            <dd className="mt-0.5 truncate font-medium text-foreground tabular-nums">
-              {value}
-            </dd>
-          </div>
-        ))}
-      </dl>
-      <div className="mt-2.5 border-t border-border/50 pt-2.5">
-        <span className="text-muted-foreground">Encoding ID</span>
-        <code
-          className="mt-0.5 block truncate text-[0.6875rem] text-foreground"
-          title={encoding.id}
-        >
-          {encoding.id}
-        </code>
-      </div>
-    </div>
+    <dl className="grid grid-cols-2 gap-1.5 text-xs">
+      {properties.map(({ label, value }) => (
+        <MetaTile key={label} label={label}>
+          <span className="font-semibold tabular-nums">{value}</span>
+        </MetaTile>
+      ))}
+    </dl>
   );
 }
 
-function TrackDetail({
-  icon,
+function MetaTile({
+  label,
   children,
 }: {
-  icon: ReactNode;
+  label: string;
   children: ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-2 [&>svg]:size-3.5 [&>svg]:shrink-0 [&>svg]:text-muted-foreground/60">
-      {icon}
-      <span className="truncate">{children}</span>
+    <div className="min-w-0 rounded-md bg-muted/40 px-2.5 py-1.5">
+      <dt className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </dt>
+      <dd
+        className="mt-0.5 truncate font-medium text-foreground"
+        title={typeof children === "string" ? children : undefined}
+      >
+        {children}
+      </dd>
     </div>
   );
 }
 
 function PlaylistLink({ playlistId }: { playlistId: string }) {
   const { data: playlist } = useQuery(playlistInfoOptions(playlistId));
+  const name = playlist?.name || "Playlist";
 
   return (
     <Link
       to="/library/playlists/$playlistId"
       params={{ playlistId }}
-      className="font-medium text-foreground hover:underline"
+      className="transition-colors hover:text-primary"
+      title={name}
     >
-      {playlist?.name || "Playlist"}
+      {name}
     </Link>
   );
 }
