@@ -2,6 +2,8 @@
   "files": [],
   "references": [
     { "path": "./apps/web" },
-    { "path": "./packages/*" },
+    { "path": "./packages/api" },
+    { "path": "./packages/media" },
+    { "path": "./packages/query" }
   ]
 }
