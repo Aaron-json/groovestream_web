@@ -8,7 +8,7 @@ import { useUploadAudioFile } from "@/query/media";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, formatBytes } from "@/lib/utils";
 
 const MAX_FILES = 5;
 const MAX_FILE_SIZE = 1024 * 1024 * 25; // 25MB
@@ -24,14 +24,6 @@ export const Route = createFileRoute(
     ],
   },
 });
-
-const formatBytes = (bytes: number): string => {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-};
 
 function validateFile(file: File) {
   const fileTypeLower = file.type.toLowerCase();

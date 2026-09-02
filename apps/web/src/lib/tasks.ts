@@ -16,8 +16,10 @@ export const useTaskStore = create<TaskSlice>((set) => ({
   },
   removeTask: (taskId) => {
     set((prevState) => {
-      delete prevState.tasks[taskId];
-      return { tasks: { ...prevState.tasks } };
+      if (!(taskId in prevState.tasks)) return prevState;
+      const tasks = { ...prevState.tasks };
+      delete tasks[taskId];
+      return { tasks };
     });
   },
 }));
