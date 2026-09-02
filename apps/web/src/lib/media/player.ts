@@ -136,12 +136,20 @@ export default class WebAudioPlayer implements MediaPlayer {
     }
 
     return this.runLatestPlaybackOperation(async (signal) => {
-      const currentMedia = this.state.currentMedia;
+      const state = this.state;
       if (
-        this.state.status !== "loading" &&
-        selectedPosition.source === currentMedia?.source &&
-        selectedPosition.audiofile.id === currentMedia.audiofile.id
+        (state.status === "playing" || state.status === "paused") &&
+        selectedPosition.audiofile.id === state.currentMedia.audiofile.id
       ) {
+        // The loaded representation belongs to the audiofile; the source owns
+        // only its live queue position and can be replaced without reloading.
+        this.setPlaybackState(
+          updateCurrentSourcePosition(state, selectedPosition),
+        );
+        signal.throwIfAborted();
+        this.subscribeToSource(selectedPosition.source);
+        signal.throwIfAborted();
+        this.requireCurrentPosition(selectedPosition);
         await this.seek(0);
         signal.throwIfAborted();
         await this.play();

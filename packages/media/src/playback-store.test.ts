@@ -4,6 +4,7 @@ import type { Audiofile, Encoding } from "@groovestream/api/models";
 import type { PlaybackItem } from "./encodings.ts";
 import {
   toUnloadedPlaybackState,
+  updateCurrentSourcePosition,
   type MediaPlayer,
   type PlaybackState,
 } from "./player.ts";
@@ -244,6 +245,38 @@ test("forwards source positions without duplicating player reconciliation", asyn
   await usePlaybackStore.getState().setMedia(position);
 
   strictEqual(player.loadCalls[0], position);
+});
+
+test("moves ready media to a new source without discarding playback state", () => {
+  const audiofile = createAudiofile("first");
+  const originalSource = createSource([audiofile]);
+  const updatedAudiofile = { ...audiofile, title: "Updated title" };
+  const nextSource = createSource([createAudiofile("other"), updatedAudiofile]);
+  const playbackItem = createPlaybackItem(audiofile.id);
+  const state: PlaybackState = {
+    status: "playing",
+    currentMedia: {
+      ...requirePosition(originalSource.source),
+      playbackItem,
+    },
+    position: 42,
+    duration: 180,
+    volume: 0.8,
+    muted: false,
+  };
+
+  const nextState = updateCurrentSourcePosition(
+    state,
+    requirePosition(nextSource.source, 1),
+  );
+
+  strictEqual(nextState.status, "playing");
+  if (nextState.status !== "playing") throw new Error("Expected ready state");
+  strictEqual(nextState.currentMedia.source, nextSource.source);
+  strictEqual(nextState.currentMedia.index, 1);
+  strictEqual(nextState.currentMedia.audiofile, updatedAudiofile);
+  strictEqual(nextState.currentMedia.playbackItem, playbackItem);
+  strictEqual(nextState.position, 42);
 });
 
 test("preserves player intrinsics through phase changes", async () => {
