@@ -494,13 +494,11 @@ function RowActions({ file, onDelete }: RowActionsProps) {
             <Button
               variant="ghost"
               size="icon"
-              className={cn(
-                "h-8 w-8 transition-opacity",
-                "opacity-0 group-hover:opacity-100",
-              )}
+              aria-label={`Actions for ${file.title || file.filename}`}
+              className="opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
               onClick={(e) => e.stopPropagation()}
             >
-              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+              <MoreHorizontal className="text-muted-foreground" />
             </Button>
           }
         />

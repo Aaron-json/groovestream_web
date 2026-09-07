@@ -154,13 +154,13 @@ function AuthenticatedLayout() {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-full min-h-0 overflow-hidden">
       <AppSidebar />
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden px-2">
-        <div className="grid flex-1 min-h-0 grid-cols-[minmax(0,1fr)_auto]">
-          <div className="flex min-w-0 flex-col">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-2">
+        <div className="grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
             <TopBar />
-            <div className="flex-1 overflow-y-auto py-2 px-2 md:px-8">
+            <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2 md:px-8">
               <Outlet />
             </div>
           </div>

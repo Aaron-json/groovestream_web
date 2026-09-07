@@ -37,7 +37,7 @@ export default function AppSidebar() {
     }
   }
   return (
-    <Sidebar>
+    <Sidebar className="h-auto">
       <SidebarHeader className="border-b">
         <TextLogo className="justify-center" />
       </SidebarHeader>

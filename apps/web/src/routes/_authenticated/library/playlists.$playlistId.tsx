@@ -1,22 +1,21 @@
 import {
   createFileRoute,
+  Link,
   Outlet,
   redirect,
-  Link,
   useRouter,
-  useMatch,
   useRouteContext,
 } from "@tanstack/react-router";
 import {
-  MoreVertical,
   ListMusic,
+  LoaderCircle,
+  LogOut,
+  MoreHorizontal,
+  Pause,
+  Play,
   Trash2,
   Upload,
   Users,
-  LogOut,
-  Play,
-  Pause,
-  LoaderCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,9 +56,24 @@ import { isApiError } from "@groovestream/api/errors";
 import type { Playlist } from "@groovestream/api/models";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
 import { useShallow } from "zustand/react/shallow";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { queryClient } from "@/lib/query";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+
+type PlaylistDialog = "addMember" | "deletePlaylist" | "leavePlaylist";
+type PlaylistPlaybackState = "idle" | "loading" | "playing";
+
+const playlistNavigation = [
+  {
+    label: "Tracks",
+    to: "/library/playlists/$playlistId",
+    icon: ListMusic,
+  },
+  {
+    label: "Upload",
+    to: "/library/playlists/$playlistId/upload",
+    icon: Upload,
+  },
+] as const;
 
 export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId",
@@ -120,12 +134,6 @@ function RouteComponent() {
       setMedia: state.setMedia,
     })),
   );
-
-  const playlistIndexMatch = useMatch({
-    from: "/_authenticated/library/playlists/$playlistId/",
-    shouldThrow: false,
-  });
-  const isOnPlaylistIndex = playlistIndexMatch !== undefined;
 
   const { playlistId } = Route.useParams();
   const { data: playlist } = useSuspenseQuery(playlistInfoOptions(playlistId));
@@ -235,138 +243,27 @@ function RouteComponent() {
 
   const isPlaying = isCurrentPlaylist && playbackState === "playing";
   const isLoading = isCurrentPlaylist && playbackState === "loading";
+  const playlistPlaybackState = isLoading
+    ? "loading"
+    : isPlaying
+      ? "playing"
+      : "idle";
+  const isOwner = user?.id === playlist.owner_id;
+
+  function openDialog(dialog: PlaylistDialog) {
+    setDialogState((previous) => ({ ...previous, [dialog]: true }));
+  }
 
   return (
-    <section className="flex h-full flex-col gap-6">
-      <div className="flex gap-4 rounded-lg border bg-card p-4">
-        {/* Playlist Cover */}
-        <AspectRatio
-          ratio={1}
-          className="w-32 h-32 md:w-40 md:h-40 bg-secondary rounded-lg flex items-center justify-center shrink-0"
-        >
-          <ListMusic className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground" />
-        </AspectRatio>
+    <section className="flex h-full min-h-0 flex-col gap-5">
+      <PlaylistHeader
+        playlist={playlist}
+        playbackState={playlistPlaybackState}
+        onPlayback={handlePlayback}
+        isOwner={isOwner}
+        onOpenDialog={openDialog}
+      />
 
-        {/* Playlist Info */}
-        <div className="flex flex-col justify-end min-w-0 flex-1 space-y-2">
-          <div className="space-y-1">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground truncate">
-              {playlist.name}
-            </h1>
-            <p className="text-muted-foreground hover:text-foreground transition-colors">
-              Created by {playlist.owner_username}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {new Date(playlist.created_at).toLocaleDateString(undefined, {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
-            </p>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-1">
-            <Button
-              onClick={handlePlayback}
-              variant={isCurrentPlaylist ? "outline" : "default"}
-              size="sm"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <LoaderCircle className="h-4 w-4 animate-spin" />
-              ) : isPlaying ? (
-                <Pause className="h-4 w-4" />
-              ) : (
-                <Play className="h-4 w-4" />
-              )}
-              <span className="w-12">
-                {isLoading ? "Loading" : isPlaying ? "Pause" : "Play"}
-              </span>
-            </Button>
-
-            {isOnPlaylistIndex ? (
-              <Link
-                to="/library/playlists/$playlistId/upload"
-                params={{ playlistId }}
-                className="flex items-center gap-1"
-              >
-                <Button variant="outline" size="sm">
-                  <Upload className="h-4 w-4" />
-                  <span className="w-12">Upload</span>
-                </Button>
-              </Link>
-            ) : (
-              <Link to="/library/playlists/$playlistId" params={{ playlistId }}>
-                <Button variant="outline" size="sm">
-                  <ListMusic className="h-4 w-4" />
-                  <span className="w-12">Tracks</span>
-                </Button>
-              </Link>
-            )}
-
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button variant="outline" size="sm">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                }
-              />
-              <DropdownMenuContent align="start" className="w-40">
-                <DropdownMenuGroup>
-                  {user?.id === playlist.owner_id && (
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setDialogState((prev) => ({
-                          ...prev,
-                          addMember: true,
-                        }));
-                      }}
-                    >
-                      <Users className="mr-1 h-4 w-4" />
-                      Add Members
-                    </DropdownMenuItem>
-                  )}
-
-                  {(!user || user.id !== playlist.owner_id) && (
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setDialogState((prev) => ({
-                          ...prev,
-                          leavePlaylist: true,
-                        }));
-                      }}
-                    >
-                      <LogOut className="mr-1 h-4 w-4" />
-                      Leave Playlist
-                    </DropdownMenuItem>
-                  )}
-
-                  <DropdownMenuSeparator />
-
-                  {user?.id === playlist.owner_id && (
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={() => {
-                        setDialogState((prev) => ({
-                          ...prev,
-                          deletePlaylist: true,
-                        }));
-                      }}
-                    >
-                      <Trash2 className="mr-1 h-4 w-4" />
-                      Delete Playlist
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
-
-      {/* Dialogs */}
       <AddPlaylistMember
         playlistId={playlistId}
         open={dialogState.addMember}
@@ -429,8 +326,7 @@ function RouteComponent() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Page Content */}
-      <div className="h-full min-h-0">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <Outlet />
       </div>
     </section>
@@ -439,31 +335,181 @@ function RouteComponent() {
 
 function PlaylistSkeleton() {
   return (
-    <section className="flex h-full flex-col gap-6">
-      <div className="flex gap-4 rounded-lg border bg-card p-4">
-        <Skeleton className="w-32 h-32 md:w-40 md:h-40 rounded-lg shrink-0" />
-        <div className="flex flex-col justify-end min-w-0 flex-1 space-y-2">
-          <div className="space-y-2">
-            <Skeleton className="h-8 md:h-10 w-3/4" />
-            <Skeleton className="h-5 w-1/2" />
-            <Skeleton className="h-4 w-1/3" />
+    <section className="flex h-full min-h-0 flex-col gap-5">
+      <PlaylistHeaderSkeleton />
+
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border">
+        <div className="shrink-0 border-b p-3">
+          <Skeleton className="h-8 w-full" />
+        </div>
+        <AudiofileTableSkeleton />
+      </div>
+    </section>
+  );
+}
+
+type PlaylistHeaderProps = Readonly<{
+  playlist: Playlist;
+  playbackState: PlaylistPlaybackState;
+  isOwner: boolean;
+  onPlayback: () => void;
+  onOpenDialog: (dialog: PlaylistDialog) => void;
+}>;
+
+function PlaylistHeader({
+  playlist,
+  playbackState,
+  isOwner,
+  onPlayback,
+  onOpenDialog,
+}: PlaylistHeaderProps) {
+  const isLoading = playbackState === "loading";
+  const isPlaying = playbackState === "playing";
+
+  return (
+    <header className="shrink-0 space-y-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
+        <div className="flex size-24 shrink-0 items-center justify-center rounded-lg border bg-muted text-muted-foreground sm:size-28 md:size-32">
+          <ListMusic className="size-10 sm:size-12" />
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col justify-end gap-1.5">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Playlist
+          </span>
+          <h1
+            className="truncate text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl"
+            title={playlist.name}
+          >
+            {playlist.name}
+          </h1>
+          <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground sm:text-sm">
+            <span className="font-medium text-foreground">
+              {playlist.owner_username}
+            </span>
+            <span aria-hidden="true">•</span>
+            <span>
+              {new Date(playlist.created_at).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
           </div>
-          <div className="flex items-center gap-2 pt-2">
-            <Skeleton className="h-9 w-20" />
-            <Skeleton className="h-9 w-20" />
-            <Skeleton className="h-9 w-9" />
+
+          <div className="flex items-center gap-2 pt-1.5">
+            <Button
+              type="button"
+              onClick={onPlayback}
+              variant={isPlaying ? "outline" : "default"}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <LoaderCircle className="animate-spin" />
+              ) : isPlaying ? (
+                <Pause />
+              ) : (
+                <Play />
+              )}
+              {isLoading ? "Loading" : isPlaying ? "Pause" : "Play"}
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Playlist actions"
+                  >
+                    <MoreHorizontal />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuGroup>
+                  {isOwner ? (
+                    <DropdownMenuItem
+                      onClick={() => onOpenDialog("addMember")}
+                    >
+                      <Users />
+                      Add members
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={() => onOpenDialog("leavePlaylist")}
+                    >
+                      <LogOut />
+                      Leave playlist
+                    </DropdownMenuItem>
+                  )}
+                  {isOwner && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => onOpenDialog("deletePlaylist")}
+                      >
+                        <Trash2 />
+                        Delete playlist
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
 
-      <div className="h-full min-h-0">
-        <div className="flex max-h-full flex-col rounded-md border">
-          <div className="shrink-0 border-b p-3">
-            <Skeleton className="h-8 w-full" />
+      <nav
+        aria-label="Playlist sections"
+        className="-mb-px flex min-w-0 gap-1 overflow-x-auto border-b text-sm"
+      >
+        {playlistNavigation.map((item) => (
+          <Link
+            key={item.to}
+            to={item.to}
+            params={{ playlistId: playlist.id }}
+            activeOptions={{ exact: true }}
+            className="flex items-center gap-2 border-b-2 px-4 py-2.5 font-medium transition-colors"
+            activeProps={{
+              className: "border-primary text-foreground",
+            }}
+            inactiveProps={{
+              className:
+                "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+            }}
+          >
+            <item.icon className="size-4 shrink-0" />
+            <span>{item.label}</span>
+          </Link>
+        ))}
+      </nav>
+    </header>
+  );
+}
+
+function PlaylistHeaderSkeleton() {
+  return (
+    <div className="shrink-0 space-y-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
+        <Skeleton className="size-24 shrink-0 rounded-lg sm:size-28 md:size-32" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-8 w-56 sm:w-72" />
+          <Skeleton className="h-4 w-36" />
+          <div className="flex items-center gap-2 pt-1.5">
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="size-8" />
           </div>
-          <AudiofileTableSkeleton />
         </div>
       </div>
-    </section>
+      <div className="flex gap-4 border-b pb-2.5">
+        <Skeleton className="h-5 w-16" />
+        <Skeleton className="h-5 w-16" />
+      </div>
+    </div>
   );
 }

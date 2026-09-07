@@ -16,6 +16,7 @@ import { usePlaybackStore } from "@groovestream/media/playback-store";
 import { useUIStore } from "@/lib/ui";
 import { formatDuration } from "@groovestream/media/duration";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
 
@@ -48,11 +49,11 @@ export default function MediaBar() {
   const getPlayIcon = () => {
     switch (playbackState) {
       case "playing":
-        return <Pause className="h-5 w-5" />;
+        return <Pause className="size-5" />;
       case "loading":
-        return <LoaderCircle className="h-5 w-5 animate-spin" />;
+        return <LoaderCircle className="size-5 animate-spin" />;
       default:
-        return <Play className="h-5 w-5" />;
+        return <Play className="size-5" />;
     }
   };
 
@@ -60,6 +61,12 @@ export default function MediaBar() {
   const trackArtist = audiofile?.artists?.length
     ? audiofile.artists.join(", ")
     : "Unknown artist";
+  const playLabel =
+    playbackState === "playing"
+      ? "Pause"
+      : playbackState === "loading"
+        ? "Loading"
+        : "Play";
 
   return (
     <div className="bg-card border border-border/80 rounded-xl shadow-md">
@@ -68,6 +75,7 @@ export default function MediaBar() {
           trackTitle={trackTitle}
           trackArtist={trackArtist}
           playIcon={getPlayIcon()}
+          playLabel={playLabel}
           onPlayPause={() => runControl(playPauseToggle)}
           onExpand={audiofile ? toggleNowPlaying : undefined}
         />
@@ -76,6 +84,7 @@ export default function MediaBar() {
           trackTitle={trackTitle}
           trackArtist={trackArtist}
           playIcon={getPlayIcon()}
+          playLabel={playLabel}
           onPlayPause={() => runControl(playPauseToggle)}
           onNext={() => runControl(next)}
           onPrev={() => runControl(prev)}
@@ -90,6 +99,7 @@ interface MobileLayoutProps {
   trackTitle: string;
   trackArtist: string;
   playIcon: ReactNode;
+  playLabel: string;
   onPlayPause: () => void;
   onExpand?: () => void;
 }
@@ -98,22 +108,26 @@ function MobileLayout({
   trackTitle,
   trackArtist,
   playIcon,
+  playLabel,
   onPlayPause,
   onExpand,
 }: MobileLayoutProps) {
   return (
-    <div className="px-3 py-2">
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <TrackInfo
-            title={trackTitle}
-            artist={trackArtist}
-            onClick={onExpand}
-          />
+    <div className="min-w-0 px-3 py-2">
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <TrackInfo
+              title={trackTitle}
+              artist={trackArtist}
+              onClick={onExpand}
+            />
+          </div>
           <ControlButton
             icon={playIcon}
             onClick={onPlayPause}
-            className="h-10 w-10"
+            className="size-10"
+            aria-label={playLabel}
           />
         </div>
         <Seeker />
@@ -126,6 +140,7 @@ interface DesktopLayoutProps {
   trackTitle: string;
   trackArtist: string;
   playIcon: ReactNode;
+  playLabel: string;
   onPlayPause: () => void;
   onNext: () => void;
   onPrev: () => void;
@@ -136,14 +151,15 @@ function DesktopLayout({
   trackTitle,
   trackArtist,
   playIcon,
+  playLabel,
   onPlayPause,
   onNext,
   onPrev,
   onExpand,
 }: DesktopLayoutProps) {
   return (
-    <div className="px-3 py-2">
-      <div className="grid grid-cols-12 gap-7 items-center">
+    <div className="min-w-0 px-3 py-2">
+      <div className="grid min-w-0 grid-cols-12 items-center gap-4 md:gap-7">
         <div className="col-span-3 min-w-0">
           <TrackInfo
             title={trackTitle}
@@ -152,31 +168,31 @@ function DesktopLayout({
           />
         </div>
 
-        <div className="col-span-6 flex flex-col items-center space-y-2">
+        <div className="col-span-6 flex min-w-0 flex-col items-center space-y-1.5">
           <div className="flex items-center gap-2">
             <ControlButton
-              icon={<SkipBack className="h-5 w-5" />}
+              icon={<SkipBack className="size-5" />}
               onClick={onPrev}
               aria-label="Previous track"
             />
             <ControlButton
               icon={playIcon}
               onClick={onPlayPause}
-              className="h-10 w-10"
-              aria-label="Play/Pause"
+              className="size-10"
+              aria-label={playLabel}
             />
             <ControlButton
-              icon={<SkipForward className="h-5 w-5" />}
+              icon={<SkipForward className="size-5" />}
               onClick={onNext}
               aria-label="Next track"
             />
           </div>
-          <div className="w-full max-w-lg">
+          <div className="min-w-0 w-full max-w-lg">
             <Seeker />
           </div>
         </div>
 
-        <div className="col-span-3 flex items-center justify-end">
+        <div className="col-span-3 flex min-w-0 items-center justify-end">
           <VolumeControl />
         </div>
       </div>
@@ -254,13 +270,13 @@ function Seeker() {
   }
 
   return (
-    <div className="flex items-center gap-2 w-full text-xs">
-      <span className="text-muted-foreground min-w-10 font-mono">
+    <div className="flex w-full min-w-0 items-center gap-2 text-xs">
+      <span className="min-w-9 shrink-0 font-mono tabular-nums text-muted-foreground">
         {formatDuration(displayedPosition)}
       </span>
 
       <Slider
-        className="flex-1"
+        className="min-w-0 flex-1"
         max={duration}
         disabled={duration === 0}
         min={0}
@@ -271,7 +287,7 @@ function Seeker() {
         aria-label="Seek position"
       />
 
-      <span className="text-muted-foreground min-w-10 text-right font-mono">
+      <span className="min-w-9 shrink-0 text-right font-mono tabular-nums text-muted-foreground">
         {formatDuration(duration)}
       </span>
     </div>
@@ -288,14 +304,17 @@ interface ControlButtonProps {
 function ControlButton({
   icon,
   onClick,
-  className = "h-8 w-8",
+  className,
   "aria-label": ariaLabel,
 }: ControlButtonProps) {
   return (
     <Button
       variant="ghost"
       size="icon"
-      className={`text-muted-foreground hover:text-foreground transition-colors ${className}`}
+      className={cn(
+        "text-muted-foreground transition-colors hover:text-foreground",
+        className,
+      )}
       onClick={onClick}
       aria-label={ariaLabel}
     >
@@ -323,7 +342,7 @@ function VolumeControl() {
   return (
     <div className="flex flex-1 max-w-40 items-center gap-2">
       <ControlButton
-        icon={<VolumeIcon className="h-5 w-5" />}
+        icon={<VolumeIcon className="size-5" />}
         onClick={toggleMute}
         aria-label={mute ? "Unmute" : "Mute"}
       />

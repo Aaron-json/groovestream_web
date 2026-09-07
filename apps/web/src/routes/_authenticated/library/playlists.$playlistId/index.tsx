@@ -98,7 +98,7 @@ function RouteComponent() {
   }
 
   return (
-    <div className="flex max-h-full flex-col rounded-md border">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border">
       <AudiofileTable
         key={playlistId}
         audiofiles={audiofilesList}
@@ -111,7 +111,7 @@ function RouteComponent() {
 
 function PlaylistTracksPending() {
   return (
-    <div className="flex max-h-full flex-col rounded-md border">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border">
       <AudiofileTableSkeleton />
     </div>
   );
