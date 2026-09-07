@@ -1,4 +1,5 @@
 import { CDN_URL } from "@/api/api";
+import type Shaka from "shaka-player/dist/shaka-player.compiled.js";
 import type { Audiofile } from "@groovestream/api/models";
 import { createEncodingToken } from "@groovestream/api/sdk";
 import {
@@ -47,7 +48,7 @@ type SourceSubscription = {
  */
 export default class WebAudioPlayer implements MediaPlayer {
   private videoElement: HTMLVideoElement | null = null;
-  private shakaPlayer: shaka.Player | undefined;
+  private shakaPlayer: Shaka.Player | undefined;
   private cdnAuthorization: CdnAuthorization | undefined;
   private readonly stateListeners = new Set<() => void>();
   private state: PlaybackState = {
@@ -193,7 +194,7 @@ export default class WebAudioPlayer implements MediaPlayer {
   unload() {
     this.cancelActiveOperation();
     this.clearPlayback();
-    void this.shakaPlayer?.unload().catch((error) => {
+    void this.shakaPlayer?.unload().catch((error: unknown) => {
       console.error("Unable to unload media", error);
     });
   }
@@ -563,34 +564,40 @@ export default class WebAudioPlayer implements MediaPlayer {
     });
   }
 
-  private configureNetworking(shakaModule: typeof shaka) {
+  private configureNetworking(shakaModule: typeof Shaka) {
     const shakaPlayer = this.shakaPlayer;
     if (!shakaPlayer) return;
     const networkingEngine = shakaPlayer.getNetworkingEngine();
     if (!networkingEngine) return;
 
-    networkingEngine.registerRequestFilter((requestType, request) => {
-      if (
-        requestType !== shakaModule.net.NetworkingEngine.RequestType.MANIFEST &&
-        requestType !== shakaModule.net.NetworkingEngine.RequestType.SEGMENT
-      ) {
-        return;
-      }
+    networkingEngine.registerRequestFilter(
+      (
+        requestType: Shaka.net.NetworkingEngine.RequestType,
+        request: Shaka.extern.Request,
+      ) => {
+        if (
+          requestType !==
+            shakaModule.net.NetworkingEngine.RequestType.MANIFEST &&
+          requestType !== shakaModule.net.NetworkingEngine.RequestType.SEGMENT
+        ) {
+          return;
+        }
 
-      const mediaUrl = new URL(request.uris[0], window.location.href);
-      const objectKey = mediaUrl.pathname.split("/").pop();
-      if (!objectKey) throw new Error("Media URL has no object key");
-      request.uris[0] = new URL(objectKey, `${CDN_URL}/`).href;
+        const mediaUrl = new URL(request.uris[0], window.location.href);
+        const objectKey = mediaUrl.pathname.split("/").pop();
+        if (!objectKey) throw new Error("Media URL has no object key");
+        request.uris[0] = new URL(objectKey, `${CDN_URL}/`).href;
 
-      const authorization = this.cdnAuthorization;
-      if (authorization) {
-        request.headers["Authorization"] = `Bearer ${authorization.token}`;
-      }
-    });
+        const authorization = this.cdnAuthorization;
+        if (authorization) {
+          request.headers["Authorization"] = `Bearer ${authorization.token}`;
+        }
+      },
+    );
 
     shakaPlayer.configure(
       "streaming.failureCallback",
-      async (error: shaka.util.Error) => {
+      async (error: Shaka.util.Error) => {
         const authorization = this.cdnAuthorization;
         if (!authorization || !this.isUnauthorizedCdnRequest(error)) return;
 
@@ -618,7 +625,7 @@ export default class WebAudioPlayer implements MediaPlayer {
     );
   }
 
-  private isUnauthorizedCdnRequest(error: shaka.util.Error) {
+  private isUnauthorizedCdnRequest(error: Shaka.util.Error) {
     const [url, status] = error.data;
     return (
       typeof url === "string" &&
@@ -677,8 +684,8 @@ export default class WebAudioPlayer implements MediaPlayer {
         duration: videoElement.duration || 0,
       });
     });
-    shakaPlayer.addEventListener("error", (event) => {
-      const error = (event as Event & { detail: shaka.util.Error }).detail;
+    shakaPlayer.addEventListener("error", (event: Event) => {
+      const error = (event as Event & { detail: Shaka.util.Error }).detail;
       // Shaka emits this event and rejects load() for the same manifest error.
       // The active load owns that failure and resets state through its rejection.
       if (

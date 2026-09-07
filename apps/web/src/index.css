@@ -122,6 +122,8 @@
 	}
 
 	body {
+		/* Anchor Base UI Drawer's absolute iOS Safari backdrop to the page. */
+		position: relative;
 		@apply font-sans bg-background text-foreground;
 	}
 

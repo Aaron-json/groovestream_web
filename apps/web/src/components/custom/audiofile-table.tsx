@@ -160,6 +160,8 @@ function AudiofileTable({
   const getItemKey = useCallback((index: number) => rows[index].id, [rows]);
   const scrollMargin = isMobile ? 0 : DESKTOP_HEADER_HEIGHT;
 
+  // TanStack Virtual exposes functions that React Compiler cannot safely memoize.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => containerRef.current,

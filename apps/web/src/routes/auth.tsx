@@ -19,7 +19,7 @@ export const Route = createFileRoute("/auth")({
   },
 });
 
-export default function RouteComponent() {
+function RouteComponent() {
   const [signInError, setSignInError] = useState<string>();
   const [isSigningIn, setIsSigningIn] = useState(false);
 

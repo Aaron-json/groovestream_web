@@ -8,12 +8,30 @@ import { useMutation } from "@tanstack/react-query";
 import { createPlaylist } from "@groovestream/api/sdk";
 import { isApiError } from "@groovestream/api/errors";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
-import { Drawer, DrawerTrigger, DrawerContent } from "@/components/ui/drawer";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { addPlaylistToCache } from "@/query/media";
+
+const CREATE_PLAYLIST_TITLE = "Create Playlist";
+const CREATE_PLAYLIST_DESCRIPTION =
+  "Create a playlist to store and share your favorite music.";
 
 type CreatePlaylistModalProps = {
   trigger?: React.ReactElement;
@@ -34,7 +52,13 @@ export default function CreatePlaylistModal(props: CreatePlaylistModalProps) {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger render={trigger} />
-        <DialogContent className="flex items-center justify-center">
+        <DialogContent className="flex flex-col items-center justify-center">
+          <DialogHeader className="items-center text-center">
+            <DialogTitle className="text-xl font-semibold">
+              {CREATE_PLAYLIST_TITLE}
+            </DialogTitle>
+            <DialogDescription>{CREATE_PLAYLIST_DESCRIPTION}</DialogDescription>
+          </DialogHeader>
           <CreatePlaylistForm onFinish={() => setOpen(false)} />
         </DialogContent>
       </Dialog>
@@ -42,9 +66,15 @@ export default function CreatePlaylistModal(props: CreatePlaylistModalProps) {
   } else {
     return (
       <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-        <DrawerContent className="flex items-center justify-center pb-4">
-          <CreatePlaylistForm onFinish={() => setOpen(false)} />
+        <DrawerTrigger render={trigger} />
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>{CREATE_PLAYLIST_TITLE}</DrawerTitle>
+            <DrawerDescription>{CREATE_PLAYLIST_DESCRIPTION}</DrawerDescription>
+          </DrawerHeader>
+          <div className="flex justify-center p-4">
+            <CreatePlaylistForm onFinish={() => setOpen(false)} />
+          </div>
         </DrawerContent>
       </Drawer>
     );
@@ -88,13 +118,6 @@ export function CreatePlaylistForm({ onFinish }: CreatePlaylistFormProps) {
       id="create-playlist-form"
       className="flex flex-col items-center w-full max-w-96 gap-4"
     >
-      <div className="flex flex-col items-center">
-        <h2 className="text-xl font-semibold">Create Playlist</h2>
-        <p className="text-muted-foreground text-center">
-          Create a playlist to store and share your favorite music.
-        </p>
-      </div>
-
       <div className="w-full grid gap-2">
         <Label htmlFor="playlist-name">Playlist Name</Label>
         <form.Field
@@ -113,7 +136,7 @@ export function CreatePlaylistForm({ onFinish }: CreatePlaylistFormProps) {
                 onBlur={field.handleBlur}
                 onChange={(event) => {
                   createPlaylistMutation.reset();
-                  field.handleChange(event.target.value);
+                  field.handleChange(event.currentTarget.value);
                 }}
                 aria-invalid={!field.state.meta.isValid}
               />
