@@ -178,7 +178,7 @@ function CurrentTrackInformation({
             <PlaybackDetails item={playbackItem} />
           ) : (
             <p className="py-2.5 text-center text-xs text-muted-foreground">
-              Audio stream details will appear when playback begins.
+              Audio stream details will appear after the track is loaded.
             </p>
           )}
         </TabsContent>
@@ -219,13 +219,7 @@ function PlaybackDetails({ item }: { item: PlaybackItem }) {
   );
 }
 
-function MetaTile({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+function MetaTile({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0 rounded-md bg-muted/40 px-2.5 py-1.5">
       <dt className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -273,11 +267,7 @@ function Queue({ media }: { media: AudioSourcePosition }) {
 
   function loadMore() {
     const paginationState = source.getSnapshot().pagination;
-    if (
-      !pagination ||
-      !paginationState?.hasMore ||
-      paginationState.isLoading
-    ) {
+    if (!pagination || !paginationState?.hasMore || paginationState.isLoading) {
       return;
     }
 

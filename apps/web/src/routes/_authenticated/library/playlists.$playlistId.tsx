@@ -374,9 +374,6 @@ function PlaylistHeader({
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-end gap-1.5">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Playlist
-          </span>
           <h1
             className="truncate text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl"
             title={playlist.name}
@@ -430,9 +427,7 @@ function PlaylistHeader({
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuGroup>
                   {isOwner ? (
-                    <DropdownMenuItem
-                      onClick={() => onOpenDialog("addMember")}
-                    >
+                    <DropdownMenuItem onClick={() => onOpenDialog("addMember")}>
                       <Users />
                       Add members
                     </DropdownMenuItem>
