@@ -281,7 +281,7 @@ function Seeker() {
         disabled={duration === 0}
         min={0}
         step={1}
-        value={displayedPosition}
+        value={[displayedPosition]}
         onValueChange={(value) => setSeekPreview(getSliderValue(value))}
         onValueCommitted={handleSeekCommit}
         aria-label="Seek position"
@@ -347,7 +347,7 @@ function VolumeControl() {
         aria-label={mute ? "Unmute" : "Mute"}
       />
       <Slider
-        value={volume}
+        value={[volume]}
         onValueChange={(value) => setVolume(getSliderValue(value))}
         max={1}
         min={0}
