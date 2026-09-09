@@ -73,7 +73,7 @@ test("filters unsupported codecs and unavailable deliveries", () => {
   );
 });
 
-test("sorts delivery first and codec last so codec remains dominant", () => {
+test("uses highest-to-lowest preferences with codec remaining dominant", () => {
   const aac = createEncoding("aac", {
     dash_manifest_id: "aac.dash",
   });
@@ -87,11 +87,11 @@ test("sorts delivery first and codec last so codec remains dominant", () => {
 
   deepStrictEqual(
     items.map(({ encoding, delivery }) => `${encoding.id}:${delivery}`),
-    ["aac:dash", "opus:hls", "opus:dash"],
+    ["opus:dash", "opus:hls", "aac:dash"],
   );
 });
 
-test("preserves API order as the final tie-breaker", () => {
+test("preserves input order as the final tie-breaker", () => {
   const first = createEncoding("first", {
     codec: "opus",
     dash_manifest_id: "first.dash",

@@ -26,7 +26,9 @@ import {
 } from "@groovestream/media/player";
 
 const INITIAL_VOLUME = 0.7;
-const WEB_CODEC_SUPPORT = [
+// Ordered from highest to lowest preference; unsupported codecs are removed
+// after Shaka probes the browser's MediaSource implementation.
+const WEB_CODEC_PREFERENCES = [
   { codec: "opus", mimeType: 'audio/mp4; codecs="opus"' },
   { codec: "aac", mimeType: 'audio/mp4; codecs="mp4a.40.2"' },
 ] as const;
@@ -95,7 +97,7 @@ export default class WebAudioPlayer implements MediaPlayer {
     }
     const browserSupport = await shaka.Player.probeSupport(false);
     this.mediaPreferences = {
-      codecs: WEB_CODEC_SUPPORT.filter(
+      codecs: WEB_CODEC_PREFERENCES.filter(
         ({ mimeType }) => browserSupport.media[mimeType],
       ).map(({ codec }) => codec),
       deliveries: ["dash", "hls"],

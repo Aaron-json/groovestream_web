@@ -3,7 +3,7 @@ import type { Audiofile, Encoding } from "@groovestream/api/models";
 
 export type MediaDelivery = "dash" | "hls";
 
-/** Values are ordered from lowest to highest priority. */
+/** Values are ordered from highest to lowest priority. */
 export type MediaPreferences = Readonly<{
   codecs: readonly string[];
   deliveries: readonly MediaDelivery[];
@@ -31,9 +31,9 @@ function getEncodingDeliveries(encoding: Encoding): EncodingDelivery[] {
   return deliveries;
 }
 
-/** Maps preference values from lowest to highest priority. */
-function getPriorities<T>(values: readonly T[]) {
-  return new Map(values.map((value, priority) => [value, priority]));
+/** Maps preference values to their rank, where a lower rank is preferred. */
+function getPreferenceRanks<T>(values: readonly T[]) {
+  return new Map(values.map((value, rank) => [value, rank]));
 }
 
 /** Returns every supported playback candidate, ordered best first. */
@@ -41,10 +41,10 @@ export function getPlaybackItems(
   encodings: readonly Encoding[],
   preferences: MediaPreferences,
 ): PlaybackItem[] {
-  const codecPriorities = getPriorities(preferences.codecs);
-  const deliveryPriorities = getPriorities(preferences.deliveries);
+  const codecRanks = getPreferenceRanks(preferences.codecs);
+  const deliveryRanks = getPreferenceRanks(preferences.deliveries);
   const items = encodings
-    .filter((encoding) => codecPriorities.has(encoding.codec))
+    .filter((encoding) => codecRanks.has(encoding.codec))
     .flatMap((encoding) =>
       getEncodingDeliveries(encoding).map(({ delivery, objectId }) => ({
         encoding,
@@ -52,20 +52,23 @@ export function getPlaybackItems(
         delivery,
       })),
     )
-    .filter((item) => deliveryPriorities.has(item.delivery));
+    .filter((item) => deliveryRanks.has(item.delivery));
 
-  // Sort the least important metric first. Array.sort is stable, so the codec
-  // pass remains dominant and API order remains the final tie-breaker.
-  items.sort(
-    (left, right) =>
-      (deliveryPriorities.get(right.delivery) ?? -1) -
-      (deliveryPriorities.get(left.delivery) ?? -1),
-  );
-  items.sort(
-    (left, right) =>
-      (codecPriorities.get(right.encoding.codec) ?? -1) -
-      (codecPriorities.get(left.encoding.codec) ?? -1),
-  );
+  // Codec is the primary preference and delivery is the secondary preference.
+  // Equal candidates retain their input order because Array.sort is stable.
+  items.sort((left, right) => {
+    const codecRank =
+      // we coallesce with MAX_SAFE_INTEGER since Map.get() can return undefined.
+      // In practice, the result should always be defined
+      (codecRanks.get(left.encoding.codec) ?? Number.MAX_SAFE_INTEGER) -
+      (codecRanks.get(right.encoding.codec) ?? Number.MAX_SAFE_INTEGER);
+    if (codecRank !== 0) return codecRank;
+
+    return (
+      (deliveryRanks.get(left.delivery) ?? Number.MAX_SAFE_INTEGER) -
+      (deliveryRanks.get(right.delivery) ?? Number.MAX_SAFE_INTEGER)
+    );
+  });
 
   return items;
 }
