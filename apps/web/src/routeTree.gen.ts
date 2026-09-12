@@ -17,6 +17,7 @@ import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedLibraryIndexRouteImport } from './routes/_authenticated/library/index'
 import { Route as AuthenticatedLibraryPlaylistsPlaylistIdRouteImport } from './routes/_authenticated/library/playlists.$playlistId'
 import { Route as AuthenticatedLibraryPlaylistsPlaylistIdIndexRouteImport } from './routes/_authenticated/library/playlists.$playlistId/index'
+import { Route as AuthenticatedLibraryPlaylistsPlaylistIdMembersRouteImport } from './routes/_authenticated/library/playlists.$playlistId/members'
 import { Route as AuthenticatedLibraryPlaylistsPlaylistIdUploadRouteImport } from './routes/_authenticated/library/playlists.$playlistId/upload'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -61,6 +62,12 @@ const AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedLibraryPlaylistsPlaylistIdRoute,
   } as any)
+const AuthenticatedLibraryPlaylistsPlaylistIdMembersRoute =
+  AuthenticatedLibraryPlaylistsPlaylistIdMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => AuthenticatedLibraryPlaylistsPlaylistIdRoute,
+  } as any)
 const AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute =
   AuthenticatedLibraryPlaylistsPlaylistIdUploadRouteImport.update({
     id: '/upload',
@@ -75,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/library/': typeof AuthenticatedLibraryIndexRoute
   '/library/playlists/$playlistId': typeof AuthenticatedLibraryPlaylistsPlaylistIdRouteWithChildren
+  '/library/playlists/$playlistId/members': typeof AuthenticatedLibraryPlaylistsPlaylistIdMembersRoute
   '/library/playlists/$playlistId/upload': typeof AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute
   '/library/playlists/$playlistId/': typeof AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/': typeof AuthenticatedIndexRoute
   '/library': typeof AuthenticatedLibraryIndexRoute
+  '/library/playlists/$playlistId/members': typeof AuthenticatedLibraryPlaylistsPlaylistIdMembersRoute
   '/library/playlists/$playlistId/upload': typeof AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute
   '/library/playlists/$playlistId': typeof AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute
 }
@@ -96,6 +105,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/library/': typeof AuthenticatedLibraryIndexRoute
   '/_authenticated/library/playlists/$playlistId': typeof AuthenticatedLibraryPlaylistsPlaylistIdRouteWithChildren
+  '/_authenticated/library/playlists/$playlistId/members': typeof AuthenticatedLibraryPlaylistsPlaylistIdMembersRoute
   '/_authenticated/library/playlists/$playlistId/upload': typeof AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute
   '/_authenticated/library/playlists/$playlistId/': typeof AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute
 }
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/library/'
     | '/library/playlists/$playlistId'
+    | '/library/playlists/$playlistId/members'
     | '/library/playlists/$playlistId/upload'
     | '/library/playlists/$playlistId/'
   fileRoutesByTo: FileRoutesByTo
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/'
     | '/library'
+    | '/library/playlists/$playlistId/members'
     | '/library/playlists/$playlistId/upload'
     | '/library/playlists/$playlistId'
   id:
@@ -128,6 +140,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/library/'
     | '/_authenticated/library/playlists/$playlistId'
+    | '/_authenticated/library/playlists/$playlistId/members'
     | '/_authenticated/library/playlists/$playlistId/upload'
     | '/_authenticated/library/playlists/$playlistId/'
   fileRoutesById: FileRoutesById
@@ -196,6 +209,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdIndexRouteImport
       parentRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdRoute
     }
+    '/_authenticated/library/playlists/$playlistId/members': {
+      id: '/_authenticated/library/playlists/$playlistId/members'
+      path: '/members'
+      fullPath: '/library/playlists/$playlistId/members'
+      preLoaderRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdMembersRouteImport
+      parentRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdRoute
+    }
     '/_authenticated/library/playlists/$playlistId/upload': {
       id: '/_authenticated/library/playlists/$playlistId/upload'
       path: '/upload'
@@ -207,12 +227,15 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedLibraryPlaylistsPlaylistIdRouteChildren {
+  AuthenticatedLibraryPlaylistsPlaylistIdMembersRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdMembersRoute
   AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute
   AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute: typeof AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute
 }
 
 const AuthenticatedLibraryPlaylistsPlaylistIdRouteChildren: AuthenticatedLibraryPlaylistsPlaylistIdRouteChildren =
   {
+    AuthenticatedLibraryPlaylistsPlaylistIdMembersRoute:
+      AuthenticatedLibraryPlaylistsPlaylistIdMembersRoute,
     AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute:
       AuthenticatedLibraryPlaylistsPlaylistIdUploadRoute,
     AuthenticatedLibraryPlaylistsPlaylistIdIndexRoute:

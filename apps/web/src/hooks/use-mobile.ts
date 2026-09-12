@@ -1,26 +1,31 @@
-import { useSyncExternalStore } from "react"
+import { useSyncExternalStore } from "react";
 
-const MOBILE_BREAKPOINT = 768
-const MOBILE_MEDIA_QUERY = `(max-width: ${MOBILE_BREAKPOINT - 1}px)`
+const MOBILE_BREAKPOINT = 768;
+const MOBILE_MEDIA_QUERY = `(max-width: ${MOBILE_BREAKPOINT - 1}px)`;
 
 function subscribeToViewport(listener: () => void) {
-  const mediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY)
-  mediaQuery.addEventListener("change", listener)
-  return () => mediaQuery.removeEventListener("change", listener)
+  const mediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY);
+  mediaQuery.addEventListener("change", listener);
+  return () => mediaQuery.removeEventListener("change", listener);
 }
 
 function getViewportSnapshot() {
-  return window.matchMedia(MOBILE_MEDIA_QUERY).matches
+  return window.matchMedia(MOBILE_MEDIA_QUERY).matches;
 }
 
 function getServerViewportSnapshot() {
-  return false
+  return false;
 }
 
 export function useIsMobile() {
   return useSyncExternalStore(
     subscribeToViewport,
     getViewportSnapshot,
-    getServerViewportSnapshot
-  )
+    getServerViewportSnapshot,
+  );
+}
+
+export function useResponsiveSheetSide() {
+  const isMobile = useIsMobile();
+  return isMobile ? "bottom" : "right";
 }

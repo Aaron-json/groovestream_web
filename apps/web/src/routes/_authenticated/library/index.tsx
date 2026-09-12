@@ -7,7 +7,7 @@ import {
 import type { PlaylistInvite } from "@groovestream/api/models";
 import MediaList, { MediaListSkeleton } from "@/components/custom/media-list";
 import InfoCard from "@/components/custom/info-card";
-import CreatePlaylistModal from "@/components/custom/create-playlist";
+import CreatePlaylistSheet from "@/components/custom/create-playlist";
 import InviteList, {
   InviteListSkeleton,
 } from "@/components/custom/invite-list";
@@ -149,7 +149,7 @@ function RouteComponent() {
         >
           <InviteList
             invites={invitesList}
-            title="Playlist Invites"
+            hasMore={hasNextInvites ?? false}
             onAccept={handleAcceptInvite}
             onDecline={handleDeclineInvite}
           />
@@ -174,18 +174,18 @@ function RouteComponent() {
 
 function PageHeader() {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 className="text-2xl font-semibold">Library</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your playlists and invites
+        <p className="mt-1 text-muted-foreground">
+          Manage your playlists and invitations.
         </p>
       </div>
 
-      <CreatePlaylistModal
+      <CreatePlaylistSheet
         trigger={
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button className="w-full sm:w-auto">
+            <Plus />
             Create Playlist
           </Button>
         }
@@ -207,7 +207,7 @@ function EmptyState() {
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <CreatePlaylistModal
+        <CreatePlaylistSheet
           trigger={
             <Button variant="outline">
               <Plus data-icon="inline-start" />

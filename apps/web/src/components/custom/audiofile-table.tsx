@@ -1,5 +1,4 @@
-import { useState, useCallback, useRef, useMemo, memo } from "react";
-import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
+import { useState, useCallback, useMemo, memo } from "react";
 import {
   columnFilteringFeature,
   createFilteredRowModel,
@@ -9,8 +8,6 @@ import {
   metaHelper,
   tableFeatures,
   useTable,
-  type ReactTable,
-  type Row,
 } from "@tanstack/react-table";
 import { Trash2, Play, Pause, MoreHorizontal, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -51,10 +48,6 @@ import { useDeleteAudiofile } from "@/query/media";
 import type { AudioSource } from "@groovestream/media/source";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
 import { cn } from "@/lib/utils";
-import {
-  InfiniteScrollTrigger,
-  type PaginationState,
-} from "@/components/custom/infinite-list";
 
 const audiofileTableFeatures = tableFeatures({
   columnFilteringFeature,
@@ -65,14 +58,7 @@ const audiofileTableFeatures = tableFeatures({
 });
 
 type AudiofileTableFeatures = typeof audiofileTableFeatures;
-type AudiofileTableInstance = ReactTable<AudiofileTableFeatures, Audiofile>;
-type AudiofileTableRow = Row<AudiofileTableFeatures, Audiofile>;
-
 const columnHelper = createColumnHelper<AudiofileTableFeatures, Audiofile>();
-
-// Keep these in sync with the h-12 rows and h-10 desktop header below.
-const ROW_HEIGHT = 48;
-const DESKTOP_HEADER_HEIGHT = 40;
 
 function getAudiofileRowId(audiofile: Audiofile) {
   return audiofile.id;
@@ -81,27 +67,27 @@ function getAudiofileRowId(audiofile: Audiofile) {
 type AudiofileTableProps = {
   audiofiles: Audiofile[];
   audiofileSource: AudioSource;
-  pagination?: PaginationState;
+  canSearch?: boolean;
+  canEdit?: boolean;
 };
 
 function AudiofileTable({
   audiofiles,
   audiofileSource,
-  pagination,
+  canSearch = true,
+  canEdit = false,
 }: AudiofileTableProps) {
   const isMobile = useIsMobile();
   const { mutate: deleteAudiofile } = useDeleteAudiofile();
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  const { media, setMedia, playPauseToggle, playbackState } =
-    usePlaybackStore(
-      useShallow((state) => ({
-        media: state.playerState.currentMedia,
-        setMedia: state.setMedia,
-        playPauseToggle: state.playPauseToggle,
-        playbackState: state.playerState.status,
-      })),
-    );
+  const { media, setMedia, playPauseToggle, playbackState } = usePlaybackStore(
+    useShallow((state) => ({
+      media: state.playerState.currentMedia,
+      setMedia: state.setMedia,
+      playPauseToggle: state.playPauseToggle,
+      playbackState: state.playerState.status,
+    })),
+  );
 
   const handlePlay = useCallback(
     (file: Audiofile, index: number) => {
@@ -143,9 +129,19 @@ function AudiofileTable({
   const columns = useMemo(
     () =>
       isMobile
-        ? getMobileColumns(handleDelete, media?.audiofile?.id, playbackState)
-        : getDesktopColumns(handleDelete, media?.audiofile?.id, playbackState),
-    [isMobile, handleDelete, media?.audiofile?.id, playbackState],
+        ? getMobileColumns(
+            handleDelete,
+            media?.audiofile?.id,
+            playbackState,
+            canEdit,
+          )
+        : getDesktopColumns(
+            handleDelete,
+            media?.audiofile?.id,
+            playbackState,
+            canEdit,
+          ),
+    [isMobile, handleDelete, media?.audiofile?.id, playbackState, canEdit],
   );
 
   const table = useTable({
@@ -157,23 +153,6 @@ function AudiofileTable({
   });
 
   const { rows } = table.getRowModel();
-  const getItemKey = useCallback((index: number) => rows[index].id, [rows]);
-  const scrollMargin = isMobile ? 0 : DESKTOP_HEADER_HEIGHT;
-
-  // TanStack Virtual exposes functions that React Compiler cannot safely memoize.
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const virtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => containerRef.current,
-    estimateSize: () => ROW_HEIGHT,
-    getItemKey,
-    scrollMargin,
-    overscan: 10,
-  });
-
-  const virtualRows = virtualizer.getVirtualItems();
-  const totalSize = virtualizer.getTotalSize();
-  const canSearch = pagination?.hasMore !== true;
   const search =
     typeof table.state.globalFilter === "string"
       ? table.state.globalFilter
@@ -193,16 +172,13 @@ function AudiofileTable({
               aria-label="Search tracks"
               placeholder="Search tracks..."
               value={search}
-              onChange={(event) => {
-                containerRef.current?.scrollTo({ top: 0 });
-                table.setGlobalFilter(event.target.value);
-              }}
+              onChange={(event) => table.setGlobalFilter(event.target.value)}
               className="h-9 pl-9"
             />
           </div>
         </div>
       )}
-      <div ref={containerRef} className="flex-1 min-h-0 overflow-auto">
+      <div>
         {audiofiles.length > 0 && (
           <Table className={cn(isMobile ? undefined : "table-fixed")}>
             {!isMobile && (
@@ -226,14 +202,25 @@ function AudiofileTable({
             )}
             <TableBody>
               {rows.length > 0 ? (
-                <VirtualizedRows
-                  virtualRows={virtualRows}
-                  totalSize={totalSize}
-                  rows={rows}
-                  table={table}
-                  onPlay={handlePlay}
-                  scrollMargin={scrollMargin}
-                />
+                rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    onClick={() => handlePlay(row.original, row.index)}
+                    className="group h-12 cursor-pointer"
+                  >
+                    {row.getAllCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className={cn(
+                          "min-w-0",
+                          cell.column.columnDef.meta?.className,
+                        )}
+                      >
+                        <table.FlexRender cell={cell} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : (
                 <TableRow>
                   <TableCell
@@ -247,92 +234,21 @@ function AudiofileTable({
             </TableBody>
           </Table>
         )}
-        {pagination && <InfiniteScrollTrigger pagination={pagination} />}
       </div>
     </div>
   );
 }
 
-interface VirtualizedRowsProps {
-  virtualRows: VirtualItem[];
-  totalSize: number;
-  rows: AudiofileTableRow[];
-  table: AudiofileTableInstance;
-  onPlay: (file: Audiofile, index: number) => void;
-  scrollMargin: number;
-}
-
-const VirtualizedRows = memo(function VirtualizedRows({
-  virtualRows,
-  totalSize,
-  rows,
-  table,
-  onPlay,
-  scrollMargin,
-}: VirtualizedRowsProps) {
-  const paddingTop =
-    virtualRows.length > 0 ? virtualRows[0].start - scrollMargin : 0;
-  const paddingBottom =
-    virtualRows.length > 0
-      ? totalSize -
-        (virtualRows[virtualRows.length - 1].end - scrollMargin)
-      : 0;
-
-  return (
-    <>
-      {paddingTop > 0 && (
-        <tr>
-          <td
-            colSpan={table.getAllColumns().length}
-            style={{ height: paddingTop }}
-          />
-        </tr>
-      )}
-      {virtualRows.map((virtualRow) => {
-        const row = rows[virtualRow.index];
-        return (
-          <TableRow
-            key={row.id}
-            onClick={() => onPlay(row.original, row.index)}
-            className="h-12 cursor-pointer group"
-          >
-            {row.getAllCells().map((cell) => (
-              <TableCell
-                key={cell.id}
-                className={cn("min-w-0", cell.column.columnDef.meta?.className)}
-              >
-                <table.FlexRender cell={cell} />
-              </TableCell>
-            ))}
-          </TableRow>
-        );
-      })}
-      {paddingBottom > 0 && (
-        <tr>
-          <td
-            colSpan={table.getAllColumns().length}
-            style={{ height: paddingBottom }}
-          />
-        </tr>
-      )}
-    </>
-  );
-});
-
 function getMobileColumns(
   onDelete: (file: Audiofile) => void,
   activeId: string | undefined,
   playbackState: string,
+  canEdit: boolean,
 ) {
   return columnHelper.columns([
     columnHelper.accessor(
       (file) =>
-        [
-          file.title,
-          file.filename,
-          file.artists?.join(", "),
-          file.album,
-        ]
+        [file.title, file.filename, file.artists?.join(", "), file.album]
           .filter(Boolean)
           .join(" "),
       {
@@ -358,7 +274,7 @@ function getMobileColumns(
                   {file.artists?.join(", ") || "Unknown Artist"}
                 </div>
               </div>
-              <RowActions file={file} onDelete={onDelete} />
+              {canEdit && <RowActions file={file} onDelete={onDelete} />}
             </div>
           );
         },
@@ -371,6 +287,7 @@ function getDesktopColumns(
   onDelete: (file: Audiofile) => void,
   activeId: string | undefined,
   playbackState: string,
+  canEdit: boolean,
 ) {
   return columnHelper.columns([
     columnHelper.display({
@@ -444,7 +361,8 @@ function getDesktopColumns(
       id: "actions",
       enableGlobalFilter: false,
       meta: { className: "w-10" },
-      cell: ({ row }) => <RowActions file={row.original} onDelete={onDelete} />,
+      cell: ({ row }) =>
+        canEdit ? <RowActions file={row.original} onDelete={onDelete} /> : null,
     }),
   ]);
 }
@@ -552,21 +470,17 @@ function AudiofileTableSkeleton() {
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="min-h-0 flex-1 overflow-hidden">
-        <div className="space-y-3 p-3">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
-              <div className="min-w-0 flex-1 space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                {isMobile && <Skeleton className="h-3 w-1/2" />}
-              </div>
-              {!isMobile && <Skeleton className="h-4 w-16 shrink-0" />}
-            </div>
-          ))}
+    <div className="space-y-3 p-3">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3">
+          <Skeleton className="size-8 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            {isMobile && <Skeleton className="h-3 w-1/2" />}
+          </div>
+          {!isMobile && <Skeleton className="h-4 w-16 shrink-0" />}
         </div>
-      </div>
+      ))}
     </div>
   );
 }

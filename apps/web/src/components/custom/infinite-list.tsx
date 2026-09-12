@@ -38,7 +38,8 @@ export function InfiniteScrollTrigger({
   if (!hasMore) return null;
 
   return (
-    <div ref={ref}>
+    // One pixel minimum height prevents unreliable zero-area observations
+    <div ref={ref} className="min-h-px">
       {isError
         ? (errorFallback ?? (
             <Alert variant="destructive">

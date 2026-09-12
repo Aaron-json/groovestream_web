@@ -5,7 +5,7 @@ import {
   type SubmitEvent,
 } from "react";
 import { FileAudio, Plus, Upload, X } from "lucide-react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { playlistInfoOptions } from "@groovestream/query/media";
@@ -21,6 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn, formatBytes } from "@/lib/utils";
+import { queryClient } from "@/lib/query";
 
 const MAX_FILES = 5;
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
@@ -46,6 +47,20 @@ export const Route = createFileRoute(
   "/_authenticated/library/playlists/$playlistId/upload",
 )({
   component: RouteComponent,
+  beforeLoad: async ({ params }) => {
+    const playlist = await queryClient.ensureQueryData(
+      playlistInfoOptions(params.playlistId),
+    );
+    if (
+      playlist.access_level !== "WRITE" &&
+      playlist.access_level !== "OWNER"
+    ) {
+      throw redirect({
+        to: "/library/playlists/$playlistId",
+        params: { playlistId: params.playlistId },
+      });
+    }
+  },
   staticData: {
     crumbs: (params) => [
       { label: "Upload", to: "/library/playlists/$playlistId/upload", params },
@@ -185,7 +200,7 @@ function EmptyDropZone({ onFiles }: EmptyDropZoneProps) {
       htmlFor="audio-file-upload"
       {...dropProps}
       className={cn(
-        "group m-4 sm:m-6 flex min-h-[260px] sm:min-h-[320px] flex-1 cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-6 text-center transition-colors outline-none focus-within:ring-2 focus-within:ring-ring",
+        "group m-4 flex min-h-72 cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-6 text-center transition-colors outline-none focus-within:ring-2 focus-within:ring-ring sm:m-6 sm:min-h-80",
         isDragOver
           ? "border-foreground/40 bg-muted/40"
           : "border-border hover:border-foreground/25 hover:bg-muted/30",
@@ -239,10 +254,7 @@ function SelectedFilesList({
   });
 
   return (
-    <div
-      {...dropProps}
-      className="relative flex min-h-0 flex-1 flex-col overflow-y-auto"
-    >
+    <div {...dropProps} className="relative">
       {isDragOver && canAddMore && (
         <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-background/90 p-6 text-center backdrop-blur-xs transition-all animate-in fade-in-0">
           <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -405,9 +417,9 @@ function RouteComponent() {
   const canAddMore = remaining > 0;
 
   return (
-    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-      <Card className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-        <CardHeader className="shrink-0 border-b">
+    <form onSubmit={handleSubmit}>
+      <Card className="relative">
+        <CardHeader className="border-b">
           <CardTitle>{hasFiles ? "Files to upload" : "Add tracks"}</CardTitle>
           <CardDescription>
             {hasFiles
@@ -425,10 +437,7 @@ function RouteComponent() {
                 <label
                   htmlFor="audio-file-upload"
                   className={cn(
-                    buttonVariants({
-                      variant: "outline",
-                      size: "sm",
-                    }),
+                    buttonVariants({ variant: "outline", size: "sm" }),
                     "cursor-pointer gap-1.5 text-xs",
                   )}
                 >
@@ -440,7 +449,7 @@ function RouteComponent() {
           )}
         </CardHeader>
 
-        <CardContent className="flex min-h-0 flex-1 flex-col p-0">
+        <CardContent className="p-0">
           {!hasFiles ? (
             <EmptyDropZone onFiles={addFiles} />
           ) : (
@@ -454,7 +463,7 @@ function RouteComponent() {
         </CardContent>
 
         {hasFiles && (
-          <CardFooter className="shrink-0 flex-col items-stretch justify-between gap-3 border-t bg-muted/40 p-4 sm:flex-row sm:items-center">
+          <CardFooter className="flex-col items-stretch justify-between gap-3 border-t bg-muted/40 p-4 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="font-medium text-foreground">
                 {files.length} {pluralizeTracks(files.length)}
