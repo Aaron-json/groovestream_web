@@ -211,6 +211,16 @@ export type PaginationPlaylistInviteView = {
     has_more: boolean;
 };
 
+export type PaginationPlaylistMember = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    cursor?: string;
+    data: Array<PlaylistMember> | null;
+    has_more: boolean;
+};
+
 export type PaginationPlaylistView = {
     /**
      * A URL to the JSON Schema for this object.
@@ -221,7 +231,21 @@ export type PaginationPlaylistView = {
     has_more: boolean;
 };
 
+export type PlaylistDetails = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    access_level: 'READ' | 'WRITE' | 'OWNER';
+    created_at: string;
+    id: string;
+    name: string;
+    owner_id: string;
+    owner_username: string;
+};
+
 export type PlaylistInviteView = {
+    access_level: string;
     created_at: string;
     from_id: string;
     from_username: string;
@@ -233,7 +257,8 @@ export type PlaylistInviteView = {
     to_id: string;
 };
 
-export type PlaylistMemberView = {
+export type PlaylistMember = {
+    access_level: 'read' | 'write';
     created_at: string;
     id: string;
     playlist_id: string;
@@ -259,6 +284,10 @@ export type SendPlaylistInviteRequest = {
      */
     readonly $schema?: string;
     /**
+     * The access granted if the invite is accepted
+     */
+    access_level: 'read' | 'write';
+    /**
      * The playlist ID
      */
     playlist_id: string;
@@ -277,6 +306,17 @@ export type UpdateCurrentUserRequest = {
      * The new username
      */
     username: string | null;
+};
+
+export type UpdatePlaylistMemberAccessRequest = {
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    /**
+     * The member's playlist access level
+     */
+    access_level: 'read' | 'write';
 };
 
 export type UpdatePlaylistRequest = {
@@ -412,10 +452,25 @@ export type PaginationPlaylistInviteViewWritable = {
     has_more: boolean;
 };
 
+export type PaginationPlaylistMemberWritable = {
+    cursor?: string;
+    data: Array<PlaylistMember> | null;
+    has_more: boolean;
+};
+
 export type PaginationPlaylistViewWritable = {
     cursor?: string;
     data: Array<PlaylistViewWritable> | null;
     has_more: boolean;
+};
+
+export type PlaylistDetailsWritable = {
+    access_level: 'READ' | 'WRITE' | 'OWNER';
+    created_at: string;
+    id: string;
+    name: string;
+    owner_id: string;
+    owner_username: string;
 };
 
 export type PlaylistViewWritable = {
@@ -427,6 +482,10 @@ export type PlaylistViewWritable = {
 };
 
 export type SendPlaylistInviteRequestWritable = {
+    /**
+     * The access granted if the invite is accepted
+     */
+    access_level: 'read' | 'write';
     /**
      * The playlist ID
      */
@@ -442,6 +501,13 @@ export type UpdateCurrentUserRequestWritable = {
      * The new username
      */
     username: string | null;
+};
+
+export type UpdatePlaylistMemberAccessRequestWritable = {
+    /**
+     * The member's playlist access level
+     */
+    access_level: 'read' | 'write';
 };
 
 export type UpdatePlaylistRequestWritable = {
@@ -912,7 +978,7 @@ export type GetPlaylistResponses = {
     /**
      * OK
      */
-    200: PlaylistView;
+    200: PlaylistDetails;
 };
 
 export type GetPlaylistResponse = GetPlaylistResponses[keyof GetPlaylistResponses];
@@ -994,7 +1060,16 @@ export type ListPlaylistMembersData = {
          */
         playlist_id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Maximum number of results
+         */
+        limit?: number;
+        /**
+         * Pagination cursor
+         */
+        cursor?: string;
+    };
     url: '/playlists/{playlist_id}/members';
 };
 
@@ -1011,7 +1086,7 @@ export type ListPlaylistMembersResponses = {
     /**
      * OK
      */
-    200: Array<PlaylistMemberView> | null;
+    200: PaginationPlaylistMember;
 };
 
 export type ListPlaylistMembersResponse = ListPlaylistMembersResponses[keyof ListPlaylistMembersResponses];
@@ -1054,7 +1129,7 @@ export type RemovePlaylistMemberData = {
          */
         playlist_id: string;
         /**
-         * The member ID
+         * The member user ID
          */
         member_id: string;
     };
@@ -1079,6 +1154,40 @@ export type RemovePlaylistMemberResponses = {
 };
 
 export type RemovePlaylistMemberResponse = RemovePlaylistMemberResponses[keyof RemovePlaylistMemberResponses];
+
+export type UpdatePlaylistMemberAccessData = {
+    body: UpdatePlaylistMemberAccessRequestWritable;
+    path: {
+        /**
+         * The playlist ID
+         */
+        playlist_id: string;
+        /**
+         * The member user ID
+         */
+        member_id: string;
+    };
+    query?: never;
+    url: '/playlists/{playlist_id}/members/{member_id}';
+};
+
+export type UpdatePlaylistMemberAccessErrors = {
+    /**
+     * Error
+     */
+    default: ApiError;
+};
+
+export type UpdatePlaylistMemberAccessError = UpdatePlaylistMemberAccessErrors[keyof UpdatePlaylistMemberAccessErrors];
+
+export type UpdatePlaylistMemberAccessResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type UpdatePlaylistMemberAccessResponse = UpdatePlaylistMemberAccessResponses[keyof UpdatePlaylistMemberAccessResponses];
 
 export type ListTasksData = {
     body?: never;

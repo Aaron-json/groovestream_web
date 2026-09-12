@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AcceptPlaylistInviteData, AcceptPlaylistInviteErrors, AcceptPlaylistInviteResponses, AddListeningHistoryData, AddListeningHistoryErrors, AddListeningHistoryResponses, CheckUsernameExistsData, CheckUsernameExistsErrors, CheckUsernameExistsResponses, ConfirmUploadData, ConfirmUploadErrors, ConfirmUploadResponses, CreateEncodingTokenData, CreateEncodingTokenErrors, CreateEncodingTokenResponses, CreatePlaylistData, CreatePlaylistErrors, CreatePlaylistResponses, CreateUploadData, CreateUploadErrors, CreateUploadResponses, CreateUserProfileData, CreateUserProfileErrors, CreateUserProfileResponses, DeleteAudiofileData, DeleteAudiofileErrors, DeleteAudiofileResponses, DeletePlaylistData, DeletePlaylistErrors, DeletePlaylistResponses, GetAudiofileMetadataData, GetAudiofileMetadataErrors, GetAudiofileMetadataResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetPlaylistData, GetPlaylistErrors, GetPlaylistResponses, LeavePlaylistData, LeavePlaylistErrors, LeavePlaylistResponses, ListAudiofileEncodingsData, ListAudiofileEncodingsErrors, ListAudiofileEncodingsResponses, ListListeningHistoryData, ListListeningHistoryErrors, ListListeningHistoryResponses, ListMostPlayedAudiofilesData, ListMostPlayedAudiofilesErrors, ListMostPlayedAudiofilesResponses, ListPlaylistAudiofilesData, ListPlaylistAudiofilesErrors, ListPlaylistAudiofilesResponses, ListPlaylistInvitesData, ListPlaylistInvitesErrors, ListPlaylistInvitesResponses, ListPlaylistMembersData, ListPlaylistMembersErrors, ListPlaylistMembersResponses, ListPlaylistsData, ListPlaylistsErrors, ListPlaylistsResponses, ListTasksData, ListTasksErrors, ListTasksResponses, RejectPlaylistInviteData, RejectPlaylistInviteErrors, RejectPlaylistInviteResponses, RemovePlaylistMemberData, RemovePlaylistMemberErrors, RemovePlaylistMemberResponses, SendPlaylistInviteData, SendPlaylistInviteErrors, SendPlaylistInviteResponses, UpdateCurrentUserData, UpdateCurrentUserErrors, UpdateCurrentUserResponses, UpdatePlaylistData, UpdatePlaylistErrors, UpdatePlaylistResponses } from './types.gen';
+import type { AcceptPlaylistInviteData, AcceptPlaylistInviteErrors, AcceptPlaylistInviteResponses, AddListeningHistoryData, AddListeningHistoryErrors, AddListeningHistoryResponses, CheckUsernameExistsData, CheckUsernameExistsErrors, CheckUsernameExistsResponses, ConfirmUploadData, ConfirmUploadErrors, ConfirmUploadResponses, CreateEncodingTokenData, CreateEncodingTokenErrors, CreateEncodingTokenResponses, CreatePlaylistData, CreatePlaylistErrors, CreatePlaylistResponses, CreateUploadData, CreateUploadErrors, CreateUploadResponses, CreateUserProfileData, CreateUserProfileErrors, CreateUserProfileResponses, DeleteAudiofileData, DeleteAudiofileErrors, DeleteAudiofileResponses, DeletePlaylistData, DeletePlaylistErrors, DeletePlaylistResponses, GetAudiofileMetadataData, GetAudiofileMetadataErrors, GetAudiofileMetadataResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetPlaylistData, GetPlaylistErrors, GetPlaylistResponses, LeavePlaylistData, LeavePlaylistErrors, LeavePlaylistResponses, ListAudiofileEncodingsData, ListAudiofileEncodingsErrors, ListAudiofileEncodingsResponses, ListListeningHistoryData, ListListeningHistoryErrors, ListListeningHistoryResponses, ListMostPlayedAudiofilesData, ListMostPlayedAudiofilesErrors, ListMostPlayedAudiofilesResponses, ListPlaylistAudiofilesData, ListPlaylistAudiofilesErrors, ListPlaylistAudiofilesResponses, ListPlaylistInvitesData, ListPlaylistInvitesErrors, ListPlaylistInvitesResponses, ListPlaylistMembersData, ListPlaylistMembersErrors, ListPlaylistMembersResponses, ListPlaylistsData, ListPlaylistsErrors, ListPlaylistsResponses, ListTasksData, ListTasksErrors, ListTasksResponses, RejectPlaylistInviteData, RejectPlaylistInviteErrors, RejectPlaylistInviteResponses, RemovePlaylistMemberData, RemovePlaylistMemberErrors, RemovePlaylistMemberResponses, SendPlaylistInviteData, SendPlaylistInviteErrors, SendPlaylistInviteResponses, UpdateCurrentUserData, UpdateCurrentUserErrors, UpdateCurrentUserResponses, UpdatePlaylistData, UpdatePlaylistErrors, UpdatePlaylistMemberAccessData, UpdatePlaylistMemberAccessErrors, UpdatePlaylistMemberAccessResponses, UpdatePlaylistResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -201,7 +201,7 @@ export const listPlaylistAudiofiles = <ThrowOnError extends boolean = true>(opti
 });
 
 /**
- * List playlists by playlist ID members
+ * Get playlists by playlist ID members
  */
 export const listPlaylistMembers = <ThrowOnError extends boolean = true>(options: Options<ListPlaylistMembersData, ThrowOnError>): RequestResult<ListPlaylistMembersResponses, ListPlaylistMembersErrors, ThrowOnError, 'data'> => (options.client ?? client).get<ListPlaylistMembersResponses, ListPlaylistMembersErrors, ThrowOnError, 'data'>({
     responseStyle: 'data',
@@ -228,6 +228,20 @@ export const removePlaylistMember = <ThrowOnError extends boolean = true>(option
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/playlists/{playlist_id}/members/{member_id}',
     ...options
+});
+
+/**
+ * Patch playlists by playlist ID members by member ID
+ */
+export const updatePlaylistMemberAccess = <ThrowOnError extends boolean = true>(options: Options<UpdatePlaylistMemberAccessData, ThrowOnError>): RequestResult<UpdatePlaylistMemberAccessResponses, UpdatePlaylistMemberAccessErrors, ThrowOnError, 'data'> => (options.client ?? client).patch<UpdatePlaylistMemberAccessResponses, UpdatePlaylistMemberAccessErrors, ThrowOnError, 'data'>({
+    responseStyle: 'data',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/playlists/{playlist_id}/members/{member_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**

@@ -3,17 +3,24 @@ import {
   deletePlaylist,
   leavePlaylist,
   listTasks,
+  removePlaylistMember,
+  updatePlaylist,
+  updatePlaylistMemberAccess,
 } from "@groovestream/api/sdk";
 import type {
   Audiofile,
   Playlist,
   PlaylistInvite,
+  PlaylistMember,
 } from "@groovestream/api/models";
 import {
   addPlaylistToCache as addPlaylistToSharedCache,
   createListeningHistoryAudiofileSource as createSharedHistorySource,
   createMostPlayedAudiofileSource as createSharedMostPlayedSource,
   createPlaylistAudiofileSource as createSharedPlaylistSource,
+  getPlaylistMembersKey,
+  playlistInfoOptions,
+  PLAYLISTS_LIST_KEY,
   removeAudiofileFromCache as removeAudiofileFromSharedCache,
   removePlaylistFromCache as removePlaylistFromSharedCache,
   removePlaylistInviteFromCache as removeInviteFromSharedCache,
@@ -147,5 +154,70 @@ export function useLeavePlaylist() {
     onSuccess: (_data, playlist) => {
       removePlaylistFromSharedCache(queryClient, playlist.id);
     },
+  });
+}
+
+type RenamePlaylistInput = {
+  playlistId: Playlist["id"];
+  name: Playlist["name"];
+};
+
+export function useRenamePlaylist() {
+  return useMutation({
+    mutationFn: ({ playlistId, name }: RenamePlaylistInput) =>
+      updatePlaylist({
+        path: { playlist_id: playlistId },
+        body: { name },
+      }),
+    onSuccess: async (_data, { playlistId }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: playlistInfoOptions(playlistId).queryKey,
+        }),
+        queryClient.invalidateQueries({ queryKey: PLAYLISTS_LIST_KEY }),
+      ]);
+    },
+  });
+}
+
+type UpdateMemberAccessInput = {
+  playlistId: Playlist["id"];
+  memberId: PlaylistMember["user_id"];
+  accessLevel: PlaylistMember["access_level"];
+};
+
+export function useUpdatePlaylistMemberAccess() {
+  return useMutation({
+    mutationFn: ({
+      playlistId,
+      memberId,
+      accessLevel,
+    }: UpdateMemberAccessInput) =>
+      updatePlaylistMemberAccess({
+        path: { playlist_id: playlistId, member_id: memberId },
+        body: { access_level: accessLevel },
+      }),
+    onSuccess: (_data, { playlistId }) =>
+      queryClient.invalidateQueries({
+        queryKey: getPlaylistMembersKey(playlistId),
+      }),
+  });
+}
+
+type RemoveMemberInput = {
+  playlistId: Playlist["id"];
+  memberId: PlaylistMember["user_id"];
+};
+
+export function useRemovePlaylistMember() {
+  return useMutation({
+    mutationFn: ({ playlistId, memberId }: RemoveMemberInput) =>
+      removePlaylistMember({
+        path: { playlist_id: playlistId, member_id: memberId },
+      }),
+    onSuccess: (_data, { playlistId }) =>
+      queryClient.invalidateQueries({
+        queryKey: getPlaylistMembersKey(playlistId),
+      }),
   });
 }

@@ -13,6 +13,7 @@ import {
   listMostPlayedAudiofiles,
   listPlaylistAudiofiles,
   listPlaylistInvites,
+  listPlaylistMembers,
   listPlaylists,
 } from "@groovestream/api/sdk";
 import type {
@@ -41,6 +42,7 @@ const PLAYLIST_AUDIOFILES_PAGE_SIZE = 100;
 const MOST_PLAYED_LIMIT = 10;
 const LISTENING_HISTORY_PAGE_SIZE = 25;
 const PLAYLIST_INVITES_PAGE_SIZE = 20;
+const PLAYLIST_MEMBERS_PAGE_SIZE = 50;
 const INITIAL_CURSOR: string | undefined = undefined;
 const EMPTY_AUDIOFILES: readonly Audiofile[] = [];
 
@@ -50,6 +52,10 @@ function getPlaylistKey(playlistId: Playlist["id"]) {
 
 function getPlaylistAudiofilesKey(playlistId: Playlist["id"]) {
   return [...getPlaylistKey(playlistId), "audiofiles"] as const;
+}
+
+export function getPlaylistMembersKey(playlistId: Playlist["id"]) {
+  return [...getPlaylistKey(playlistId), "members"] as const;
 }
 
 function getNextCursor(page: { has_more: boolean; cursor?: string }) {
@@ -131,6 +137,20 @@ export function playlistInfoOptions(playlistId: Playlist["id"]) {
     queryKey: [...getPlaylistKey(playlistId), "metadata"],
     queryFn: ({ signal }) =>
       getPlaylist({ path: { playlist_id: playlistId }, signal }),
+  });
+}
+
+export function playlistMembersOptions(playlistId: Playlist["id"]) {
+  return infiniteQueryOptions({
+    queryKey: getPlaylistMembersKey(playlistId),
+    queryFn: ({ pageParam, signal }) =>
+      listPlaylistMembers({
+        path: { playlist_id: playlistId },
+        query: { limit: PLAYLIST_MEMBERS_PAGE_SIZE, cursor: pageParam },
+        signal,
+      }),
+    initialPageParam: INITIAL_CURSOR,
+    getNextPageParam: getNextCursor,
   });
 }
 

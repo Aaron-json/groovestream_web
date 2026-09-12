@@ -14,7 +14,9 @@ export type {
   PaginationPlaylistInviteView as PlaylistInvitePage,
   PaginationPlaylistView as PlaylistPage,
   PlaylistInviteView as PlaylistInvite,
-  PlaylistMemberView as PlaylistMember,
+  PaginationPlaylistMember as PlaylistMemberPage,
+  PlaylistDetails,
+  PlaylistMember,
   PlaylistView as Playlist,
   User,
 } from "./generated/types.gen";
