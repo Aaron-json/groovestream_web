@@ -43,11 +43,11 @@ function DesktopNowPlayingPanel() {
       aria-hidden={!open}
       inert={!open}
       className={cn(
-        "flex flex-col shrink-0 overflow-hidden border-l bg-card transition-[width,border-color] duration-200 ease-linear",
+        "flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-l bg-card transition-[width,border-color] duration-200 ease-linear",
         open ? "w-96" : "w-0 border-transparent",
       )}
     >
-      <div className="flex flex-1 w-96 flex-col">
+      <div className="flex h-full min-h-0 w-96 flex-1 flex-col">
         <div className="flex h-12 shrink-0 items-center justify-between border-b px-4">
           <h2 className="text-sm font-semibold">Now Playing</h2>
           <Button
@@ -71,7 +71,10 @@ function MobileNowPlayingSheet() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
+      <SheetContent
+        side="right"
+        className="w-full min-h-0 gap-0 overflow-hidden p-0 sm:max-w-md"
+      >
         <SheetHeader className="h-12 flex-row items-center border-b px-4 py-0">
           <SheetTitle className="text-sm font-semibold">Now Playing</SheetTitle>
           <SheetDescription className="sr-only">
@@ -96,7 +99,7 @@ function NowPlayingContent() {
   }
 
   return (
-    <div className="h-full flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <CurrentTrackInformation
         audiofile={media.item.audiofile}
         playbackItem={media.playbackItem}
