@@ -41,7 +41,7 @@ export default function MediaList({
 
 export function MediaListSkeleton() {
   return (
-    <Card className="gap-0 py-0">
+    <Card className="w-full gap-0 py-0">
       <CardContent className="grid grid-cols-1 gap-1 p-2 md:grid-cols-2">
         {Array.from({ length: 6 }).map((_, index) => (
           <MediaRowSkeleton key={index} />
