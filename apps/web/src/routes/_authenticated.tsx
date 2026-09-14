@@ -18,7 +18,10 @@ import { useEffect, useState } from "react";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
 import type { CurrentMedia } from "@groovestream/media/player";
 import WebAudioPlayer from "@/lib/media/player";
-import { recordListeningHistory } from "@groovestream/query/media";
+import {
+  LISTENING_HISTORY_SOURCE_ID,
+  recordListeningHistory,
+} from "@groovestream/query/media";
 import { queryClient } from "@/lib/query";
 import { RefreshCw } from "lucide-react";
 import { NowPlayingPanel } from "@/components/custom/now-playing-panel";
@@ -80,6 +83,9 @@ function AuthenticatedLayout() {
       if (playerState.status !== "playing") return;
 
       const currentMedia = playerState.currentMedia;
+      // Recording would reorder the queue that playback is currently traversing.
+      if (currentMedia.source.id === LISTENING_HISTORY_SOURCE_ID) return;
+
       if (
         currentMedia.source === lastRecordedMedia?.source &&
         currentMedia.item.id === lastRecordedMedia.item.id
