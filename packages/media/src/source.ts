@@ -5,9 +5,16 @@ export interface AudioSourcePagination {
   loadMore(): Promise<void>;
 }
 
+/** One occurrence of an audiofile in an ordered playback source. */
+export type AudioSourceItem = Readonly<{
+  /** Stable within the source, including when the same audiofile occurs twice. */
+  id: string;
+  audiofile: Audiofile;
+}>;
+
 /** Immutable observable state for a live audio source. */
 export type AudioSourceSnapshot = Readonly<{
-  audiofiles: readonly Audiofile[];
+  items: readonly AudioSourceItem[];
   pagination:
     | Readonly<{
         hasMore: boolean;
@@ -19,8 +26,8 @@ export type AudioSourceSnapshot = Readonly<{
 /**
  * A live ordered playback queue. Implementations own their storage and
  * snapshot stability; consumers observe them through this interface.
- * Audiofile IDs must be unique within a source so a moved position can be
- * recovered unambiguously after the source changes.
+ * Source item IDs must be unique so positions can be recovered unambiguously
+ * after the source changes. The same audiofile may occur more than once.
  */
 export interface AudioSource {
   /** Returns the same object until the source's observable state changes. */
@@ -32,8 +39,8 @@ export interface AudioSource {
 }
 
 /**
- * A cursor into a live source. The index is the fast path and the audiofile ID
- * prevents a stale cursor from silently selecting another track.
+ * A cursor into a live source. The index is the fast path and the source item
+ * ID prevents a stale cursor from silently selecting another occurrence.
  *
  * Positions can become stale whenever their source emits. The component that
  * owns a retained position must reconcile it before using the index again.
@@ -41,15 +48,23 @@ export interface AudioSource {
 export type AudioSourcePosition = Readonly<{
   source: AudioSource;
   index: number;
-  audiofile: Audiofile;
+  item: AudioSourceItem;
 }>;
+
+function createPosition(
+  source: AudioSource,
+  index: number,
+  item: AudioSourceItem,
+): AudioSourcePosition {
+  return { source, index, item };
+}
 
 export function getAudioSourcePosition(
   source: AudioSource,
   index: number,
 ): AudioSourcePosition | undefined {
-  const audiofile = source.getSnapshot().audiofiles[index];
-  return audiofile ? { source, index, audiofile } : undefined;
+  const item = source.getSnapshot().items[index];
+  return item ? createPosition(source, index, item) : undefined;
 }
 
 /**
@@ -60,17 +75,17 @@ export function getAudioSourcePosition(
 export function reconcileAudioSourcePosition(
   position: AudioSourcePosition,
 ): AudioSourcePosition | undefined {
-  const audiofiles = position.source.getSnapshot().audiofiles;
-  const audiofileAtIndex = audiofiles[position.index];
+  const items = position.source.getSnapshot().items;
+  const itemAtIndex = items[position.index];
 
-  if (audiofileAtIndex?.id === position.audiofile.id) {
-    if (shallow(audiofileAtIndex, position.audiofile)) return position;
-    return { ...position, audiofile: audiofileAtIndex };
+  if (itemAtIndex?.id === position.item.id) {
+    if (shallow(itemAtIndex.audiofile, position.item.audiofile)) return position;
+    return { ...position, item: itemAtIndex };
   }
 
-  const index = audiofiles.findIndex(({ id }) => id === position.audiofile.id);
+  const index = items.findIndex(({ id }) => id === position.item.id);
   if (index === -1) return undefined;
-  return { source: position.source, index, audiofile: audiofiles[index] };
+  return createPosition(position.source, index, items[index]);
 }
 
 /** Returns a neighbor of an already reconciled position without an ID scan. */
@@ -79,19 +94,15 @@ export function getAdjacentAudioSourcePosition(
   direction: "next" | "previous",
   wrap = true,
 ): AudioSourcePosition | undefined {
-  const audiofiles = position.source.getSnapshot().audiofiles;
+  const items = position.source.getSnapshot().items;
   const adjacentIndex =
     direction === "next" ? position.index + 1 : position.index - 1;
-  const audiofile = audiofiles[adjacentIndex];
-  if (audiofile) {
-    return { source: position.source, index: adjacentIndex, audiofile };
+  const item = items[adjacentIndex];
+  if (item) {
+    return createPosition(position.source, adjacentIndex, item);
   }
-  if (!wrap || audiofiles.length === 0) return undefined;
+  if (!wrap || items.length === 0) return undefined;
 
-  const wrappedIndex = direction === "next" ? 0 : audiofiles.length - 1;
-  return {
-    source: position.source,
-    index: wrappedIndex,
-    audiofile: audiofiles[wrappedIndex],
-  };
+  const wrappedIndex = direction === "next" ? 0 : items.length - 1;
+  return createPosition(position.source, wrappedIndex, items[wrappedIndex]);
 }

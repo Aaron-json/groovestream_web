@@ -20,7 +20,7 @@ import { InfiniteList } from "./infinite-list";
 export function SidebarPlaylists() {
   const { isMobile, setOpenMobile } = useSidebar();
   const currentlyPlayingPlaylistId = usePlaybackStore(
-    (state) => state.playerState.currentMedia?.audiofile.playlist_id,
+    (state) => state.playerState.currentMedia?.item.audiofile.playlist_id,
   );
   const {
     data,

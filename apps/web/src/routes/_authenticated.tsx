@@ -82,7 +82,7 @@ function AuthenticatedLayout() {
       const currentMedia = playerState.currentMedia;
       if (
         currentMedia.source === lastRecordedMedia?.source &&
-        currentMedia.audiofile.id === lastRecordedMedia.audiofile.id
+        currentMedia.item.id === lastRecordedMedia.item.id
       ) {
         return;
       }
@@ -90,7 +90,7 @@ function AuthenticatedLayout() {
       lastRecordedMedia = currentMedia;
       void recordListeningHistory(
         queryClient,
-        currentMedia.audiofile.id,
+        currentMedia.item.audiofile.id,
       ).catch(() => {});
     });
   }, []);

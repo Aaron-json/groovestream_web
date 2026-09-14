@@ -1,45 +1,50 @@
-import type { AudioSource } from "@groovestream/media/source";
-import MediaCard, { MediaCardSkeleton } from "./media-card";
-import type { Audiofile, Playlist } from "@groovestream/api/models";
+import type { ReactNode } from "react";
 
-export type MediaCardListProps = {
-  audiofileSource?: AudioSource;
-  title?: string;
-  media: (Audiofile | Playlist)[];
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { MediaRowSkeleton } from "./media-card";
+
+export type MediaListProps = {
+  children: ReactNode;
+  title: string;
+  headerAction?: ReactNode;
 };
 
 export default function MediaList({
   title,
-  media,
-  audiofileSource,
-}: MediaCardListProps) {
+  headerAction,
+  children,
+}: MediaListProps) {
   return (
-    <div className="flex flex-col w-full p-1 gap-1">
-      {title && (
-        <h2 className="text-lg font-semibold text-foreground mb-2">{title}</h2>
-      )}
-      <div className="flex flex-wrap gap-4 px-2">
-        {media.map((audiofile, index) => (
-          <MediaCard
-            key={audiofile.id}
-            media={audiofile}
-            audiofileSource={audiofileSource}
-            index={index}
-          />
-        ))}
-      </div>
-    </div>
+    <section className="w-full">
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b py-4">
+          <CardTitle>
+            <h2>{title}</h2>
+          </CardTitle>
+          {headerAction && <CardAction>{headerAction}</CardAction>}
+        </CardHeader>
+        <CardContent className="p-2">
+          <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
+            {children}
+          </div>
+        </CardContent>
+      </Card>
+    </section>
   );
 }
 
 export function MediaListSkeleton() {
   return (
-    <div className="flex w-full p-2">
-      <div className="flex flex-wrap gap-4">
-        <MediaCardSkeleton />
-        <MediaCardSkeleton />
-        <MediaCardSkeleton />
-      </div>
+    <div className="grid w-full grid-cols-1 gap-1 rounded-xl bg-card p-2 ring-1 ring-foreground/10 md:grid-cols-2">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <MediaRowSkeleton key={index} />
+      ))}
     </div>
   );
 }

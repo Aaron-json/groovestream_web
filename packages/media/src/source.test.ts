@@ -6,6 +6,7 @@ import {
   getAudioSourcePosition,
   reconcileAudioSourcePosition,
   type AudioSource,
+  type AudioSourceItem,
   type AudioSourceSnapshot,
 } from "./source.ts";
 
@@ -29,9 +30,16 @@ function createAudiofile(id: string): Audiofile {
   };
 }
 
-function createSource(initialAudiofiles: readonly Audiofile[]) {
+function createItem(
+  audiofile: Audiofile,
+  id: string = audiofile.id,
+): AudioSourceItem {
+  return { id, audiofile };
+}
+
+function createSource(initialItems: readonly AudioSourceItem[]) {
   let snapshot: AudioSourceSnapshot = {
-    audiofiles: initialAudiofiles,
+    items: initialItems,
     pagination: undefined,
   };
   const source: AudioSource = {
@@ -40,8 +48,8 @@ function createSource(initialAudiofiles: readonly Audiofile[]) {
   };
   return {
     source,
-    replace(nextAudiofiles: readonly Audiofile[]) {
-      snapshot = { audiofiles: nextAudiofiles, pagination: undefined };
+    replace(nextItems: readonly AudioSourceItem[]) {
+      snapshot = { items: nextItems, pagination: undefined };
     },
   };
 }
@@ -54,10 +62,10 @@ function requirePosition(source: AudioSource, index: number) {
 
 test("keeps a shallow-equal source position without allocating", () => {
   const first = createAudiofile("first");
-  const liveSource = createSource([first]);
+  const liveSource = createSource([createItem(first)]);
   const position = requirePosition(liveSource.source, 0);
 
-  liveSource.replace([{ ...first }]);
+  liveSource.replace([createItem({ ...first })]);
 
   strictEqual(reconcileAudioSourcePosition(position), position);
 });
@@ -65,32 +73,32 @@ test("keeps a shallow-equal source position without allocating", () => {
 test("refreshes metadata without changing a valid index", () => {
   const first = createAudiofile("first");
   const updated = { ...first, title: "Updated title" };
-  const liveSource = createSource([first]);
+  const liveSource = createSource([createItem(first)]);
   const position = requirePosition(liveSource.source, 0);
 
-  liveSource.replace([updated]);
+  liveSource.replace([createItem(updated)]);
   const reconciled = reconcileAudioSourcePosition(position);
 
   strictEqual(reconciled?.index, 0);
-  strictEqual(reconciled?.audiofile, updated);
+  strictEqual(reconciled?.item.audiofile, updated);
 });
 
 test("repairs an index after the audiofile moves", () => {
   const first = createAudiofile("first");
   const second = createAudiofile("second");
-  const liveSource = createSource([first, second]);
+  const liveSource = createSource([createItem(first), createItem(second)]);
   const position = requirePosition(liveSource.source, 1);
 
-  liveSource.replace([second, first]);
+  liveSource.replace([createItem(second), createItem(first)]);
   const reconciled = reconcileAudioSourcePosition(position);
 
   strictEqual(reconciled?.index, 0);
-  strictEqual(reconciled?.audiofile, second);
+  strictEqual(reconciled?.item.audiofile, second);
 });
 
 test("returns undefined when the positioned audiofile was removed", () => {
   const first = createAudiofile("first");
-  const liveSource = createSource([first]);
+  const liveSource = createSource([createItem(first)]);
   const position = requirePosition(liveSource.source, 0);
 
   liveSource.replace([]);
@@ -101,15 +109,30 @@ test("returns undefined when the positioned audiofile was removed", () => {
 test("selects adjacent positions directly and wraps when requested", () => {
   const first = createAudiofile("first");
   const second = createAudiofile("second");
-  const { source } = createSource([first, second]);
+  const { source } = createSource([createItem(first), createItem(second)]);
   const firstPosition = requirePosition(source, 0);
 
   const secondPosition = getAdjacentAudioSourcePosition(firstPosition, "next");
   strictEqual(secondPosition?.index, 1);
-  strictEqual(secondPosition?.audiofile, second);
+  strictEqual(secondPosition?.item.audiofile, second);
   if (!secondPosition) throw new Error("Expected a next position");
 
   const wrapped = getAdjacentAudioSourcePosition(secondPosition, "next");
   strictEqual(wrapped?.index, 0);
-  strictEqual(wrapped?.audiofile, first);
+  strictEqual(wrapped?.item.audiofile, first);
+});
+
+test("distinguishes duplicate audiofiles by source item ID", () => {
+  const audiofile = createAudiofile("duplicate");
+  const firstOccurrence = createItem(audiofile, "first-occurrence");
+  const secondOccurrence = createItem(audiofile, "second-occurrence");
+  const liveSource = createSource([firstOccurrence, secondOccurrence]);
+  const position = requirePosition(liveSource.source, 1);
+
+  liveSource.replace([secondOccurrence, firstOccurrence]);
+  const reconciled = reconcileAudioSourcePosition(position);
+
+  strictEqual(reconciled?.item.id, secondOccurrence.id);
+  strictEqual(reconciled?.index, 0);
+  strictEqual(reconciled?.item.audiofile, audiofile);
 });

@@ -73,16 +73,11 @@ export function toUnloadedPlaybackState(
 }
 
 /** Replaces the live source position without changing its hydration level. */
-export function updateCurrentSourcePosition(
+export function withCurrentSourcePosition(
   state: PlaybackState,
   position: AudioSourcePosition,
 ): PlaybackState {
-  if (state.status === "unloaded") return state;
-  if (
-    state.currentMedia.source === position.source &&
-    state.currentMedia.index === position.index &&
-    state.currentMedia.audiofile === position.audiofile
-  ) {
+  if (state.status === "unloaded" || state.currentMedia === position) {
     return state;
   }
 
@@ -96,7 +91,7 @@ export class UnsupportedPlaybackError extends Error {
   override name = "UnsupportedPlaybackError";
 
   constructor(audiofileId: Audiofile["id"]) {
-    super(`Audio file ${audiofileId} has no supported playback representation`);
+    super(`Track ${audiofileId} has no supported playback representation`);
   }
 }
 

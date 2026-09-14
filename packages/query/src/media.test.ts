@@ -47,7 +47,7 @@ test("playlist sources reuse snapshots until observable state changes", () => {
 
   const firstSnapshot = source.getSnapshot();
   strictEqual(source.getSnapshot(), firstSnapshot);
-  deepStrictEqual(firstSnapshot.audiofiles, [first]);
+  deepStrictEqual(firstSnapshot.items, [{ id: first.id, audiofile: first }]);
   deepStrictEqual(firstSnapshot.pagination, {
     hasMore: false,
     isLoading: false,
@@ -68,7 +68,7 @@ test("playlist sources reuse snapshots until observable state changes", () => {
   });
   const paginatedSnapshot = source.getSnapshot();
   notStrictEqual(paginatedSnapshot, firstSnapshot);
-  strictEqual(paginatedSnapshot.audiofiles, firstSnapshot.audiofiles);
+  strictEqual(paginatedSnapshot.items, firstSnapshot.items);
   deepStrictEqual(paginatedSnapshot.pagination, {
     hasMore: true,
     isLoading: false,
@@ -85,7 +85,10 @@ test("playlist sources reuse snapshots until observable state changes", () => {
   const updatedSnapshot = source.getSnapshot();
   notStrictEqual(updatedSnapshot, paginatedSnapshot);
   strictEqual(source.getSnapshot(), updatedSnapshot);
-  deepStrictEqual(updatedSnapshot.audiofiles, [first, second]);
+  deepStrictEqual(updatedSnapshot.items, [
+    { id: first.id, audiofile: first },
+    { id: second.id, audiofile: second },
+  ]);
 });
 
 test("cache removal only replaces data when an item matches", () => {

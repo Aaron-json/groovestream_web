@@ -45,7 +45,10 @@ import type { Audiofile } from "@groovestream/api/models";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDuration } from "@groovestream/media/duration";
 import { useDeleteAudiofile } from "@/query/media";
-import type { AudioSource } from "@groovestream/media/source";
+import {
+  getAudioSourcePosition,
+  type AudioSource,
+} from "@groovestream/media/source";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
 import { cn } from "@/lib/utils";
 
@@ -57,26 +60,23 @@ const audiofileTableFeatures = tableFeatures({
   columnMeta: metaHelper<{ className?: string }>(),
 });
 
-type AudiofileTableFeatures = typeof audiofileTableFeatures;
-const columnHelper = createColumnHelper<AudiofileTableFeatures, Audiofile>();
+type PlaylistAudiofileTableFeatures = typeof audiofileTableFeatures;
+const columnHelper =
+  createColumnHelper<PlaylistAudiofileTableFeatures, Audiofile>();
 
-function getAudiofileRowId(audiofile: Audiofile) {
-  return audiofile.id;
-}
-
-type AudiofileTableProps = {
+type PlaylistAudiofileTableProps = {
   audiofiles: Audiofile[];
   audiofileSource: AudioSource;
   canSearch?: boolean;
   canEdit?: boolean;
 };
 
-function AudiofileTable({
+function PlaylistAudiofileTable({
   audiofiles,
   audiofileSource,
   canSearch = true,
   canEdit = false,
-}: AudiofileTableProps) {
+}: PlaylistAudiofileTableProps) {
   const isMobile = useIsMobile();
   const { mutate: deleteAudiofile } = useDeleteAudiofile();
 
@@ -91,23 +91,30 @@ function AudiofileTable({
 
   const handlePlay = useCallback(
     (file: Audiofile, index: number) => {
-      if (media?.audiofile?.id === file.id) {
+      const position = getAudioSourcePosition(audiofileSource, index);
+      if (!position || position.item.audiofile.id !== file.id) {
+        toast.error("This track is no longer available in the playback queue");
+        return;
+      }
+
+      if (
+        media?.source === audiofileSource &&
+        media.item.id === position.item.id
+      ) {
         void playPauseToggle().catch((error) => {
           toast.error("Playback Error", {
             description: error instanceof Error ? error.message : undefined,
           });
         });
       } else {
-        setMedia({ source: audiofileSource, index, audiofile: file }).catch(
-          (error) => {
-            toast.error("Playback Error", {
-              description: error instanceof Error ? error.message : undefined,
-            });
-          },
-        );
+        setMedia(position).catch((error) => {
+          toast.error("Playback Error", {
+            description: error instanceof Error ? error.message : undefined,
+          });
+        });
       }
     },
-    [audiofileSource, media?.audiofile?.id, playPauseToggle, setMedia],
+    [audiofileSource, media, playPauseToggle, setMedia],
   );
 
   const handleDelete = useCallback(
@@ -116,7 +123,7 @@ function AudiofileTable({
         onSuccess: () => {
           const { playerState, unloadMedia } = usePlaybackStore.getState();
           const currentMedia = playerState.currentMedia;
-          if (currentMedia?.audiofile.id === audio.id) unloadMedia();
+          if (currentMedia?.item.audiofile.id === audio.id) unloadMedia();
           toast.success("Audio file deleted successfully");
         },
         onError: () =>
@@ -126,29 +133,37 @@ function AudiofileTable({
     [deleteAudiofile],
   );
 
+  const activeAudiofileId =
+    media?.source === audiofileSource ? media.item.audiofile.id : undefined;
   const columns = useMemo(
     () =>
       isMobile
         ? getMobileColumns(
             handleDelete,
-            media?.audiofile?.id,
+            activeAudiofileId,
             playbackState,
             canEdit,
           )
         : getDesktopColumns(
             handleDelete,
-            media?.audiofile?.id,
+            activeAudiofileId,
             playbackState,
             canEdit,
           ),
-    [isMobile, handleDelete, media?.audiofile?.id, playbackState, canEdit],
+    [
+      isMobile,
+      handleDelete,
+      activeAudiofileId,
+      playbackState,
+      canEdit,
+    ],
   );
 
   const table = useTable({
     features: audiofileTableFeatures,
     data: audiofiles,
     columns,
-    getRowId: getAudiofileRowId,
+    getRowId: (audiofile) => audiofile.id,
     globalFilterFn: "includesString",
   });
 
@@ -241,7 +256,7 @@ function AudiofileTable({
 
 function getMobileColumns(
   onDelete: (file: Audiofile) => void,
-  activeId: string | undefined,
+  activeAudiofileId: Audiofile["id"] | undefined,
   playbackState: string,
   canEdit: boolean,
 ) {
@@ -256,7 +271,7 @@ function getMobileColumns(
         enableGlobalFilter: true,
         cell: ({ row }) => {
           const file = row.original;
-          const isActive = activeId === file.id;
+          const isActive = activeAudiofileId === file.id;
           const isPlaying = isActive && playbackState === "playing";
 
           return (
@@ -285,7 +300,7 @@ function getMobileColumns(
 
 function getDesktopColumns(
   onDelete: (file: Audiofile) => void,
-  activeId: string | undefined,
+  activeAudiofileId: Audiofile["id"] | undefined,
   playbackState: string,
   canEdit: boolean,
 ) {
@@ -295,8 +310,7 @@ function getDesktopColumns(
       enableGlobalFilter: false,
       meta: { className: "w-12" },
       cell: ({ row }) => {
-        const file = row.original;
-        const isActive = activeId === file.id;
+        const isActive = activeAudiofileId === row.original.id;
         const isPlaying = isActive && playbackState === "playing";
         return (
           <PlayButton
@@ -318,7 +332,7 @@ function getDesktopColumns(
           <span
             className={cn(
               "block truncate font-medium",
-              activeId === row.original.id && "text-primary",
+              activeAudiofileId === row.original.id && "font-semibold",
             )}
           >
             {row.original.title || row.original.filename}
@@ -382,9 +396,9 @@ const PlayButton = memo(function PlayButton({
     <div className="relative flex h-8 w-8 items-center justify-center">
       {isActive ? (
         isPlaying ? (
-          <Pause className="h-4 w-4 text-primary" />
+          <Pause className="h-4 w-4 text-foreground" />
         ) : (
-          <Play className="h-4 w-4 text-primary" />
+          <Play className="h-4 w-4 text-foreground" />
         )
       ) : (
         <>
@@ -466,7 +480,7 @@ function RowActions({ file, onDelete }: RowActionsProps) {
   );
 }
 
-function AudiofileTableSkeleton() {
+function PlaylistAudiofileTableSkeleton() {
   const isMobile = useIsMobile();
 
   return (
@@ -485,4 +499,8 @@ function AudiofileTableSkeleton() {
   );
 }
 
-export { AudiofileTable, AudiofileTableSkeleton, type AudiofileTableProps };
+export {
+  PlaylistAudiofileTable,
+  PlaylistAudiofileTableSkeleton,
+  type PlaylistAudiofileTableProps,
+};

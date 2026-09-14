@@ -13,6 +13,11 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import MediaList, { MediaListSkeleton } from "@/components/custom/media-list";
+import {
+  ListeningHistoryCard,
+  MostPlayedCard,
+} from "@/components/custom/media-card";
+import { PlaySourceButton } from "@/components/custom/play-source-button";
 import { Music2 } from "lucide-react";
 import InfoCard from "@/components/custom/info-card";
 import { InfiniteList } from "@/components/custom/infinite-list";
@@ -120,9 +125,22 @@ function RouteComponent() {
           {mostPlayedList.length > 0 && (
             <MediaList
               title="Most Played"
-              media={mostPlayedList}
-              audiofileSource={mostPlayedSource}
-            />
+              headerAction={
+                <PlaySourceButton
+                  source={mostPlayedSource}
+                  sourceName="Most Played"
+                />
+              }
+            >
+              {mostPlayedList.map((audiofile, index) => (
+                <MostPlayedCard
+                  key={audiofile.id}
+                  audiofile={audiofile}
+                  source={mostPlayedSource}
+                  index={index}
+                />
+              ))}
+            </MediaList>
           )}
 
           {(historyList.length > 0 || hasNextHistory) && (
@@ -130,11 +148,16 @@ function RouteComponent() {
               pagination={historyPagination}
               loadingFallback={<MediaListSkeleton />}
             >
-              <MediaList
-                title="Listening History"
-                media={historyList}
-                audiofileSource={historySource}
-              />
+              <MediaList title="Listening History">
+                {historyList.map((item, index) => (
+                  <ListeningHistoryCard
+                    key={item.id}
+                    item={item}
+                    source={historySource}
+                    index={index}
+                  />
+                ))}
+              </MediaList>
             </InfiniteList>
           )}
         </>

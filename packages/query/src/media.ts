@@ -28,6 +28,7 @@ import type {
 } from "@groovestream/api/models";
 import type {
   AudioSource,
+  AudioSourceItem,
   AudioSourceSnapshot,
 } from "@groovestream/media/source";
 
@@ -44,7 +45,7 @@ const LISTENING_HISTORY_PAGE_SIZE = 25;
 const PLAYLIST_INVITES_PAGE_SIZE = 20;
 const PLAYLIST_MEMBERS_PAGE_SIZE = 50;
 const INITIAL_CURSOR: string | undefined = undefined;
-const EMPTY_AUDIOFILES: readonly Audiofile[] = [];
+const EMPTY_AUDIO_SOURCE_ITEMS: readonly AudioSourceItem[] = [];
 
 function getPlaylistKey(playlistId: Playlist["id"]) {
   return ["playlist", playlistId] as const;
@@ -201,11 +202,11 @@ export function playlistInvitesOptions() {
   });
 }
 
-type AudiofileQueryResult = Readonly<{
-  data: readonly Audiofile[] | undefined;
+type AudioSourceQueryResult = Readonly<{
+  data: readonly AudioSourceItem[] | undefined;
 }>;
 
-type PaginatedAudiofileQueryResult = AudiofileQueryResult &
+type PaginatedAudioSourceQueryResult = AudioSourceQueryResult &
   Readonly<{
     hasNextPage: boolean;
     isFetchingNextPage: boolean;
@@ -213,12 +214,12 @@ type PaginatedAudiofileQueryResult = AudiofileQueryResult &
 
 type QueryAudioSourceConfig =
   | Readonly<{
-      readResult(): AudiofileQueryResult;
+      readResult(): AudioSourceQueryResult;
       subscribe: AudioSource["subscribe"];
       fetchNextPage?: undefined;
     }>
   | Readonly<{
-      readResult(): PaginatedAudiofileQueryResult;
+      readResult(): PaginatedAudioSourceQueryResult;
       subscribe: AudioSource["subscribe"];
       fetchNextPage(): Promise<
         Readonly<{
@@ -235,19 +236,19 @@ function createQueryAudioSource(config: QueryAudioSourceConfig): AudioSource {
   const source: AudioSource = {
     getSnapshot: () => {
       if (!config.fetchNextPage) {
-        const audiofiles = config.readResult().data ?? EMPTY_AUDIOFILES;
-        if (snapshot?.audiofiles === audiofiles) return snapshot;
+        const items = config.readResult().data ?? EMPTY_AUDIO_SOURCE_ITEMS;
+        if (snapshot?.items === items) return snapshot;
 
-        snapshot = { audiofiles, pagination: undefined };
+        snapshot = { items, pagination: undefined };
         return snapshot;
       }
 
       const result = config.readResult();
-      const audiofiles = result.data ?? EMPTY_AUDIOFILES;
+      const items = result.data ?? EMPTY_AUDIO_SOURCE_ITEMS;
       const hasMore = result.hasNextPage;
       const isLoading = result.isFetchingNextPage;
       if (
-        snapshot?.audiofiles === audiofiles &&
+        snapshot?.items === items &&
         snapshot.pagination?.hasMore === hasMore &&
         snapshot.pagination?.isLoading === isLoading
       ) {
@@ -255,7 +256,7 @@ function createQueryAudioSource(config: QueryAudioSourceConfig): AudioSource {
       }
 
       snapshot = {
-        audiofiles,
+        items,
         pagination: { hasMore, isLoading },
       };
       return snapshot;
@@ -275,11 +276,19 @@ function createQueryAudioSource(config: QueryAudioSourceConfig): AudioSource {
   return source;
 }
 
-function flattenAudiofilePages<
+function toAudioSourceItem(audiofile: Audiofile): AudioSourceItem {
+  // Current API collections contain each audiofile once. When they expose an
+  // occurrence ID, it can replace this ID without changing AudioSource.
+  return { id: audiofile.id, audiofile };
+}
+
+function flattenAudiofilePagesToSourceItems<
   TPage extends { data: Audiofile[] | null },
   TPageParam,
->(data: InfiniteData<TPage, TPageParam>): Audiofile[] {
-  return flattenInfiniteData(data, (page) => page.data ?? []);
+>(data: InfiniteData<TPage, TPageParam>): AudioSourceItem[] {
+  return flattenInfiniteData(data, (page) => page.data ?? []).map(
+    toAudioSourceItem,
+  );
 }
 
 export function createPlaylistAudiofileSource(
@@ -290,7 +299,7 @@ export function createPlaylistAudiofileSource(
   const observer = new InfiniteQueryObserver(queryClient, {
     ...options,
     enabled: false,
-    select: flattenAudiofilePages,
+    select: flattenAudiofilePagesToSourceItems,
   });
   // The constructor stores defaulted options, but the public property retains
   // the broader input type in TanStack Query's declarations.
@@ -311,7 +320,8 @@ export function createMostPlayedAudiofileSource(
   const observerOptions = queryClient.defaultQueryOptions({
     ...mostPlayedOptions(),
     enabled: false,
-    select: (audiofiles) => audiofiles ?? EMPTY_AUDIOFILES,
+    select: (audiofiles) =>
+      audiofiles?.map(toAudioSourceItem) ?? EMPTY_AUDIO_SOURCE_ITEMS,
   });
   const observer = new QueryObserver(queryClient, observerOptions);
   return createQueryAudioSource({
@@ -327,7 +337,7 @@ export function createListeningHistoryAudiofileSource(
   const observer = new InfiniteQueryObserver(queryClient, {
     ...options,
     enabled: false,
-    select: flattenAudiofilePages,
+    select: flattenAudiofilePagesToSourceItems,
   });
   const observerOptions = observer.options as Parameters<
     typeof observer.getOptimisticResult

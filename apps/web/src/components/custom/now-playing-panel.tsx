@@ -12,9 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { playlistInfoOptions } from "@groovestream/query/media";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { PlaybackItem } from "@groovestream/media/encodings";
-import type {
-  AudioSource,
-  AudioSourcePosition,
+import {
+  getAudioSourcePosition,
+  type AudioSource,
+  type AudioSourcePosition,
 } from "@groovestream/media/source";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
 import { formatDuration } from "@groovestream/media/duration";
@@ -97,7 +98,7 @@ function NowPlayingContent() {
   return (
     <div className="h-full flex min-h-0 flex-1 flex-col">
       <CurrentTrackInformation
-        audiofile={media.audiofile}
+        audiofile={media.item.audiofile}
         playbackItem={media.playbackItem}
       />
       <Queue media={media} />
@@ -260,7 +261,7 @@ function Queue({ media }: { media: AudioSourcePosition }) {
     source.getSnapshot,
     source.getSnapshot,
   );
-  const queueItems = queueSnapshot.audiofiles;
+  const queueItems = queueSnapshot.items;
   const pagination = source.pagination;
   const [paginationErrorSource, setPaginationErrorSource] =
     useState<AudioSource>();
@@ -276,9 +277,9 @@ function Queue({ media }: { media: AudioSourcePosition }) {
   }
 
   function playQueueItem(index: number) {
-    const audiofile = queueItems[index];
-    if (!audiofile) return;
-    setMedia({ source, index, audiofile }).catch((error) => {
+    const position = getAudioSourcePosition(source, index);
+    if (!position) return;
+    setMedia(position).catch((error) => {
       toast.error("Playback Error", {
         description: error instanceof Error ? error.message : undefined,
       });
@@ -302,7 +303,8 @@ function Queue({ media }: { media: AudioSourcePosition }) {
           </p>
         ) : (
           queueItems.map((item, index) => {
-            const active = item.id === media.audiofile.id;
+            const audiofile = item.audiofile;
+            const active = item.id === media.item.id;
             return (
               <button
                 key={item.id}
@@ -323,22 +325,24 @@ function Queue({ media }: { media: AudioSourcePosition }) {
                   )}
                 >
                   {active && playbackStatus === "playing" ? (
-                    <Volume2 className="size-3.5 text-primary opacity-80" />
+                    <Volume2 className="size-3.5 text-foreground opacity-80" />
                   ) : (
                     index + 1
                   )}
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium">
-                    {item.title || item.filename}
+                    {audiofile.title || audiofile.filename}
                   </span>
                   <span className="block truncate text-xs text-muted-foreground">
-                    {item.artists?.join(", ") || "Unknown artist"}
+                    {audiofile.artists?.join(", ") || "Unknown artist"}
                   </span>
                 </span>
                 <span className="text-xs tabular-nums text-muted-foreground">
                   {formatDuration(
-                    item.duration ? item.duration / 1000 : undefined,
+                    audiofile.duration
+                      ? audiofile.duration / 1000
+                      : undefined,
                   )}
                 </span>
               </button>

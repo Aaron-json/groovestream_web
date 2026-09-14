@@ -4,7 +4,7 @@ import type { Audiofile, Encoding } from "@groovestream/api/models";
 import type { PlaybackItem } from "./encodings.ts";
 import {
   toUnloadedPlaybackState,
-  updateCurrentSourcePosition,
+  withCurrentSourcePosition,
   type MediaPlayer,
   type PlaybackState,
 } from "./player.ts";
@@ -12,6 +12,7 @@ import { usePlaybackStore } from "./playback-store.ts";
 import {
   getAudioSourcePosition,
   type AudioSource,
+  type AudioSourceItem,
   type AudioSourcePosition,
   type AudioSourceSnapshot,
 } from "./source.ts";
@@ -61,9 +62,13 @@ function createPlaybackItem(audiofileId: string): PlaybackItem {
   };
 }
 
+function toSourceItems(audiofiles: readonly Audiofile[]): AudioSourceItem[] {
+  return audiofiles.map((audiofile) => ({ id: audiofile.id, audiofile }));
+}
+
 function createSource(initialAudiofiles: readonly Audiofile[]) {
   let snapshot: AudioSourceSnapshot = {
-    audiofiles: initialAudiofiles,
+    items: toSourceItems(initialAudiofiles),
     pagination: undefined,
   };
   const source: AudioSource = {
@@ -74,7 +79,10 @@ function createSource(initialAudiofiles: readonly Audiofile[]) {
   return {
     source,
     replace(nextAudiofiles: readonly Audiofile[]) {
-      snapshot = { audiofiles: nextAudiofiles, pagination: undefined };
+      snapshot = {
+        items: toSourceItems(nextAudiofiles),
+        pagination: undefined,
+      };
     },
   };
 }
@@ -141,7 +149,9 @@ class FakePlayer implements MediaPlayer {
       status: "paused",
       currentMedia: {
         ...this.state.currentMedia,
-        playbackItem: createPlaybackItem(this.state.currentMedia.audiofile.id),
+        playbackItem: createPlaybackItem(
+          this.state.currentMedia.item.audiofile.id,
+        ),
       },
     });
   }
@@ -210,12 +220,12 @@ test("mirrors loading, hydrated, and playing player states", async () => {
     .getState()
     .setMedia(requirePosition(liveSource.source, 1));
 
-  strictEqual(player.loadCalls[0].audiofile, second);
+  strictEqual(player.loadCalls[0].item.audiofile, second);
   strictEqual(player.loadCalls[0].index, 1);
   const loading = usePlaybackStore.getState().playerState;
   strictEqual(loading.status, "loading");
   if (loading.status !== "loading") throw new Error("Expected loading state");
-  strictEqual(loading.currentMedia.audiofile, second);
+  strictEqual(loading.currentMedia.item.audiofile, second);
   strictEqual(loading.currentMedia.playbackItem, undefined);
 
   player.completeLoad();
@@ -223,7 +233,7 @@ test("mirrors loading, hydrated, and playing player states", async () => {
   strictEqual(paused.status, "paused");
   if (paused.status !== "paused") throw new Error("Expected paused state");
   strictEqual(paused.currentMedia.source, liveSource.source);
-  strictEqual(paused.currentMedia.audiofile, second);
+  strictEqual(paused.currentMedia.item.audiofile, second);
   strictEqual(
     paused.currentMedia.playbackItem.encoding.audiofile_id,
     second.id,
@@ -265,7 +275,7 @@ test("moves ready media to a new source without discarding playback state", () =
     muted: false,
   };
 
-  const nextState = updateCurrentSourcePosition(
+  const nextState = withCurrentSourcePosition(
     state,
     requirePosition(nextSource.source, 1),
   );
@@ -274,9 +284,27 @@ test("moves ready media to a new source without discarding playback state", () =
   if (nextState.status !== "playing") throw new Error("Expected ready state");
   strictEqual(nextState.currentMedia.source, nextSource.source);
   strictEqual(nextState.currentMedia.index, 1);
-  strictEqual(nextState.currentMedia.audiofile, updatedAudiofile);
+  strictEqual(nextState.currentMedia.item.audiofile, updatedAudiofile);
   strictEqual(nextState.currentMedia.playbackItem, playbackItem);
   strictEqual(nextState.position, 42);
+});
+
+test("keeps playback state when its source position is unchanged", () => {
+  const audiofile = createAudiofile("first");
+  const source = createSource([audiofile]);
+  const state: PlaybackState = {
+    status: "playing",
+    currentMedia: {
+      ...requirePosition(source.source),
+      playbackItem: createPlaybackItem(audiofile.id),
+    },
+    position: 42,
+    duration: 180,
+    volume: 0.8,
+    muted: false,
+  };
+
+  strictEqual(withCurrentSourcePosition(state, state.currentMedia), state);
 });
 
 test("preserves player intrinsics through phase changes", async () => {

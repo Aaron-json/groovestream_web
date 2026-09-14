@@ -10,8 +10,8 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import {
-  AudiofileTable,
-  AudiofileTableSkeleton,
+  PlaylistAudiofileTable,
+  PlaylistAudiofileTableSkeleton,
 } from "@/components/custom/audiofile-table";
 import { Music2 } from "lucide-react";
 import InfoCard from "@/components/custom/info-card";
@@ -118,7 +118,7 @@ function RouteComponent() {
     <InfiniteList pagination={pagination}>
       <Card className="gap-0 py-0">
         <CardContent className="p-0">
-          <AudiofileTable
+          <PlaylistAudiofileTable
             key={playlistId}
             audiofiles={audiofilesList}
             audiofileSource={audiofileSource}
@@ -135,7 +135,7 @@ function PlaylistTracksPending() {
   return (
     <Card className="gap-0 py-0">
       <CardContent className="p-0">
-        <AudiofileTableSkeleton />
+        <PlaylistAudiofileTableSkeleton />
       </CardContent>
     </Card>
   );

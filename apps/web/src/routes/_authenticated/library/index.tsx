@@ -6,6 +6,7 @@ import {
 } from "@groovestream/api/sdk";
 import type { PlaylistInvite } from "@groovestream/api/models";
 import MediaList, { MediaListSkeleton } from "@/components/custom/media-list";
+import { PlaylistCard } from "@/components/custom/media-card";
 import InfoCard from "@/components/custom/info-card";
 import CreatePlaylistSheet from "@/components/custom/create-playlist";
 import InviteList, {
@@ -162,7 +163,11 @@ function RouteComponent() {
             pagination={playlistsPagination}
             loadingFallback={<MediaListSkeleton />}
           >
-            <MediaList media={playlistsList} title="Your Playlists" />
+            <MediaList title="Your Playlists">
+              {playlistsList.map((playlist) => (
+                <PlaylistCard key={playlist.id} playlist={playlist} />
+              ))}
+            </MediaList>
           </InfiniteList>
         ) : (
           <EmptyState />

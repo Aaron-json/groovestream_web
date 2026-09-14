@@ -51,7 +51,9 @@ import { RenamePlaylistSheet } from "@/components/custom/rename-playlist";
 import { toast } from "sonner";
 import { useState, useCallback, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AudiofileTableSkeleton } from "@/components/custom/audiofile-table";
+import {
+  PlaylistAudiofileTableSkeleton,
+} from "@/components/custom/audiofile-table";
 import { isApiError } from "@groovestream/api/errors";
 import type { Playlist, PlaylistDetails } from "@groovestream/api/models";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
@@ -157,7 +159,7 @@ function RouteComponent() {
     () => createPlaylistAudiofileSource(playlistId),
     [playlistId],
   );
-  const isCurrentPlaylist = media?.audiofile.playlist_id === playlistId;
+  const isCurrentPlaylist = media?.item.audiofile.playlist_id === playlistId;
 
   const handleDeletePlaylist = useCallback(
     (playlist: Playlist) => {
@@ -168,7 +170,7 @@ function RouteComponent() {
         onSuccess: () => {
           const { playerState, unloadMedia } = usePlaybackStore.getState();
           const currentMedia = playerState.currentMedia;
-          if (currentMedia?.audiofile.playlist_id === playlist.id) {
+          if (currentMedia?.item.audiofile.playlist_id === playlist.id) {
             unloadMedia();
           }
           toast.success("Playlist deleted successfully");
@@ -190,7 +192,7 @@ function RouteComponent() {
         onSuccess: () => {
           const { playerState, unloadMedia } = usePlaybackStore.getState();
           const currentMedia = playerState.currentMedia;
-          if (currentMedia?.audiofile.playlist_id === playlist.id) {
+          if (currentMedia?.item.audiofile.playlist_id === playlist.id) {
             unloadMedia();
           }
           toast.success(`Successfully left the playlist "${playlist.name}"`);
@@ -341,7 +343,7 @@ function PlaylistSkeleton() {
         <div className="shrink-0 border-b p-3">
           <Skeleton className="h-8 w-full" />
         </div>
-        <AudiofileTableSkeleton />
+        <PlaylistAudiofileTableSkeleton />
       </div>
     </section>
   );

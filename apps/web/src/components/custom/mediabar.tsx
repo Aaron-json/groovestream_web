@@ -44,7 +44,7 @@ export default function MediaBar() {
     });
   };
 
-  const audiofile = media?.audiofile;
+  const audiofile = media?.item.audiofile;
 
   const getPlayIcon = () => {
     switch (playbackState) {

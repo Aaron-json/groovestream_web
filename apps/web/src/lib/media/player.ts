@@ -1,6 +1,5 @@
 import { CDN_URL } from "@/api/api";
 import type Shaka from "shaka-player/dist/shaka-player.compiled.js";
-import type { Audiofile } from "@groovestream/api/models";
 import { createEncodingToken } from "@groovestream/api/sdk";
 import {
   resolvePlaybackItems,
@@ -11,6 +10,7 @@ import {
   getAdjacentAudioSourcePosition,
   reconcileAudioSourcePosition,
   type AudioSource,
+  type AudioSourceItem,
   type AudioSourcePosition,
 } from "@groovestream/media/source";
 import {
@@ -19,7 +19,7 @@ import {
   UnsupportedPlaybackError,
   playbackStatesEqual,
   toUnloadedPlaybackState,
-  updateCurrentSourcePosition,
+  withCurrentSourcePosition,
   type CurrentMedia,
   type MediaPlayer,
   type PlaybackState,
@@ -142,12 +142,13 @@ export default class WebAudioPlayer implements MediaPlayer {
       const state = this.state;
       if (
         (state.status === "playing" || state.status === "paused") &&
-        selectedPosition.audiofile.id === state.currentMedia.audiofile.id
+        selectedPosition.item.audiofile.id ===
+          state.currentMedia.item.audiofile.id
       ) {
         // The loaded representation belongs to the audiofile; the source owns
         // only its live queue position and can be replaced without reloading.
         this.setPlaybackState(
-          updateCurrentSourcePosition(state, selectedPosition),
+          withCurrentSourcePosition(state, selectedPosition),
         );
         signal.throwIfAborted();
         this.subscribeToSource(selectedPosition.source);
@@ -167,7 +168,9 @@ export default class WebAudioPlayer implements MediaPlayer {
           signal,
         );
         if (!playbackItem) {
-          throw new UnsupportedPlaybackError(selectedPosition.audiofile.id);
+          throw new UnsupportedPlaybackError(
+            selectedPosition.item.audiofile.id,
+          );
         }
         await this.loadPlaybackItem(selectedPosition, playbackItem, signal);
       } catch (error) {
@@ -327,7 +330,7 @@ export default class WebAudioPlayer implements MediaPlayer {
       this.unload();
       return;
     }
-    this.setPlaybackState(updateCurrentSourcePosition(state, position));
+    this.setPlaybackState(withCurrentSourcePosition(state, position));
   }
 
   private requireCurrentPosition(
@@ -337,7 +340,7 @@ export default class WebAudioPlayer implements MediaPlayer {
     if (
       !currentMedia ||
       currentMedia.source !== expectedPosition.source ||
-      currentMedia.audiofile.id !== expectedPosition.audiofile.id
+      currentMedia.item.id !== expectedPosition.item.id
     ) {
       throw new Error("The current track is no longer in the playback source");
     }
@@ -380,7 +383,7 @@ export default class WebAudioPlayer implements MediaPlayer {
   ) {
     const { mediaPreferences } = this.requirePlaybackEngine();
     const [playbackItem] = await resolvePlaybackItems(
-      position.audiofile,
+      position.item.audiofile,
       mediaPreferences,
       signal,
     );
@@ -409,7 +412,7 @@ export default class WebAudioPlayer implements MediaPlayer {
     if (
       state.status !== "loading" ||
       state.currentMedia.source !== position.source ||
-      state.currentMedia.audiofile.id !== position.audiofile.id
+      state.currentMedia.item.id !== position.item.id
     ) {
       throw new Error("The selected track is no longer available");
     }
@@ -480,7 +483,7 @@ export default class WebAudioPlayer implements MediaPlayer {
     if (source.getSnapshot().pagination?.hasMore) return undefined;
 
     target = getAdjacentAudioSourcePosition(currentPosition, direction);
-    if (!target || target.audiofile.id === currentPosition.audiofile.id) {
+    if (!target || target.item.id === currentPosition.item.id) {
       return undefined;
     }
     return target;
@@ -491,33 +494,34 @@ export default class WebAudioPlayer implements MediaPlayer {
    * Network, token, Shaka, and decoding failures escape immediately.
    */
   private async loadFirstSupportedNavigationTarget(
-    originAudiofileId: Audiofile["id"],
+    originSourceItemId: AudioSourceItem["id"],
     initialTarget: AudioSourcePosition,
     direction: "next" | "previous",
     signal: AbortSignal,
   ) {
-    // The source wraps and can change while encodings are fetched; IDs provide
-    // a stable termination condition when every encountered track is
-    // unsupported.
-    const seenAudiofileIds = new Set<Audiofile["id"]>([originAudiofileId]);
+    // The source wraps and can change while encodings are fetched. Occurrence
+    // IDs terminate the search correctly even when an audiofile appears twice.
+    const seenSourceItemIds = new Set<AudioSourceItem["id"]>([
+      originSourceItemId,
+    ]);
     let candidate = initialTarget;
 
     await this.beginLoading(candidate, signal);
     while (true) {
-      seenAudiofileIds.add(candidate.audiofile.id);
+      seenSourceItemIds.add(candidate.item.id);
       const playbackItem = await this.resolvePlaybackItem(candidate, signal);
       if (playbackItem) {
         await this.loadPlaybackItem(candidate, playbackItem, signal);
         return;
       }
 
-      const unsupportedAudiofileId = candidate.audiofile.id;
+      const unsupportedAudiofileId = candidate.item.audiofile.id;
       const nextCandidate = await this.findNavigationTarget(
         candidate,
         direction,
         signal,
       );
-      if (!nextCandidate || seenAudiofileIds.has(nextCandidate.audiofile.id)) {
+      if (!nextCandidate || seenSourceItemIds.has(nextCandidate.item.id)) {
         throw new UnsupportedPlaybackError(unsupportedAudiofileId);
       }
 
@@ -554,7 +558,7 @@ export default class WebAudioPlayer implements MediaPlayer {
 
       try {
         await this.loadFirstSupportedNavigationTarget(
-          currentMedia.audiofile.id,
+          currentMedia.item.id,
           navigationTarget,
           direction,
           signal,
