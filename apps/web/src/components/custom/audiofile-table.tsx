@@ -9,7 +9,14 @@ import {
   tableFeatures,
   useTable,
 } from "@tanstack/react-table";
-import { Trash2, Play, Pause, MoreHorizontal, Search } from "lucide-react";
+import {
+  LoaderCircle,
+  MoreHorizontal,
+  Pause,
+  Play,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 
@@ -101,6 +108,7 @@ function PlaylistAudiofileTable({
         media?.source === audiofileSource &&
         media.item.id === position.item.id
       ) {
+        if (playbackState === "loading") return;
         void playPauseToggle().catch((error) => {
           toast.error("Playback Error", {
             description: error instanceof Error ? error.message : undefined,
@@ -114,7 +122,7 @@ function PlaylistAudiofileTable({
         });
       }
     },
-    [audiofileSource, media, playPauseToggle, setMedia],
+    [audiofileSource, media, playbackState, playPauseToggle, setMedia],
   );
 
   const handleDelete = useCallback(
@@ -273,12 +281,14 @@ function getMobileColumns(
           const file = row.original;
           const isActive = activeAudiofileId === file.id;
           const isPlaying = isActive && playbackState === "playing";
+          const isLoading = isActive && playbackState === "loading";
 
           return (
             <div className="flex items-center gap-3">
               <PlayButton
                 index={row.index}
                 isActive={isActive}
+                isLoading={isLoading}
                 isPlaying={isPlaying}
               />
               <div className="min-w-0 flex-1">
@@ -312,10 +322,12 @@ function getDesktopColumns(
       cell: ({ row }) => {
         const isActive = activeAudiofileId === row.original.id;
         const isPlaying = isActive && playbackState === "playing";
+        const isLoading = isActive && playbackState === "loading";
         return (
           <PlayButton
             index={row.index}
             isActive={isActive}
+            isLoading={isLoading}
             isPlaying={isPlaying}
           />
         );
@@ -384,18 +396,22 @@ function getDesktopColumns(
 interface PlayButtonProps {
   index: number;
   isActive: boolean;
+  isLoading: boolean;
   isPlaying: boolean;
 }
 
 const PlayButton = memo(function PlayButton({
   index,
   isActive,
+  isLoading,
   isPlaying,
 }: PlayButtonProps) {
   return (
     <div className="relative flex h-8 w-8 items-center justify-center">
       {isActive ? (
-        isPlaying ? (
+        isLoading ? (
+          <LoaderCircle className="h-4 w-4 animate-spin text-foreground" />
+        ) : isPlaying ? (
           <Pause className="h-4 w-4 text-foreground" />
         ) : (
           <Play className="h-4 w-4 text-foreground" />

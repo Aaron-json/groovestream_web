@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
-import { ChevronRight, Clock3, ListMusic, Pause, Play } from "lucide-react";
+import {
+  ChevronRight,
+  Clock3,
+  ListMusic,
+  LoaderCircle,
+  Pause,
+  Play,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
@@ -152,6 +159,7 @@ function AudiofileCard({
     currentMedia?.source === source &&
     currentMedia.item.id === sourcePosition.item.id;
   const isPlaying = isCurrentSourceItem && playbackState === "playing";
+  const isLoading = isCurrentSourceItem && playbackState === "loading";
 
   async function handlePlayback() {
     try {
@@ -187,14 +195,19 @@ function AudiofileCard({
     audiofile.duration === null
       ? undefined
       : formatDuration(audiofile.duration / 1000);
-  const PlaybackIcon = isPlaying ? Pause : Play;
+  const PlaybackIcon = isLoading ? LoaderCircle : isPlaying ? Pause : Play;
+  const playbackLabel = isLoading
+    ? `Loading ${title}`
+    : `${isPlaying ? "Pause" : "Play"} ${title}`;
 
   return (
     <button
       type="button"
-      className="group/media-card block w-full cursor-pointer rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="group/media-card block w-full cursor-pointer rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-wait"
       onClick={() => void handlePlayback()}
-      aria-label={`${isPlaying ? "Pause" : "Play"} ${title}`}
+      disabled={isLoading}
+      aria-busy={isLoading}
+      aria-label={playbackLabel}
       aria-current={isCurrentSourceItem ? "true" : undefined}
     >
       <MediaRow
@@ -215,7 +228,11 @@ function AudiofileCard({
             aria-hidden="true"
           >
             <PlaybackIcon
-              className={cn("size-3.5", !isPlaying && "translate-x-px")}
+              className={cn(
+                "size-3.5",
+                isLoading && "animate-spin",
+                !isLoading && !isPlaying && "translate-x-px",
+              )}
             />
           </span>
         }
@@ -242,11 +259,7 @@ export function MostPlayedCard({
       source={source}
       index={index}
       prefix={
-        <span
-          className={cn(
-            "w-6 shrink-0 text-center text-xs font-semibold tabular-nums text-muted-foreground",
-          )}
-        >
+        <span className="w-6 shrink-0 text-center text-xs font-semibold tabular-nums text-muted-foreground">
           {String(rank).padStart(2, "0")}
         </span>
       }

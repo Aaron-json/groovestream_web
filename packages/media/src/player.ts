@@ -72,7 +72,11 @@ export function toUnloadedPlaybackState(
   };
 }
 
-/** Replaces the live source position without changing its hydration level. */
+/**
+ * Replaces the live source position without changing its hydration level.
+ * Reconciliation preserves its input reference when the position is unchanged,
+ * making reference identity the no-op path here.
+ */
 export function withCurrentSourcePosition(
   state: PlaybackState,
   position: AudioSourcePosition,

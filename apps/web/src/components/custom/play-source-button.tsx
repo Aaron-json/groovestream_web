@@ -1,4 +1,4 @@
-import { Pause, Play } from "lucide-react";
+import { LoaderCircle, Pause, Play } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
 
@@ -31,6 +31,8 @@ export function PlaySourceButton({
 
   const isCurrentSource = currentMedia?.source === source;
   const isPlaying = isCurrentSource && playbackState === "playing";
+  const isLoading = isCurrentSource && playbackState === "loading";
+  const label = isLoading ? "Loading" : isPlaying ? "Pause" : "Play all";
 
   async function handleClick() {
     try {
@@ -59,12 +61,24 @@ export function PlaySourceButton({
       variant="outline"
       size="sm"
       onClick={() => void handleClick()}
+      disabled={isLoading}
+      aria-busy={isLoading}
       aria-label={
-        isPlaying ? `Pause ${sourceName}` : `Play all from ${sourceName}`
+        isLoading
+          ? `Loading ${sourceName}`
+          : isPlaying
+            ? `Pause ${sourceName}`
+            : `Play all from ${sourceName}`
       }
     >
-      {isPlaying ? <Pause /> : <Play className="translate-x-px" />}
-      {isPlaying ? "Pause" : "Play all"}
+      {isLoading ? (
+        <LoaderCircle className="animate-spin" />
+      ) : isPlaying ? (
+        <Pause />
+      ) : (
+        <Play className="translate-x-px" />
+      )}
+      {label}
     </Button>
   );
 }
