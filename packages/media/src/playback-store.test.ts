@@ -72,6 +72,7 @@ function createSource(initialAudiofiles: readonly Audiofile[]) {
     pagination: undefined,
   };
   const source: AudioSource = {
+    id: "test-source",
     getSnapshot: () => snapshot,
     subscribe: () => () => {},
   };

@@ -37,6 +37,8 @@ export const PLAYLISTS_LIST_KEY = [...PLAYLISTS_KEY, "list"] as const;
 const PLAYLIST_INVITES_KEY = ["playlistInvites"] as const;
 const MOST_PLAYED_KEY = ["most-played"] as const;
 const LISTENING_HISTORY_KEY = ["listening-history"] as const;
+export const LISTENING_HISTORY_SOURCE_ID =
+  LISTENING_HISTORY_KEY.join(".");
 
 const PLAYLIST_PAGE_SIZE = 50;
 const PLAYLIST_AUDIOFILES_PAGE_SIZE = 100;
@@ -230,10 +232,14 @@ type QueryAudioSourceConfig =
     }>;
 
 /** Adapts one query observer into the complete state exposed by AudioSource. */
-function createQueryAudioSource(config: QueryAudioSourceConfig): AudioSource {
+function createQueryAudioSource(
+  id: AudioSource["id"],
+  config: QueryAudioSourceConfig,
+): AudioSource {
   let snapshot: AudioSourceSnapshot | undefined;
 
   const source: AudioSource = {
+    id,
     getSnapshot: () => {
       if (!config.fetchNextPage) {
         const items = config.readResult().data ?? EMPTY_AUDIO_SOURCE_ITEMS;
@@ -306,7 +312,7 @@ export function createPlaylistAudiofileSource(
   const observerOptions = observer.options as Parameters<
     typeof observer.getOptimisticResult
   >[0];
-  return createQueryAudioSource({
+  return createQueryAudioSource(options.queryKey.join("."), {
     // Optimistic reads include cache writes made before the first subscriber.
     readResult: () => observer.getOptimisticResult(observerOptions),
     subscribe: (listener) => observer.subscribe(listener),
@@ -324,7 +330,7 @@ export function createMostPlayedAudiofileSource(
       audiofiles?.map(toAudioSourceItem) ?? EMPTY_AUDIO_SOURCE_ITEMS,
   });
   const observer = new QueryObserver(queryClient, observerOptions);
-  return createQueryAudioSource({
+  return createQueryAudioSource(observerOptions.queryKey.join("."), {
     readResult: () => observer.getOptimisticResult(observerOptions),
     subscribe: (listener) => observer.subscribe(listener),
   });
@@ -342,7 +348,7 @@ export function createListeningHistoryAudiofileSource(
   const observerOptions = observer.options as Parameters<
     typeof observer.getOptimisticResult
   >[0];
-  return createQueryAudioSource({
+  return createQueryAudioSource(LISTENING_HISTORY_SOURCE_ID, {
     readResult: () => observer.getOptimisticResult(observerOptions),
     subscribe: (listener) => observer.subscribe(listener),
     fetchNextPage: () => observer.fetchNextPage({ cancelRefetch: false }),

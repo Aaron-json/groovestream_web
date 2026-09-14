@@ -1,10 +1,6 @@
 import type { Audiofile } from "@groovestream/api/models";
 import { shallow } from "zustand/shallow";
 
-export interface AudioSourcePagination {
-  loadMore(): Promise<void>;
-}
-
 /** One occurrence of an audiofile in an ordered playback source. */
 export type AudioSourceItem = Readonly<{
   /** Stable within the source, including when the same audiofile occurs twice. */
@@ -30,12 +26,24 @@ export type AudioSourceSnapshot = Readonly<{
  * after the source changes. The same audiofile may occur more than once.
  */
 export interface AudioSource {
+  /** Stable identity shared by equivalent instances of the same source. */
+  readonly id: string;
   /** Returns the same object until the source's observable state changes. */
   getSnapshot(): AudioSourceSnapshot;
   /** Notifies that `getSnapshot()` may return a different object. */
   subscribe(listener: () => void): () => void;
   /** Present when the source can extend its current snapshot. */
-  pagination?: AudioSourcePagination;
+  pagination?: Readonly<{
+    loadMore(): Promise<void>;
+  }>;
+}
+
+/** Compares logical source identity without conflating concrete subscriptions. */
+export function isSameAudioSource(
+  left: AudioSource | undefined,
+  right: AudioSource,
+): boolean {
+  return left?.id === right.id;
 }
 
 /**

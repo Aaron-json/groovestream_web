@@ -40,6 +40,8 @@ test("playlist sources reuse snapshots until observable state changes", () => {
   const first = createAudiofile("first");
   const second = createAudiofile("second");
 
+  strictEqual(source.id, `playlist.${playlistId}.audiofiles`);
+
   queryClient.setQueryData<InfiniteData<AudiofilePage>>(queryKey, {
     pages: [createPage([first])],
     pageParams: [undefined],

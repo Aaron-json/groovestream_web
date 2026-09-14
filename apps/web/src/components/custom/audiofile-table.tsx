@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, memo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   columnFilteringFeature,
   createFilteredRowModel,
@@ -54,6 +54,7 @@ import { formatDuration } from "@groovestream/media/duration";
 import { useDeleteAudiofile } from "@/query/media";
 import {
   getAudioSourcePosition,
+  isSameAudioSource,
   type AudioSource,
 } from "@groovestream/media/source";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
@@ -105,7 +106,8 @@ function PlaylistAudiofileTable({
       }
 
       if (
-        media?.source === audiofileSource &&
+        media &&
+        isSameAudioSource(media.source, audiofileSource) &&
         media.item.id === position.item.id
       ) {
         if (playbackState === "loading") return;
@@ -142,7 +144,9 @@ function PlaylistAudiofileTable({
   );
 
   const activeAudiofileId =
-    media?.source === audiofileSource ? media.item.audiofile.id : undefined;
+    media && isSameAudioSource(media.source, audiofileSource)
+      ? media.item.audiofile.id
+      : undefined;
   const columns = useMemo(
     () =>
       isMobile
@@ -400,7 +404,7 @@ interface PlayButtonProps {
   isPlaying: boolean;
 }
 
-const PlayButton = memo(function PlayButton({
+function PlayButton({
   index,
   isActive,
   isLoading,
@@ -426,7 +430,7 @@ const PlayButton = memo(function PlayButton({
       )}
     </div>
   );
-});
+}
 
 interface RowActionsProps {
   file: Audiofile;

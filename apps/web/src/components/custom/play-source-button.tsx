@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
 import {
   getAudioSourcePosition,
+  isSameAudioSource,
   type AudioSource,
 } from "@groovestream/media/source";
 
@@ -29,7 +30,7 @@ export function PlaySourceButton({
       })),
     );
 
-  const isCurrentSource = currentMedia?.source === source;
+  const isCurrentSource = isSameAudioSource(currentMedia?.source, source);
   const isPlaying = isCurrentSource && playbackState === "playing";
   const isLoading = isCurrentSource && playbackState === "loading";
   const label = isLoading ? "Loading" : isPlaying ? "Pause" : "Play all";

@@ -20,6 +20,7 @@ import { formatDuration } from "@groovestream/media/duration";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
 import {
   getAudioSourcePosition,
+  isSameAudioSource,
   type AudioSource,
 } from "@groovestream/media/source";
 
@@ -156,7 +157,8 @@ function AudiofileCard({
   const sourcePosition = getAudioSourcePosition(source, index);
   const isCurrentSourceItem =
     sourcePosition !== undefined &&
-    currentMedia?.source === source &&
+    currentMedia !== undefined &&
+    isSameAudioSource(currentMedia.source, source) &&
     currentMedia.item.id === sourcePosition.item.id;
   const isPlaying = isCurrentSourceItem && playbackState === "playing";
   const isLoading = isCurrentSourceItem && playbackState === "loading";
@@ -170,7 +172,8 @@ function AudiofileCard({
       }
 
       if (
-        currentMedia?.source === source &&
+        currentMedia &&
+        isSameAudioSource(currentMedia.source, source) &&
         currentMedia.item.id === position.item.id
       ) {
         await playPauseToggle();
