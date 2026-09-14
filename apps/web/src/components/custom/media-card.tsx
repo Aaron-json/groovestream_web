@@ -206,7 +206,7 @@ function AudiofileCard({
   return (
     <button
       type="button"
-      className="group/media-card block w-full cursor-pointer rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-wait"
+      className="group/media-card block w-full cursor-pointer rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default"
       onClick={() => void handlePlayback()}
       disabled={isLoading}
       aria-busy={isLoading}
