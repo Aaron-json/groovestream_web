@@ -39,11 +39,6 @@ type CdnAuthorization = {
   refreshPromise?: Promise<void>;
 };
 
-type SourceSubscription = {
-  source: AudioSource;
-  unsubscribe: () => void;
-};
-
 /**
  * Owns the active AudioSourcePosition. External positions are validated at
  * load boundaries; source notifications keep retained player state current.
@@ -57,7 +52,7 @@ export default class WebAudioPlayer implements MediaPlayer {
     ...INITIAL_PLAYBACK_STATE,
     volume: INITIAL_VOLUME,
   };
-  private sourceSubscription: SourceSubscription | undefined;
+  private sourceUnsubscribe: (() => void) | undefined;
   private activeOperationController: AbortController | undefined;
   private mediaPreferences: MediaPreferences | undefined;
 
@@ -151,8 +146,6 @@ export default class WebAudioPlayer implements MediaPlayer {
           withCurrentSourcePosition(state, selectedPosition),
         );
         signal.throwIfAborted();
-        this.subscribeToSource(selectedPosition.source);
-        signal.throwIfAborted();
         this.requireCurrentPosition(selectedPosition);
         await this.seek(0);
         signal.throwIfAborted();
@@ -172,7 +165,7 @@ export default class WebAudioPlayer implements MediaPlayer {
             selectedPosition.item.audiofile.id,
           );
         }
-        await this.loadPlaybackItem(selectedPosition, playbackItem, signal);
+        await this.loadPlaybackItem(playbackItem, signal);
       } catch (error) {
         if (!signal.aborted) await this.clearCurrentMedia();
         throw error;
@@ -246,7 +239,18 @@ export default class WebAudioPlayer implements MediaPlayer {
 
   private setPlaybackState(nextState: PlaybackState) {
     if (playbackStatesEqual(this.state, nextState)) return;
+
+    const previousSource = this.state.currentMedia?.source;
+    const nextSource = nextState.currentMedia?.source;
     this.state = nextState;
+
+    if (previousSource !== nextSource) {
+      this.replaceSourceSubscription(nextSource);
+    }
+
+    // A source may emit synchronously while it is being subscribed. That
+    // transition has already notified listeners with the authoritative state.
+    if (this.state !== nextState) return;
     this.stateListeners.forEach((listener) => listener());
   }
 
@@ -267,7 +271,6 @@ export default class WebAudioPlayer implements MediaPlayer {
 
   private clearPlayback() {
     this.cdnAuthorization = undefined;
-    this.clearSourceSubscription();
     this.setPlaybackState(toUnloadedPlaybackState(this.state));
     this.videoElement?.pause();
   }
@@ -299,15 +302,12 @@ export default class WebAudioPlayer implements MediaPlayer {
     }
   }
 
-  private clearSourceSubscription() {
-    const subscription = this.sourceSubscription;
-    this.sourceSubscription = undefined;
-    subscription?.unsubscribe();
-  }
+  private replaceSourceSubscription(source: AudioSource | undefined) {
+    const previousUnsubscribe = this.sourceUnsubscribe;
+    this.sourceUnsubscribe = undefined;
+    previousUnsubscribe?.();
 
-  private subscribeToSource(source: AudioSource) {
-    if (this.sourceSubscription?.source === source) return;
-    this.clearSourceSubscription();
+    if (!source) return;
     const unsubscribe = source.subscribe(() => this.handleSourceUpdate());
 
     // A source may notify synchronously while being subscribed. If that
@@ -316,7 +316,7 @@ export default class WebAudioPlayer implements MediaPlayer {
       unsubscribe();
       return;
     }
-    this.sourceSubscription = { source, unsubscribe };
+    this.sourceUnsubscribe = unsubscribe;
   }
 
   private handleSourceUpdate() {
@@ -363,7 +363,6 @@ export default class WebAudioPlayer implements MediaPlayer {
       position: 0,
       duration: 0,
     });
-    this.subscribeToSource(position.source);
   }
 
   private async beginLoading(
@@ -391,7 +390,6 @@ export default class WebAudioPlayer implements MediaPlayer {
   }
 
   private async loadPlaybackItem(
-    position: AudioSourcePosition,
     playbackItem: PlaybackItem,
     signal: AbortSignal,
   ) {
@@ -409,12 +407,8 @@ export default class WebAudioPlayer implements MediaPlayer {
     await shakaPlayer.load(playbackItem.objectId);
     signal.throwIfAborted();
     const state = this.state;
-    if (
-      state.status !== "loading" ||
-      state.currentMedia.source !== position.source ||
-      state.currentMedia.item.id !== position.item.id
-    ) {
-      throw new Error("The selected track is no longer available");
+    if (state.status !== "loading") {
+      throw new Error("Playback load was interrupted by another operation");
     }
     const currentMedia: CurrentMedia = {
       ...state.currentMedia,
@@ -511,7 +505,7 @@ export default class WebAudioPlayer implements MediaPlayer {
       seenSourceItemIds.add(candidate.item.id);
       const playbackItem = await this.resolvePlaybackItem(candidate, signal);
       if (playbackItem) {
-        await this.loadPlaybackItem(candidate, playbackItem, signal);
+        await this.loadPlaybackItem(playbackItem, signal);
         return;
       }
 
