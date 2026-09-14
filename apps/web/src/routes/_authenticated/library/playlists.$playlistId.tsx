@@ -51,9 +51,7 @@ import { RenamePlaylistSheet } from "@/components/custom/rename-playlist";
 import { toast } from "sonner";
 import { useState, useCallback, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  PlaylistAudiofileTableSkeleton,
-} from "@/components/custom/audiofile-table";
+import { PlaylistAudiofileTableSkeleton } from "@/components/custom/audiofile-table";
 import { isApiError } from "@groovestream/api/errors";
 import type { Playlist, PlaylistDetails } from "@groovestream/api/models";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
@@ -151,10 +149,7 @@ function RouteComponent() {
   const router = useRouter();
   const { mutate: deletePlaylist } = useDeletePlaylist();
   const { mutate: leavePlaylist } = useLeavePlaylist();
-  const playlistAudiofilesQuery = useMemo(
-    () => playlistAudiofilesOptions(playlistId),
-    [playlistId],
-  );
+  const playlistAudiofilesQuery = playlistAudiofilesOptions(playlistId);
   const playlistAudiofileSource = useMemo(
     () => createPlaylistAudiofileSource(playlistId),
     [playlistId],

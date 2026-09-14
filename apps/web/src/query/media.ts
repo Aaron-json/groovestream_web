@@ -102,7 +102,7 @@ export function useDeleteAudiofile() {
   return useMutation({
     mutationFn: (audiofile: Audiofile) =>
       deleteAudiofile({ path: { audiofile_id: audiofile.id } }),
-    onMutate: async (audiofile) => {
+    onMutate: (audiofile) => {
       const taskId = genTaskId();
       const task: MediaTask = {
         type: TaskType.MediaTask,
@@ -128,7 +128,7 @@ export function useDeletePlaylist() {
   return useMutation({
     mutationFn: (playlist: Playlist) =>
       deletePlaylist({ path: { playlist_id: playlist.id } }),
-    onMutate: async (playlist) => {
+    onMutate: (playlist) => {
       const taskId = genTaskId();
       const task: MediaTask = {
         type: TaskType.MediaTask,
