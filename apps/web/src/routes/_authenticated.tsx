@@ -16,13 +16,9 @@ import { Button } from "@/components/ui/button";
 import { TextLogo } from "@/components/custom/textlogo";
 import { useEffect, useState } from "react";
 import { usePlaybackStore } from "@groovestream/media/playback-store";
-import type { CurrentMedia } from "@groovestream/media/player";
 import WebAudioPlayer from "@/lib/media/player";
-import {
-  LISTENING_HISTORY_SOURCE_ID,
-  recordListeningHistory,
-} from "@groovestream/query/media";
-import { queryClient } from "@/lib/query";
+import { useListeningHistoryRecorder } from "@/lib/media/listening-history";
+import { useMediaSession } from "@/lib/media/media-session";
 import { RefreshCw } from "lucide-react";
 import { NowPlayingPanel } from "@/components/custom/now-playing-panel";
 
@@ -39,6 +35,9 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  useMediaSession();
+  useListeningHistoryRecorder();
+
   const init = usePlaybackStore((state) => state.init);
   const destroy = usePlaybackStore((state) => state.destroy);
   const player = usePlaybackStore((state) => state.player);
@@ -63,43 +62,13 @@ function AuthenticatedLayout() {
       }
     };
 
-    void initializer();
+    initializer();
 
     return () => {
       cancelled = true;
-      void destroy().catch(() => {});
+      destroy().catch(() => {});
     };
   }, [destroy, init]);
-
-  useEffect(() => {
-    let lastRecordedMedia: CurrentMedia | undefined;
-
-    return usePlaybackStore.subscribe((state) => {
-      const playerState = state.playerState;
-      if (playerState.status === "unloaded") {
-        lastRecordedMedia = undefined;
-        return;
-      }
-      if (playerState.status !== "playing") return;
-
-      const currentMedia = playerState.currentMedia;
-      // Recording would reorder the queue that playback is currently traversing.
-      if (currentMedia.source.id === LISTENING_HISTORY_SOURCE_ID) return;
-
-      if (
-        currentMedia.source === lastRecordedMedia?.source &&
-        currentMedia.item.id === lastRecordedMedia.item.id
-      ) {
-        return;
-      }
-
-      lastRecordedMedia = currentMedia;
-      void recordListeningHistory(
-        queryClient,
-        currentMedia.item.audiofile.id,
-      ).catch(() => {});
-    });
-  }, []);
 
   if (unsupported) {
     return (
