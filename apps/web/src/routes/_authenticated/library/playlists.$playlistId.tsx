@@ -231,7 +231,7 @@ function RouteComponent() {
   }
 
   function handlePlayback() {
-    void startPlayback().catch((error) => {
+    startPlayback().catch((error) => {
       toast.error("Playback Error", {
         description:
           error instanceof Error ? error.message : "Unable to play playlist",

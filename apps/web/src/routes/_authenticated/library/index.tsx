@@ -93,7 +93,11 @@ function RouteComponent() {
         },
       });
       removePlaylistInviteFromCache(invite);
-      void queryClient.invalidateQueries({ queryKey: PLAYLISTS_LIST_KEY });
+      queryClient
+        .invalidateQueries({ queryKey: PLAYLISTS_LIST_KEY })
+        .catch((error) =>
+          console.error("Unable to refresh playlists", error),
+        );
       toast.success("Invite accepted");
     } catch {
       toast.error("Failed to accept invite");

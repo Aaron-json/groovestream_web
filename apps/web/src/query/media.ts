@@ -82,9 +82,11 @@ export function useUploadAudioFile() {
             });
           },
         });
-        void queryClient.invalidateQueries({
-          queryKey: cloudTasksOptions().queryKey,
-        });
+        queryClient
+          .invalidateQueries({ queryKey: cloudTasksOptions().queryKey })
+          .catch((error) =>
+            console.error("Unable to refresh cloud tasks", error),
+          );
       } catch (error) {
         failures.push({ file, error });
       }

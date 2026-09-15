@@ -111,7 +111,7 @@ function PlaylistAudiofileTable({
         media.item.id === position.item.id
       ) {
         if (playbackState === "loading") return;
-        void playPauseToggle().catch((error) => {
+        playPauseToggle().catch((error) => {
           toast.error("Playback Error", {
             description: error instanceof Error ? error.message : undefined,
           });

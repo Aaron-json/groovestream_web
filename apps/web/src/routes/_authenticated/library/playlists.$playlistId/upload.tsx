@@ -396,7 +396,7 @@ function RouteComponent() {
     toast("Uploading audio files", {
       description: "You can monitor processing from the tasks menu.",
     });
-    void uploadFiles(submittedFiles, playlist)
+    uploadFiles(submittedFiles, playlist)
       .then(({ failures }) => {
         for (const { file, error } of failures) {
           toast.error(`Error uploading "${file.name}"`, {

@@ -78,7 +78,7 @@ function CreatePlaylistForm({ onFinish }: CreatePlaylistFormProps) {
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        void form.handleSubmit().catch(() => {
+        form.handleSubmit().catch(() => {
           // The mutation state below owns submit errors.
         });
       }}

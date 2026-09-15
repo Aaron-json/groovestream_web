@@ -192,7 +192,7 @@ export default class WebAudioPlayer implements MediaPlayer {
   unload() {
     this.cancelActiveOperation();
     this.clearPlayback();
-    void this.shakaPlayer?.unload().catch((error: unknown) => {
+    this.shakaPlayer?.unload().catch((error: unknown) => {
       console.error("Unable to unload media", error);
     });
   }
@@ -653,7 +653,7 @@ export default class WebAudioPlayer implements MediaPlayer {
           duration: videoElement.duration || 0,
         });
       }
-      void this.next().catch((error) => {
+      this.next().catch((error) => {
         if (!(error instanceof Error && error.name === "AbortError")) {
           console.error("Unable to advance playback", error);
         }

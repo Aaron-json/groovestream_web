@@ -276,7 +276,7 @@ function Queue({ media }: { media: AudioSourcePosition }) {
     }
 
     setPaginationErrorSource(undefined);
-    void pagination.loadMore().catch(() => setPaginationErrorSource(source));
+    pagination.loadMore().catch(() => setPaginationErrorSource(source));
   }
 
   function playQueueItem(index: number) {

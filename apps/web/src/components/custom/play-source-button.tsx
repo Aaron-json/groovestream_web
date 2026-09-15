@@ -61,7 +61,7 @@ export function PlaySourceButton({
       type="button"
       variant="outline"
       size="sm"
-      onClick={() => void handleClick()}
+      onClick={() => handleClick()}
       disabled={isLoading}
       aria-busy={isLoading}
       aria-label={

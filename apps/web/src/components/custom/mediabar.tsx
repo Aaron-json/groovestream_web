@@ -37,7 +37,7 @@ export default function MediaBar() {
   const toggleNowPlaying = useUIStore((state) => state.toggleNowPlaying);
 
   const runControl = (control: () => Promise<void>) => {
-    void control().catch((error) => {
+    control().catch((error) => {
       toast.error("Playback Error", {
         description: error instanceof Error ? error.message : undefined,
       });
@@ -262,7 +262,7 @@ function Seeker() {
   function handleSeekCommit(value: number | readonly number[]) {
     const nextPosition = getSliderValue(value);
     setSeekPreview(undefined);
-    void seek(nextPosition).catch((error) => {
+    seek(nextPosition).catch((error) => {
       toast.error("Playback Error", {
         description: error instanceof Error ? error.message : undefined,
       });

@@ -75,7 +75,7 @@ export default function InviteCard({
             variant="ghost"
             className="text-muted-foreground hover:text-destructive"
             disabled={pendingAction !== undefined}
-            onClick={() => void runAction("decline")}
+            onClick={() => runAction("decline")}
           >
             {pendingAction === "decline" ? (
               <LoaderCircle className="animate-spin" />
@@ -88,7 +88,7 @@ export default function InviteCard({
             type="button"
             size="sm"
             disabled={pendingAction !== undefined}
-            onClick={() => void runAction("accept")}
+            onClick={() => runAction("accept")}
           >
             {pendingAction === "accept" ? (
               <LoaderCircle className="animate-spin" />

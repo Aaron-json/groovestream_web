@@ -66,7 +66,7 @@ function RouteComponent() {
   });
 
   const submit = () => {
-    void form.handleSubmit().catch(() => {
+    form.handleSubmit().catch(() => {
       // The create-profile mutation state below owns submit errors.
     });
   };
