@@ -124,12 +124,12 @@ export function useMediaSession() {
           : null;
       }
 
-      const nextPlaybackState: MediaSessionPlaybackState =
-        playback.status === "playing"
-          ? "playing"
-          : playback.status === "paused"
-            ? "paused"
-            : "none";
+      let nextPlaybackState: MediaSessionPlaybackState = "none";
+      if (playback.status === "playing") {
+        nextPlaybackState = "playing";
+      } else if (playback.status === "paused") {
+        nextPlaybackState = "paused";
+      }
       if (playbackState !== nextPlaybackState) {
         playbackState = nextPlaybackState;
         mediaSession.playbackState = nextPlaybackState;
