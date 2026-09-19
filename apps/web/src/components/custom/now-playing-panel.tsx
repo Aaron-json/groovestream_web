@@ -247,7 +247,7 @@ function PlaylistLink({ playlistId }: { playlistId: string }) {
     <Link
       to="/library/playlists/$playlistId"
       params={{ playlistId }}
-      className="transition-colors hover:text-primary"
+      className="block truncate transition-colors hover:text-primary"
       title={name}
     >
       {name}

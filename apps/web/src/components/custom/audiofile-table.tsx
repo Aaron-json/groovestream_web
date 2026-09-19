@@ -207,7 +207,7 @@ function PlaylistAudiofileTable({
       )}
       <div>
         {audiofiles.length > 0 && (
-          <Table className={cn(isMobile ? undefined : "table-fixed")}>
+          <Table className="table-fixed">
             {!isMobile && (
               <TableHeader>
                 {table.getHeaderGroups().map((group) => (
@@ -281,6 +281,7 @@ function getMobileColumns(
       {
         id: "row",
         enableGlobalFilter: true,
+        meta: { className: "w-full max-w-0" },
         cell: ({ row }) => {
           const file = row.original;
           const isActive = activeAudiofileId === file.id;
@@ -288,7 +289,7 @@ function getMobileColumns(
           const isLoading = isActive && playbackState === "loading";
 
           return (
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <PlayButton
                 index={row.index}
                 isActive={isActive}

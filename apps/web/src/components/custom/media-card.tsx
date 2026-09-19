@@ -86,7 +86,7 @@ function MediaRow({
   return (
     <div
       className={cn(
-        "flex h-full items-center gap-3 rounded-md px-3 py-2.5 transition-colors",
+        "flex h-full w-full min-w-0 items-center gap-3 rounded-md px-3 py-2.5 transition-colors",
         "group-hover/media-card:bg-muted/50",
         active && "bg-muted",
       )}

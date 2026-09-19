@@ -65,15 +65,15 @@ export function SidebarPlaylists() {
                       to="/library/playlists/$playlistId"
                       params={{ playlistId: playlist.id }}
                       onClick={handlePlaylistSelect}
-                      className="flex w-full items-center justify-between rounded-md px-3 py-2 text-muted-foreground hover:text-foreground"
+                      className="flex w-full min-w-0 items-center justify-between rounded-md px-3 py-2 text-muted-foreground hover:text-foreground"
                       activeProps={{
                         className:
                           "bg-muted text-foreground font-medium shadow-sm",
                       }}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
                         <ListMusic className="size-4 shrink-0 opacity-70" />
-                        <span className="truncate text-sm">
+                        <span className="min-w-0 flex-1 truncate text-sm">
                           {playlist.name}
                         </span>
                       </div>
